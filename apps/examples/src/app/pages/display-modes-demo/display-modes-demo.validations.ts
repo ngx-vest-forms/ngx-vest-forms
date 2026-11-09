@@ -1,4 +1,4 @@
-import { type NgxVestSuite } from 'ngx-vest-forms';
+import type { NgxVestSuite } from 'ngx-vest-forms';
 import { create, enforce, test, warn } from 'vest';
 import type { DisplayModesDemoModel } from '../../models/display-modes-demo.model';
 

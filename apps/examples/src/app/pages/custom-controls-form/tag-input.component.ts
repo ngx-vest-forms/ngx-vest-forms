@@ -1,6 +1,6 @@
 import {
   Component,
-  ElementRef,
+  type ElementRef,
   forwardRef,
   signal,
   viewChild,

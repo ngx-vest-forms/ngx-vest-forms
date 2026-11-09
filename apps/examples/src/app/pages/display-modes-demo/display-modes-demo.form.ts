@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import {
   createFormFeedbackSignals,
-  FormDirective,
+  type FormDirective,
   NgxVestForms,
   type NgxVestSuite,
 } from 'ngx-vest-forms';

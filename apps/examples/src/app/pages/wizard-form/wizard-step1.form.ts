@@ -1,6 +1,6 @@
 import { Component, input, output, viewChild } from '@angular/core';
 import {
-  FormDirective,
+  type FormDirective,
   type NgxFirstInvalidOptions,
   type NgxValidationConfig,
   NgxVestForms,

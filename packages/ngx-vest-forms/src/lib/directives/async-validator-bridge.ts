@@ -1,5 +1,5 @@
 import { isDevMode } from '@angular/core';
-import { AbstractControl, type ValidationErrors } from '@angular/forms';
+import type { AbstractControl, ValidationErrors } from '@angular/forms';
 import { from, Observable, of } from 'rxjs';
 import {
   logDiagnostic,

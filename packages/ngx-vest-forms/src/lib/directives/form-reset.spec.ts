@@ -73,7 +73,7 @@ import { create, enforce, test } from 'vest';
 import { describe, expect, it } from 'vitest';
 import { NgxVestForms } from '../exports';
 import type { NgxDeepPartial } from '../utils/deep-partial';
-import { FormDirective } from './form.directive';
+import type { FormDirective } from './form.directive';
 
 describe('FormDirective - Reset Functionality', () => {
   describe('Using resetForm() method (RECOMMENDED)', () => {

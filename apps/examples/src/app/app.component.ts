@@ -2,7 +2,7 @@ import {
   afterRenderEffect,
   Component,
   DestroyRef,
-  ElementRef,
+  type ElementRef,
   inject,
   signal,
   viewChild,

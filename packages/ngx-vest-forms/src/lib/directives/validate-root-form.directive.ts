@@ -16,14 +16,14 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
-  AbstractControl,
+  type AbstractControl,
   type AsyncValidator,
   type AsyncValidatorFn,
   NG_ASYNC_VALIDATORS,
   NgForm,
   type ValidationErrors,
 } from '@angular/forms';
-import { catchError, map, Observable, of } from 'rxjs';
+import { catchError, map, type Observable, of } from 'rxjs';
 import { ROOT_FORM } from '../constants';
 import {
   logDiagnostic,

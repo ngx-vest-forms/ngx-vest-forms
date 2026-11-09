@@ -1,4 +1,4 @@
-import { DestroyRef } from '@angular/core';
+import type { DestroyRef } from '@angular/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { scheduleMicrotask, scheduleTimeout } from './destroy-scheduler';
 

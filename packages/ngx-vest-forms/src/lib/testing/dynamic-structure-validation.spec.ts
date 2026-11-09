@@ -7,7 +7,7 @@ import userEvent from '@testing-library/user-event';
 import { create, enforce, omitWhen, test } from 'vest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { NgxDeepPartial, ValidationConfigMap } from '../../public-api';
-import { FormDirective } from '../directives/form.directive';
+import type { FormDirective } from '../directives/form.directive';
 import { NgxVestForms } from '../exports';
 
 type DynamicFormModel = NgxDeepPartial<{

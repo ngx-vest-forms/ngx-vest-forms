@@ -1,10 +1,10 @@
 import {
-  ChangeDetectorRef,
-  DestroyRef,
+  type ChangeDetectorRef,
+  type DestroyRef,
   ErrorHandler,
   isDevMode,
 } from '@angular/core';
-import { AbstractControl, FormGroup } from '@angular/forms';
+import type { AbstractControl, FormGroup } from '@angular/forms';
 import {
   debounceTime,
   defer,
@@ -13,7 +13,7 @@ import {
   filter,
   finalize,
   map,
-  Observable,
+  type Observable,
   of,
   race,
   merge as rxMerge,

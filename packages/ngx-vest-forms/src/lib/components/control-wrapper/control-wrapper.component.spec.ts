@@ -16,7 +16,7 @@ import {
 } from '@angular/forms';
 import { fireEvent, render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
-import { Observable, Subject, take } from 'rxjs';
+import { type Observable, Subject, take } from 'rxjs';
 import { create, enforce, test as vestTest, warn } from 'vest';
 import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { NgxVestForms } from '../../exports';

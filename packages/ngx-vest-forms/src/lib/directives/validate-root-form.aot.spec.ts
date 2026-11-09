@@ -1,4 +1,4 @@
-import { Component, signal, Type } from '@angular/core';
+import { Component, signal, type Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { create, enforce, test } from 'vest';
 import { afterEach, describe, expect, it } from 'vitest';

@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Service } from '@angular/core';
-import { map, Observable } from 'rxjs';
+import { map, type Observable } from 'rxjs';
 
 /**
  * Talks to the in-app mock endpoint `GET /api/username-availability/:name`.

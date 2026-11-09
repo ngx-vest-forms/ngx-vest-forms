@@ -1,4 +1,4 @@
-import { type NgxVestSuite } from 'ngx-vest-forms';
+import type { NgxVestSuite } from 'ngx-vest-forms';
 import { create, enforce, omitWhen, test, warn } from 'vest';
 import type { SubmissionPatternsModel } from '../../models/submission-patterns.model';
 import { EMAIL_PATTERN } from '../../shared/validations/email.validations';

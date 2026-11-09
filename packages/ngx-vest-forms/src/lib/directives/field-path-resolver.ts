@@ -1,4 +1,9 @@
-import { AbstractControl, FormArray, FormGroup, NgForm } from '@angular/forms';
+import {
+  type AbstractControl,
+  FormArray,
+  FormGroup,
+  type NgForm,
+} from '@angular/forms';
 import {
   findRegisteredControl,
   findRegisteredGroupPath,

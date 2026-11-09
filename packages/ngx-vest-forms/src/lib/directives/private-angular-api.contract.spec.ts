@@ -33,12 +33,12 @@ import {
 } from '@angular/core';
 import { outputToObservable } from '@angular/core/rxjs-interop';
 import { TestBed } from '@angular/core/testing';
-import { FormsModule, NgForm } from '@angular/forms';
+import { FormsModule, type NgForm } from '@angular/forms';
 import { render, screen } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { NgxVestForms } from '../exports';
-import { FormDirective, type NgxFieldBlurEvent } from './form.directive';
+import type { FormDirective, NgxFieldBlurEvent } from './form.directive';
 
 const whenStable = () => TestBed.inject(ApplicationRef).whenStable();
 

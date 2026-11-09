@@ -5,7 +5,7 @@ import { memo } from 'vest/memo';
 import type { PurchaseFormModel } from '../../models/purchase-form.model';
 import { addressValidations } from '../../shared/validations/address.validations';
 import { phonenumberValidations } from '../../shared/validations/phonenumber.validations';
-import { SwapiService } from './swapi.service';
+import type { SwapiService } from './swapi.service';
 
 type PurchaseValidationSwapi = Pick<SwapiService, 'userIdExists'>;
 

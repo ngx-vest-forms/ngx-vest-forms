@@ -74,7 +74,7 @@ export const travelFormContract: NgxDeepRequired<TravelFormModel> = {
 ### 2. Vest suite with type-safe field names
 
 ```typescript
-import { type NgxVestSuite } from 'ngx-vest-forms';
+import type { NgxVestSuite } from 'ngx-vest-forms';
 import { create, enforce, omitWhen, test } from 'vest';
 
 export const travelValidationSuite: NgxVestSuite<TravelFormModel> = create(

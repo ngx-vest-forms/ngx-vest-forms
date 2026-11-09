@@ -12,8 +12,8 @@ import {
   untracked,
 } from '@angular/core';
 import {
-  AbstractControl,
-  AbstractControlDirective,
+  type AbstractControl,
+  type AbstractControlDirective,
   NgModel,
   NgModelGroup,
   type ValidationErrors,

@@ -1,4 +1,4 @@
-import { DestroyRef } from '@angular/core';
+import type { DestroyRef } from '@angular/core';
 import { describe, expect, it, vi } from 'vitest';
 import type { NgxSuiteRunResult, NgxVestSuite } from './validation-suite';
 import {

@@ -2,14 +2,14 @@ import { KeyValuePipe } from '@angular/common';
 import {
   Component,
   computed,
-  ElementRef,
+  type ElementRef,
   input,
   output,
   viewChild,
 } from '@angular/core';
 import {
   createFormFeedbackSignals,
-  FormDirective,
+  type FormDirective,
   type NgxSubmitSettledEvent,
   NgxVestForms,
   type NgxVestSuite,

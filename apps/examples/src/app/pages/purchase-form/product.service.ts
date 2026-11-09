@@ -1,5 +1,5 @@
 import { Service } from '@angular/core';
-import { delay, Observable, of } from 'rxjs';
+import { delay, type Observable, of } from 'rxjs';
 import type { Product } from './product.type';
 
 const PRODUCTS: Product[] = [

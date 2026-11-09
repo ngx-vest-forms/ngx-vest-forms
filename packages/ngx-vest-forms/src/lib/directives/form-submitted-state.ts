@@ -1,5 +1,9 @@
 import { signal, type WritableSignal } from '@angular/core';
-import { FormResetEvent, FormSubmittedEvent, NgForm } from '@angular/forms';
+import {
+  FormResetEvent,
+  FormSubmittedEvent,
+  type NgForm,
+} from '@angular/forms';
 
 const formSubmittedSignals = new WeakMap<NgForm, WritableSignal<boolean>>();
 const formsInSubmitValidation = new WeakSet<NgForm>();

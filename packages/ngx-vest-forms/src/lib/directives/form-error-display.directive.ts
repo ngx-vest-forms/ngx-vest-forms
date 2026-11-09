@@ -10,7 +10,7 @@ import {
   untracked,
 } from '@angular/core';
 import {
-  AbstractControl,
+  type AbstractControl,
   FormResetEvent,
   NgForm,
   StatusChangeEvent,

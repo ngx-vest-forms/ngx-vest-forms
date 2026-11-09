@@ -1,6 +1,6 @@
 import { KeyValuePipe } from '@angular/common';
 import { Component, ElementRef, inject, input, output } from '@angular/core';
-import { NgModelGroup } from '@angular/forms';
+import type { NgModelGroup } from '@angular/forms';
 import {
   arrayToObject,
   NgxVestForms,

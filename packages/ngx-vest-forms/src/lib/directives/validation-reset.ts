@@ -1,5 +1,5 @@
-import { AbstractControl } from '@angular/forms';
-import { Observable, Subject } from 'rxjs';
+import type { AbstractControl } from '@angular/forms';
+import { type Observable, Subject } from 'rxjs';
 
 const validationResets = new WeakMap<AbstractControl, Subject<void>>();
 

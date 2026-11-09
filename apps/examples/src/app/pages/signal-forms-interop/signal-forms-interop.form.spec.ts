@@ -1,5 +1,5 @@
 import { Component, signal, viewChild } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgModel } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import type { NgxSubmitSettledEvent } from 'ngx-vest-forms';

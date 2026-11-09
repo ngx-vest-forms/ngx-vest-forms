@@ -1,5 +1,5 @@
 import { Service } from '@angular/core';
-import { delay, Observable, of, throwError } from 'rxjs';
+import { delay, type Observable, of, throwError } from 'rxjs';
 import type { AutoSaveDemoModel } from '../../models/auto-save-demo.model';
 
 export type AutoSaveDraftResult = {

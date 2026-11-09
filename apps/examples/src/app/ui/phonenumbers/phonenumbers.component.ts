@@ -1,7 +1,7 @@
 import { KeyValuePipe } from '@angular/common';
 import {
   Component,
-  ElementRef,
+  type ElementRef,
   input,
   output,
   signal,

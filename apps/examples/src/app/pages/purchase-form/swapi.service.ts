@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Service } from '@angular/core';
-import { catchError, map, Observable, of } from 'rxjs';
+import { catchError, map, type Observable, of } from 'rxjs';
 
 @Service()
 export class SwapiService {

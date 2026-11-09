@@ -2,7 +2,7 @@ import {
   afterNextRender,
   Component,
   computed,
-  ElementRef,
+  type ElementRef,
   inject,
   Injector,
   signal,

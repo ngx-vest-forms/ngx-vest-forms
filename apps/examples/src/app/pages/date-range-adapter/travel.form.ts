@@ -2,7 +2,7 @@ import { Component, input, output, signal, viewChild } from '@angular/core';
 import {
   ControlWrapperComponent,
   createFormFeedbackSignals,
-  FormDirective,
+  type FormDirective,
   type NgxSubmitSettledEvent,
   type NgxValidationConfig,
   NgxVestForms,

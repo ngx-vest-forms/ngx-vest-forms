@@ -16,7 +16,7 @@ import {
   clearFields,
   createFormFeedbackSignals,
   createValidationConfig,
-  FormDirective,
+  type FormDirective,
   NGX_VALIDATION_DEBOUNCE_PRESETS,
   type NgxSubmitSettledEvent,
   NgxVestForms,

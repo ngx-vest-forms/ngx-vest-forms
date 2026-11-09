@@ -8,13 +8,13 @@ import {
   type OnInit,
 } from '@angular/core';
 import {
-  AbstractControl,
+  type AbstractControl,
   type AsyncValidator,
   NG_ASYNC_VALIDATORS,
   NgModelGroup,
   type ValidationErrors,
 } from '@angular/forms';
-import { Observable } from 'rxjs';
+import type { Observable } from 'rxjs';
 import { getFormGroupField } from '../utils/form-utils';
 import { runAsyncValidationBridge } from './async-validator-bridge';
 import { registerGroupElement } from './field-element-registry';

@@ -1,7 +1,13 @@
-import { Component, ElementRef, input, output, viewChild } from '@angular/core';
+import {
+  Component,
+  type ElementRef,
+  input,
+  output,
+  viewChild,
+} from '@angular/core';
 import {
   createFormFeedbackSignals,
-  FormDirective,
+  type FormDirective,
   getAllFormErrors,
   NGX_ERROR_DISPLAY_MODE_TOKEN,
   type NgxFormErrorsByPath,

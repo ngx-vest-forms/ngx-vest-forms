@@ -1,7 +1,7 @@
 import { Component, input, output, viewChild } from '@angular/core';
 import {
   createFormFeedbackSignals,
-  FormDirective,
+  type FormDirective,
   FormErrorControlDirective,
   type NgxSubmitSettledEvent,
   NgxVestForms,

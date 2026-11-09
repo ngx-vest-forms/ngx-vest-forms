@@ -1,4 +1,4 @@
-import { type NgxVestSuite } from 'ngx-vest-forms';
+import type { NgxVestSuite } from 'ngx-vest-forms';
 import { create, enforce, omitWhen, test, warn } from 'vest';
 import type { CustomControlsModel } from '../../models/custom-controls.model';
 

@@ -1,7 +1,7 @@
 import {
-  AbstractControl,
-  FormArray,
-  FormGroup,
+  type AbstractControl,
+  type FormArray,
+  type FormGroup,
   isFormArray,
   isFormGroup,
   type ValidationErrors,

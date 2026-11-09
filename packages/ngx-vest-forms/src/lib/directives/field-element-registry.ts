@@ -1,4 +1,4 @@
-import { NgForm, NgModel, NgModelGroup } from '@angular/forms';
+import type { NgForm, NgModel, NgModelGroup } from '@angular/forms';
 
 /**
  * @internal

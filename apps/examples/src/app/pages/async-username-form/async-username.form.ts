@@ -2,7 +2,7 @@ import { Component, computed, input, output, viewChild } from '@angular/core';
 import {
   createDebouncedPendingState,
   createFormFeedbackSignals,
-  FormDirective,
+  type FormDirective,
   NGX_PENDING_LABEL,
   NGX_VALIDATION_DEBOUNCE_PRESETS,
   type NgxSubmitSettledEvent,
