@@ -1,4 +1,9 @@
-import { expect, Locator, Page, type ConsoleMessage } from '@playwright/test';
+import {
+  expect,
+  type Locator,
+  type Page,
+  type ConsoleMessage,
+} from '@playwright/test';
 
 /**
  * Validation polling configuration

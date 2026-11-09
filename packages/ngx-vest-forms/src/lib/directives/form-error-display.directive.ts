@@ -6,7 +6,7 @@ import {
   input,
   isDevMode,
   signal,
-  Signal,
+  type Signal,
   untracked,
 } from '@angular/core';
 import {
@@ -25,12 +25,12 @@ import {
   NGX_WARNING_DISPLAY_MODE_TOKEN,
 } from './error-display-mode.token';
 import {
-  AttachedControl,
+  type AttachedControl,
   extractErrorMessages,
   extractWarningMessages,
   FormControlStateDirective,
   getAttachedControl,
-  VestValidationErrors,
+  type VestValidationErrors,
 } from './form-control-state.directive';
 import { getFormSubmittedSignal } from './form-submitted-state';
 import { FormDirective } from './form.directive';

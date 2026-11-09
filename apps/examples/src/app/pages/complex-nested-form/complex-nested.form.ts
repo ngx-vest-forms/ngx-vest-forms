@@ -5,13 +5,13 @@ import {
   FormDirective,
   type NgxSubmitSettledEvent,
   NgxVestForms,
-  NgxVestSuite,
+  type NgxVestSuite,
   provideFormContract,
 } from 'ngx-vest-forms';
 import {
   complexNestedContract,
-  ComplexNestedModel,
-  TeamMemberModel,
+  type ComplexNestedModel,
+  type TeamMemberModel,
 } from '../../models/complex-nested.model';
 import { AddressComponent } from '../../ui/address/address.component';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';

@@ -1,6 +1,6 @@
 import {
   HttpErrorResponse,
-  HttpInterceptorFn,
+  type HttpInterceptorFn,
   HttpResponse,
 } from '@angular/common/http';
 import { delay, mergeMap, of, throwError } from 'rxjs';

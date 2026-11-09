@@ -6,7 +6,7 @@ import {
   NgxVestForms,
   vestFormsViewProviders,
 } from 'ngx-vest-forms';
-import { BusinessHourFormModel } from '../../../../models/business-hours-form.model';
+import type { BusinessHourFormModel } from '../../../../models/business-hours-form.model';
 import { byNumericKey } from '../../../../shared/by-numeric-key';
 import { BusinessHourComponent } from '../business-hour/business-hour.component';
 

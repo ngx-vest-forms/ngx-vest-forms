@@ -1,6 +1,6 @@
 import { type NgxVestSuite } from 'ngx-vest-forms';
 import { create, enforce, test } from 'vest';
-import { NativeSchemaDemoModel } from '../../models/native-schema-demo.model';
+import type { NativeSchemaDemoModel } from '../../models/native-schema-demo.model';
 import { EMAIL_PATTERN } from '../../shared/validations/email.validations';
 
 /**

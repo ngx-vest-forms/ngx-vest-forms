@@ -1,6 +1,9 @@
-import { NgxDeepPartial, NgxDeepRequired } from 'ngx-vest-forms';
-import { AddressModel, addressContract } from './address.model';
-import { PhoneNumberModel, phoneNumberContract } from './phonenumber.model';
+import type { NgxDeepPartial, NgxDeepRequired } from 'ngx-vest-forms';
+import { type AddressModel, addressContract } from './address.model';
+import {
+  type PhoneNumberModel,
+  phoneNumberContract,
+} from './phonenumber.model';
 
 export type PurchaseFormModel = NgxDeepPartial<{
   userId: string;

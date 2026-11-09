@@ -4,11 +4,11 @@ import {
   FormDirective,
   type NgxSubmitSettledEvent,
   NgxVestForms,
-  NgxVestSuite,
+  type NgxVestSuite,
   provideFormContract,
 } from 'ngx-vest-forms';
 import {
-  StarterFormModel,
+  type StarterFormModel,
   starterFormShape,
 } from '../../models/starter-form.model';
 

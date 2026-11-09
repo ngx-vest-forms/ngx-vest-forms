@@ -5,7 +5,7 @@ import {
   signal,
   viewChildren,
 } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { type ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 /**
  * A non-native star-rating control built on Angular's

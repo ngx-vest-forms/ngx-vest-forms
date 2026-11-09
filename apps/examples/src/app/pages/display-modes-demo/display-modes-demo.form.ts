@@ -9,9 +9,9 @@ import {
   createFormFeedbackSignals,
   FormDirective,
   NgxVestForms,
-  NgxVestSuite,
+  type NgxVestSuite,
 } from 'ngx-vest-forms';
-import { DisplayModesDemoModel } from '../../models/display-modes-demo.model';
+import type { DisplayModesDemoModel } from '../../models/display-modes-demo.model';
 import { Card } from '../../ui/card/card.component';
 
 @Component({

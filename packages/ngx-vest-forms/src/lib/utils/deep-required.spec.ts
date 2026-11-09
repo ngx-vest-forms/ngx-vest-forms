@@ -1,6 +1,6 @@
 import { expectTypeOf, vi } from 'vitest';
 import type { NgxDeepPartial } from './deep-partial';
-import { NgxDeepRequired } from './deep-required';
+import type { NgxDeepRequired } from './deep-required';
 
 describe('NgxDeepRequired', () => {
   it('should make all properties required in flat structure', () => {

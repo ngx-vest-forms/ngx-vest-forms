@@ -1,4 +1,4 @@
-import { NgxDeepPartial, NgxDeepRequired } from 'ngx-vest-forms';
+import type { NgxDeepPartial, NgxDeepRequired } from 'ngx-vest-forms';
 
 /**
  * Map of phone numbers indexed by numeric keys

@@ -3,7 +3,7 @@ import {
   NGX_ERROR_DISPLAY_MODE_TOKEN,
   NGX_WARNING_DISPLAY_MODE_TOKEN,
 } from 'ngx-vest-forms';
-import { DisplayModesDemoModel } from '../../models/display-modes-demo.model';
+import type { DisplayModesDemoModel } from '../../models/display-modes-demo.model';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
 import {

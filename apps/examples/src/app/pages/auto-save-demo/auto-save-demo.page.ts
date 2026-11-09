@@ -2,7 +2,7 @@ import { Component, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   createValidationConfig,
-  NgxFieldBlurEvent,
+  type NgxFieldBlurEvent,
   type NgxSubmitSettledEvent,
 } from 'ngx-vest-forms';
 import {
@@ -15,7 +15,7 @@ import {
   tap,
 } from 'rxjs';
 import {
-  AutoSaveDemoModel,
+  type AutoSaveDemoModel,
   initialAutoSaveDemoValue,
 } from '../../models/auto-save-demo.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
@@ -31,8 +31,8 @@ import { autoSaveContent } from './auto-save-demo.content';
 import { AutoSaveDemoFormBody } from './auto-save-demo.form';
 import {
   AutoSaveDemoService,
-  AutoSaveDraftResult,
-  StoredAutoSaveDraft,
+  type AutoSaveDraftResult,
+  type StoredAutoSaveDraft,
 } from './auto-save-demo.service';
 import {
   autoSaveDemoSuite,

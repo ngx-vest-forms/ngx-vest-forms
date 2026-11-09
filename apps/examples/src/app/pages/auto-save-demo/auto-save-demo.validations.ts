@@ -1,6 +1,6 @@
 import { type NgxVestSuite } from 'ngx-vest-forms';
 import { create, enforce, omitWhen, test, warn } from 'vest';
-import { AutoSaveDemoModel } from '../../models/auto-save-demo.model';
+import type { AutoSaveDemoModel } from '../../models/auto-save-demo.model';
 import { EMAIL_PATTERN } from '../../shared/validations/email.validations';
 
 export const autoSaveDemoValidationErrorRulesByField: Record<string, string[]> =

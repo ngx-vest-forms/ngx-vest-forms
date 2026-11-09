@@ -3,7 +3,7 @@ import { Component, computed, signal } from '@angular/core';
 import { NgxVestForms } from '../exports';
 import { provideFormContract } from '../tokens/form-contract.token';
 import {
-  FormModel,
+  type FormModel,
   createFormValidationSuite,
   formContract,
 } from './simple-form';

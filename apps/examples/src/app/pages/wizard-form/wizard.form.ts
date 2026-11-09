@@ -1,10 +1,10 @@
 import { Component, input, output, viewChild } from '@angular/core';
-import {
+import type {
   NgxFirstInvalidOptions,
   NgxValidationConfig,
   NgxVestSuite,
 } from 'ngx-vest-forms';
-import {
+import type {
   WizardStep,
   WizardStep1Model,
   WizardStep2Model,

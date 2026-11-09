@@ -72,7 +72,7 @@ import userEvent from '@testing-library/user-event';
 import { create, enforce, test } from 'vest';
 import { describe, expect, it } from 'vitest';
 import { NgxVestForms } from '../exports';
-import { NgxDeepPartial } from '../utils/deep-partial';
+import type { NgxDeepPartial } from '../utils/deep-partial';
 import { FormDirective } from './form.directive';
 
 describe('FormDirective - Reset Functionality', () => {

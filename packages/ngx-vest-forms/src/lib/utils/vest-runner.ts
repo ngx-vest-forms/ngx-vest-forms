@@ -1,6 +1,6 @@
 import { DestroyRef, ErrorHandler } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ValidationErrors } from '@angular/forms';
+import type { ValidationErrors } from '@angular/forms';
 import { Observable, defer, from, map, of, switchMap, take, timer } from 'rxjs';
 import type { ValidationOptions } from '../directives/validation-options';
 import type { NgxSuiteRunResult } from './validation-suite';

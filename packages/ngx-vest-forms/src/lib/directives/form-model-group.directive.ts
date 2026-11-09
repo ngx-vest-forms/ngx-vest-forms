@@ -5,21 +5,21 @@ import {
   inject,
   Injector,
   input,
-  OnInit,
+  type OnInit,
 } from '@angular/core';
 import {
   AbstractControl,
-  AsyncValidator,
+  type AsyncValidator,
   NG_ASYNC_VALIDATORS,
   NgModelGroup,
-  ValidationErrors,
+  type ValidationErrors,
 } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { getFormGroupField } from '../utils/form-utils';
 import { runAsyncValidationBridge } from './async-validator-bridge';
 import { registerGroupElement } from './field-element-registry';
 import { FormDirective } from './form.directive';
-import { ValidationOptions } from './validation-options';
+import type { ValidationOptions } from './validation-options';
 
 /**
  * Hooks into `ngModelGroup` and runs async group-level validation

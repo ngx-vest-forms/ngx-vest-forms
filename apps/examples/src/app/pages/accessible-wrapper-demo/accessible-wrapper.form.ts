@@ -5,12 +5,12 @@ import {
   FormErrorControlDirective,
   type NgxSubmitSettledEvent,
   NgxVestForms,
-  NgxVestSuite,
+  type NgxVestSuite,
   provideFormContract,
 } from 'ngx-vest-forms';
 import {
   accessibleWrapperContract,
-  AccessibleWrapperModel,
+  type AccessibleWrapperModel,
 } from '../../models/accessible-wrapper.model';
 
 @Component({

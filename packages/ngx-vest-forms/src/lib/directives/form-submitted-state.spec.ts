@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { FormControl, NgForm, ValidationErrors } from '@angular/forms';
+import { FormControl, NgForm, type ValidationErrors } from '@angular/forms';
 import { describe, expect, it } from 'vitest';
 import {
   getFormSubmittedSignal,

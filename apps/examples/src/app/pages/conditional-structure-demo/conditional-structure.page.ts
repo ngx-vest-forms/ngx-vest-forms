@@ -5,8 +5,8 @@ import {
   type NgxSubmitSettledEvent,
 } from 'ngx-vest-forms';
 import {
-  ConditionalStructureModel,
-  DeliveryMode,
+  type ConditionalStructureModel,
+  type DeliveryMode,
   initialConditionalStructureValue,
 } from '../../models/conditional-structure.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';

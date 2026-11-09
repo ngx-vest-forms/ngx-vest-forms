@@ -1,15 +1,15 @@
 import { Component, input, output, viewChild } from '@angular/core';
 import {
   FormDirective,
-  NgxFirstInvalidOptions,
-  NgxValidationConfig,
+  type NgxFirstInvalidOptions,
+  type NgxValidationConfig,
   NgxVestForms,
-  NgxVestSuite,
+  type NgxVestSuite,
   provideFormContract,
 } from 'ngx-vest-forms';
 import {
   wizardStep2Contract,
-  WizardStep2Model,
+  type WizardStep2Model,
 } from '../../models/wizard-form.model';
 import { WizardNavigationComponent } from '../../ui/wizard';
 

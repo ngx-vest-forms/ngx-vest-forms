@@ -18,7 +18,7 @@ import {
   createValidationConfig,
   FormDirective,
   NGX_VALIDATION_DEBOUNCE_PRESETS,
-  NgxSubmitSettledEvent,
+  type NgxSubmitSettledEvent,
   NgxVestForms,
   provideFormContract,
   setValueAtPath,
@@ -28,7 +28,7 @@ import { z } from 'zod';
 import {
   initialPurchaseFormValue,
   purchaseFormContract,
-  PurchaseFormModel,
+  type PurchaseFormModel,
 } from '../../models/purchase-form.model';
 import { AddressComponent } from '../../ui/address/address.component';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';

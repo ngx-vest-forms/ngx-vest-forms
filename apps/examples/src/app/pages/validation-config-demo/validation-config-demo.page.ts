@@ -3,7 +3,7 @@ import {
   createValidationConfig,
   type NgxSubmitSettledEvent,
 } from 'ngx-vest-forms';
-import { ValidationDemoModel } from '../../models/validation-demo.model';
+import type { ValidationDemoModel } from '../../models/validation-demo.model';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
 import {

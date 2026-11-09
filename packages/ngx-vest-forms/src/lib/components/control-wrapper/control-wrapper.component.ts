@@ -1,5 +1,5 @@
 import {
-  AfterContentInit,
+  type AfterContentInit,
   booleanAttribute,
   Component,
   computed,
@@ -12,9 +12,9 @@ import { createAriaAssociationController } from '../../directives/aria-associati
 import { FormErrorDisplayDirective } from '../../directives/form-error-display.directive';
 import { injectPendingLabel } from '../../tokens/pending-label.token';
 import {
-  AriaAssociationMode,
+  type AriaAssociationMode,
   buildMessageDescribedBy,
-  MessageRegionIds,
+  type MessageRegionIds,
   messageRegionIdList,
 } from '../../utils/aria-association.utils';
 import { NgxIdGenerator } from '../../utils/id-generator';

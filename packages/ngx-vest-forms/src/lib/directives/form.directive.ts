@@ -10,7 +10,7 @@ import {
   inject,
   Injector,
   input,
-  InputSignal,
+  type InputSignal,
   isDevMode,
   output,
   signal,
@@ -18,7 +18,7 @@ import {
 } from '@angular/core';
 import { outputFromObservable, toSignal } from '@angular/core/rxjs-interop';
 import {
-  AsyncValidatorFn,
+  type AsyncValidatorFn,
   NgForm,
   PristineChangeEvent,
   StatusChangeEvent,
@@ -49,7 +49,7 @@ import {
   type NgxFirstInvalidOptions,
 } from '../utils/first-invalid.utils';
 import { validateFormContract } from '../utils/form-contract';
-import { NgxFormState } from '../utils/form-state.utils';
+import type { NgxFormState } from '../utils/form-state.utils';
 import { getAllFormErrors } from '../utils/form-utils';
 import type { NgxVestSuite } from '../utils/validation-suite';
 import { fieldBlurEvent } from './field-blur-event';
@@ -76,7 +76,7 @@ import {
   submitOutcomes,
   touchAndValidateOnSubmit,
 } from './submit-pipeline';
-import { ValidationOptions } from './validation-options';
+import type { ValidationOptions } from './validation-options';
 import { notifyValidationReset } from './validation-reset';
 
 export type {

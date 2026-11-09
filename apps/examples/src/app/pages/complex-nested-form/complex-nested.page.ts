@@ -1,7 +1,7 @@
 import { Component, signal, viewChild } from '@angular/core';
 import { type NgxSubmitSettledEvent, objectToArray } from 'ngx-vest-forms';
 import {
-  ComplexNestedModel,
+  type ComplexNestedModel,
   initialComplexNestedValue,
 } from '../../models/complex-nested.model';
 import { Card } from '../../ui/card/card.component';

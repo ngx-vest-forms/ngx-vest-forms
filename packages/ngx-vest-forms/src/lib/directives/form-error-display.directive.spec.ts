@@ -9,11 +9,11 @@ import {
 } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import {
-  AsyncValidator,
+  type AsyncValidator,
   FormsModule,
   NG_ASYNC_VALIDATORS,
   NgForm,
-  ValidationErrors,
+  type ValidationErrors,
 } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import userEvent from '@testing-library/user-event';

@@ -1,8 +1,8 @@
-import { NgxVestSuite, ROOT_FORM } from 'ngx-vest-forms';
+import { type NgxVestSuite, ROOT_FORM } from 'ngx-vest-forms';
 import { fromEvent, lastValueFrom, takeUntil } from 'rxjs';
 import { create, enforce, omitWhen, test, warn } from 'vest';
 import { memo } from 'vest/memo';
-import { PurchaseFormModel } from '../../models/purchase-form.model';
+import type { PurchaseFormModel } from '../../models/purchase-form.model';
 import { addressValidations } from '../../shared/validations/address.validations';
 import { phonenumberValidations } from '../../shared/validations/phonenumber.validations';
 import { SwapiService } from './swapi.service';

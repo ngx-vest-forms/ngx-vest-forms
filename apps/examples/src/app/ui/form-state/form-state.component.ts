@@ -1,8 +1,8 @@
 import { Component, computed, input } from '@angular/core';
 import {
   createEmptyFormState,
-  NgxFormFeedbackSignals,
-  NgxFormState,
+  type NgxFormFeedbackSignals,
+  type NgxFormState,
   ROOT_FORM,
 } from 'ngx-vest-forms';
 import { AlertPanel } from '../alert-panel/alert-panel.component';

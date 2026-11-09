@@ -4,6 +4,12 @@
   "compilerOptions": {
     "outDir": "../../out-tsc/spec",
     "module": "CommonJs",
+    // `verbatimModuleSyntax` forbids ESM `import`/`export` in files compiled
+    // as CommonJS, so this CommonJS typecheck config (used by CI's
+    // `tsc -p packages/ngx-vest-forms/tsconfig.spec.json`) opts out. The
+    // specs themselves run through the root `tsconfig.spec.json` (ES2022),
+    // which keeps the flag on.
+    "verbatimModuleSyntax": false,
     "types": ["vitest/globals", "@testing-library/jest-dom/vitest"]
   },
   "include": ["**/*.spec.ts", "**/*.d.ts"]

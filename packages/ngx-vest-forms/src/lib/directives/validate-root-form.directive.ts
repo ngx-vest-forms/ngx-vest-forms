@@ -1,5 +1,5 @@
 import {
-  AfterViewInit,
+  type AfterViewInit,
   booleanAttribute,
   computed,
   DestroyRef,
@@ -12,16 +12,16 @@ import {
   isDevMode,
   signal,
   untracked,
-  WritableSignal,
+  type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
-  AsyncValidator,
-  AsyncValidatorFn,
+  type AsyncValidator,
+  type AsyncValidatorFn,
   NG_ASYNC_VALIDATORS,
   NgForm,
-  ValidationErrors,
+  type ValidationErrors,
 } from '@angular/forms';
 import { catchError, map, Observable, of } from 'rxjs';
 import { ROOT_FORM } from '../constants';
@@ -42,7 +42,7 @@ import {
   getFormSubmittedSignal,
   isSubmitValidationPass,
 } from './form-submitted-state';
-import { ValidationOptions } from './validation-options';
+import type { ValidationOptions } from './validation-options';
 
 /**
  * Validates the root form (cross-field validation) using a Vest suite.

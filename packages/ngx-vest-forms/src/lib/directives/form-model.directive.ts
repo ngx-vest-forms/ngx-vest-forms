@@ -5,21 +5,21 @@ import {
   inject,
   Injector,
   input,
-  OnInit,
+  type OnInit,
 } from '@angular/core';
 import {
   AbstractControl,
-  AsyncValidator,
+  type AsyncValidator,
   NG_ASYNC_VALIDATORS,
   NgModel,
-  ValidationErrors,
+  type ValidationErrors,
 } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { getFormControlField } from '../utils/form-utils';
 import { runAsyncValidationBridge } from './async-validator-bridge';
 import { registerControlElement } from './field-element-registry';
 import { FormDirective } from './form.directive';
-import { ValidationOptions } from './validation-options';
+import type { ValidationOptions } from './validation-options';
 
 /**
  * Hooks into `ngModel` and runs async field-level validation

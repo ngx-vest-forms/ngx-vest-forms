@@ -1,6 +1,6 @@
 import type { NgxVestSuite } from 'ngx-vest-forms';
 import { create, enforce, omitWhen, test } from 'vest';
-import { ConditionalStructureModel } from '../../models/conditional-structure.model';
+import type { ConditionalStructureModel } from '../../models/conditional-structure.model';
 import { EMAIL_PATTERN } from '../../shared/validations/email.validations';
 
 export const conditionalStructureSuite: NgxVestSuite<ConditionalStructureModel> =

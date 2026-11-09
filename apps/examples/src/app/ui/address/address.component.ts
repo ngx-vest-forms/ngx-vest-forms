@@ -1,7 +1,7 @@
 import { Component, computed, input } from '@angular/core';
 
 import { NgxVestForms, vestFormsViewProviders } from 'ngx-vest-forms';
-import { AddressModel } from '../../models/address.model';
+import type { AddressModel } from '../../models/address.model';
 
 let nextAddressInstanceId = 0;
 

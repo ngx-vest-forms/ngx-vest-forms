@@ -5,7 +5,7 @@ import {
   signal,
   viewChildren,
 } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { type ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 type Segment = {
   readonly value: string;

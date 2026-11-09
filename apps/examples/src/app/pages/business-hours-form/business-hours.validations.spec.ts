@@ -1,6 +1,6 @@
 import { ROOT_FORM } from 'ngx-vest-forms';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { BusinessHourFormModel } from '../../models/business-hours-form.model';
+import type { BusinessHourFormModel } from '../../models/business-hours-form.model';
 import { businessHoursSuite } from './business-hours.validations';
 
 const OVERLAP = 'There should be no overlap between business hours';

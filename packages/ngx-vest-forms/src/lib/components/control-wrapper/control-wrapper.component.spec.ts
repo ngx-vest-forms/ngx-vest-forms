@@ -6,13 +6,13 @@ import {
   viewChild,
 } from '@angular/core';
 import {
-  AsyncValidator,
-  ControlValueAccessor,
+  type AsyncValidator,
+  type ControlValueAccessor,
   FormsModule,
   NG_ASYNC_VALIDATORS,
   NG_VALUE_ACCESSOR,
   NgForm,
-  ValidationErrors,
+  type ValidationErrors,
 } from '@angular/forms';
 import { fireEvent, render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';

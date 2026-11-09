@@ -1,13 +1,13 @@
 import { Component, computed, signal, viewChild } from '@angular/core';
 import { ROOT_FORM } from 'ngx-vest-forms';
-import { PurchaseFormModel } from '../../models/purchase-form.model';
+import type { PurchaseFormModel } from '../../models/purchase-form.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
 import { PageTitle } from '../../ui/page-title/page-title.component';
 import { purchaseContent } from './purchase.content';
-import { FetchErrorScenario, PurchaseForm } from './purchase.form';
+import { type FetchErrorScenario, PurchaseForm } from './purchase.form';
 import {
   purchaseValidationErrorRulesByField,
   purchaseValidationWarningRulesByField,

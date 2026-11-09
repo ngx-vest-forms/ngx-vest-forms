@@ -1,5 +1,5 @@
 import { Component, signal } from '@angular/core';
-import { ZodSchemaDemoModel } from '../../models/zod-schema-demo.model';
+import type { ZodSchemaDemoModel } from '../../models/zod-schema-demo.model';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
 import {

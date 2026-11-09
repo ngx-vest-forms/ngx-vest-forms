@@ -1,12 +1,12 @@
 import { isDevMode } from '@angular/core';
-import { AbstractControl, ValidationErrors } from '@angular/forms';
+import { AbstractControl, type ValidationErrors } from '@angular/forms';
 import { from, Observable, of } from 'rxjs';
 import {
   logDiagnostic,
   NGX_VEST_FORMS_DIAGNOSTICS,
 } from '../errors/error-catalog';
 import type { FormDirective } from './form.directive';
-import { ValidationOptions } from './validation-options';
+import type { ValidationOptions } from './validation-options';
 
 type FieldResolver = (
   control: AbstractControl,

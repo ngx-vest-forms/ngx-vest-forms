@@ -3,7 +3,7 @@ import { FormErrorDisplayDirective } from '../../directives/form-error-display.d
 import { injectPendingLabel } from '../../tokens/pending-label.token';
 import {
   buildMessageDescribedBy,
-  MessageRegionIds,
+  type MessageRegionIds,
 } from '../../utils/aria-association.utils';
 import { NgxIdGenerator } from '../../utils/id-generator';
 import { createDebouncedPendingState } from '../../utils/pending-state.utils';

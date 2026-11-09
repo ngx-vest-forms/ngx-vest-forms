@@ -1,6 +1,6 @@
-import { NgxVestSuite, ROOT_FORM } from 'ngx-vest-forms';
+import { type NgxVestSuite, ROOT_FORM } from 'ngx-vest-forms';
 import { create, each, enforce, omitWhen, test } from 'vest';
-import {
+import type {
   BusinessHourFormModel,
   BusinessHoursFormModel,
 } from '../../models/business-hours-form.model';

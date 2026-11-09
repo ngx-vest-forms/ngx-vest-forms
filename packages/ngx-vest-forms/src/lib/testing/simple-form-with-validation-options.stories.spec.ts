@@ -8,7 +8,7 @@ import { provideFormContract } from '../tokens/form-contract.token';
 import {
   createFormValidationSuite,
   formContract,
-  FormModel,
+  type FormModel,
   selectors,
 } from './simple-form';
 

@@ -5,14 +5,14 @@ import {
   FormDirective,
   NGX_PENDING_LABEL,
   NGX_VALIDATION_DEBOUNCE_PRESETS,
-  NgxSubmitSettledEvent,
+  type NgxSubmitSettledEvent,
   NgxVestForms,
-  NgxVestSuite,
+  type NgxVestSuite,
   provideFormContract,
-  ValidationOptions,
+  type ValidationOptions,
 } from 'ngx-vest-forms';
 import {
-  AsyncUsernameModel,
+  type AsyncUsernameModel,
   asyncUsernameShape,
 } from '../../models/async-username.model';
 

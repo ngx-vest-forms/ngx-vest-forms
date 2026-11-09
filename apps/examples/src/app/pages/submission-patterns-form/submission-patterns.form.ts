@@ -4,14 +4,14 @@ import {
   FormDirective,
   getAllFormErrors,
   NGX_ERROR_DISPLAY_MODE_TOKEN,
-  NgxFormErrorsByPath,
+  type NgxFormErrorsByPath,
   type NgxSubmitSettledEvent,
   NgxVestForms,
-  NgxVestSuite,
+  type NgxVestSuite,
   provideFormContract,
 } from 'ngx-vest-forms';
 import {
-  SubmissionPatternsModel,
+  type SubmissionPatternsModel,
   submissionPatternsShape,
 } from '../../models/submission-patterns.model';
 

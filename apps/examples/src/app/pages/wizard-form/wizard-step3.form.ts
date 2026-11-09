@@ -1,17 +1,17 @@
 import { Component, computed, input, output, viewChild } from '@angular/core';
 import {
   FormDirective,
-  NgxFirstInvalidOptions,
+  type NgxFirstInvalidOptions,
   NgxVestForms,
-  NgxVestSuite,
+  type NgxVestSuite,
   provideFormContract,
 } from 'ngx-vest-forms';
 import {
-  WizardStep,
-  WizardStep1Model,
-  WizardStep2Model,
+  type WizardStep,
+  type WizardStep1Model,
+  type WizardStep2Model,
   wizardStep3Contract,
-  WizardStep3Model,
+  type WizardStep3Model,
 } from '../../models/wizard-form.model';
 import { WizardNavigationComponent } from '../../ui/wizard';
 

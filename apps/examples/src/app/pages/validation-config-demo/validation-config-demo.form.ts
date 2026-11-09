@@ -3,14 +3,14 @@ import {
   createFormFeedbackSignals,
   FormDirective,
   type NgxSubmitSettledEvent,
-  NgxValidationConfig,
+  type NgxValidationConfig,
   NgxVestForms,
-  NgxVestSuite,
+  type NgxVestSuite,
   provideFormContract,
 } from 'ngx-vest-forms';
 import {
   validationDemoContract,
-  ValidationDemoModel,
+  type ValidationDemoModel,
 } from '../../models/validation-demo.model';
 import { Card } from '../../ui/card/card.component';
 import { FormSectionComponent } from '../../ui/form-section/form-section.component';
