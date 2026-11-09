@@ -27,7 +27,6 @@ import {
   AbstractControl,
   AsyncValidatorFn,
   FormArray,
-  FormControlStatus,
   FormGroup,
   NgForm,
   PristineChangeEvent,
@@ -35,20 +34,15 @@ import {
 } from '@angular/forms';
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 import {
-  asapScheduler,
   catchError,
   distinctUntilChanged,
   filter,
   map,
-  Observable,
-  observeOn,
   of,
   merge as rxMerge,
   scan,
-  share,
   startWith,
   switchMap,
-  take,
 } from 'rxjs';
 import { logWarning, NGX_VEST_FORMS_ERRORS } from '../errors/error-catalog';
 import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from '../tokens/debounce.token';
@@ -108,6 +102,7 @@ import {
 import { formValueChanges } from './form-value-changes';
 import { FormValueSnapshot } from './form-value-snapshot';
 import { ModelFormSync } from './model-form-sync';
+import { submitOutcomes } from './submit-pipeline';
 import { ValidationOptions } from './validation-options';
 import { notifyValidationReset } from './validation-reset';
 
@@ -391,13 +386,8 @@ export class FormDirective<T extends Record<string, unknown>> {
    * `validationConfig` dependents. Shared and subscribed in the constructor,
    * so that runs once per submit whether or not `submitSettled` is bound.
    */
-  readonly #submitOutcome$ = this.ngForm.ngSubmit.pipe(
-    observeOn(asapScheduler),
-    switchMap(() => {
-      this.#revalidateConfigDependents();
-      return this.#settledStatus();
-    }),
-    share()
+  readonly #submitOutcome$ = submitOutcomes(this.ngForm, () =>
+    this.validationConfig()
   );
 
   /**
@@ -671,66 +661,6 @@ export class FormDirective<T extends Record<string, unknown>> {
         takeUntilDestroyed(this.#destroyRef)
       )
       .subscribe();
-  }
-
-  /**
-   * Re-runs the validators of every `validationConfig` dependent, then of
-   * their ancestors, deepest first, so the root status includes a dependent
-   * that is still PENDING.
-   *
-   * Runs on every submit, from `#submitOutcome$`. The config pipeline
-   * debounces trigger changes and revalidates dependents with `onlySelf`, so
-   * a submit right after a trigger edit could otherwise settle on a
-   * dependent's stale verdict, such as a confirm-password field that still
-   * matches the old password. It runs after the `(ngSubmit)` handlers: they
-   * read the status synchronously, and a revalidation would turn it PENDING
-   * under them.
-   */
-  #revalidateConfigDependents(): void {
-    const config = this.validationConfig() as Record<
-      string,
-      string[] | undefined
-    > | null;
-    if (!config) {
-      return;
-    }
-    const form = this.ngForm.form;
-    const ancestors = new Set<AbstractControl>();
-    for (const path of new Set(Object.values(config).flat())) {
-      const control = path ? form.get(path) : null;
-      if (!control) {
-        continue;
-      }
-      control.updateValueAndValidity({ onlySelf: true, emitEvent: true });
-      for (let parent = control.parent; parent; parent = parent.parent) {
-        ancestors.add(parent);
-      }
-    }
-    const depth = (control: AbstractControl): number => {
-      let count = 0;
-      for (let parent = control.parent; parent; parent = parent.parent) {
-        count++;
-      }
-      return count;
-    };
-    for (const ancestor of [...ancestors].sort((a, b) => depth(b) - depth(a))) {
-      ancestor.updateValueAndValidity({ onlySelf: true, emitEvent: true });
-    }
-  }
-
-  /**
-   * The root status once it is no longer PENDING: emits right away when
-   * validation already settled, otherwise on the next settled status.
-   */
-  #settledStatus(): Observable<FormControlStatus> {
-    const form = this.ngForm.form;
-    if (form.status !== 'PENDING') {
-      return of(form.status);
-    }
-    return form.statusChanges.pipe(
-      filter((status) => status !== 'PENDING'),
-      take(1)
-    );
   }
 
   /**
