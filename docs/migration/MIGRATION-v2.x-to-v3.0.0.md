@@ -43,7 +43,7 @@ If you already have a schema, pass it directly and let that remain your structur
 <form ngxVestForm [suite]="suite" [formContract]="zodSchema"></form>
 ```
 
-`@standard-schema/spec` (`>=1.0.0`) is now an optional peer dependency. ngx-vest-forms uses it only for types, but the published `.d.ts` imports it, so install it as a dev dependency (`npm install -D @standard-schema/spec`) if you use `[formContract]`, `NgxFormContract`, `StandardSchemaV1` or `toFormContract()`. Without it those types fall back to `any` under `skipLibCheck: true`, and `skipLibCheck: false` reports a missing module. The internal `validateShape()` helper has been removed; use `toFormContract()` from `ngx-vest-forms` if you need explicit shape→schema conversion.
+`@standard-schema/spec` (`^1.0.0`) is now a regular dependency of ngx-vest-forms and is installed automatically; you do not need to add it yourself. The internal `validateShape()` helper has been removed; use `toFormContract()` from `ngx-vest-forms` if you need explicit shape→schema conversion.
 
 Unknown-key warnings now depend on the strictness of the supplied Standard Schema. If you keep using a raw `NgxDeepRequired<T>` contract, the legacy extra-property typo checks still apply. The directive only consumes **synchronous** contract results for its development-only diagnostics; async schema results are ignored by that pass.
 
