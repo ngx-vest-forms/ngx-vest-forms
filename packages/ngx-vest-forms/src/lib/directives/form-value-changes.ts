@@ -1,5 +1,5 @@
 import { untracked } from '@angular/core';
-import { type FormGroup, ValueChangeEvent } from '@angular/forms';
+import type { FormGroup } from '@angular/forms';
 import { distinctUntilChanged, filter, map, type Observable, tap } from 'rxjs';
 import { mergeValuesAndRawValues } from '../utils/form-utils';
 import type { FormValueSnapshot } from './form-value-snapshot';
@@ -11,7 +11,8 @@ import type { ModelFormSync } from './model-form-sync';
  * (disabled controls included) after each value change the user (or app code
  * outside the sync effect) made, deduplicated against the last value seen.
  *
- * Records each emitted value as `sync.lastEmittedFormValue`, so the sync
+ * Built on `snapshot.valueChanges`, so the snapshot is current for each
+ * event. Records each emitted value with `sync.recordEmitted()`, so the sync
  * effect can tell a consumer's follow-up model write from a conflict.
  */
 export function formValueChanges<T>(
@@ -19,8 +20,7 @@ export function formValueChanges<T>(
   snapshot: FormValueSnapshot<T>,
   sync: ModelFormSync<T>
 ): Observable<T> {
-  return form.events.pipe(
-    filter((v) => v instanceof ValueChangeEvent),
+  return snapshot.valueChanges.pipe(
     // Merge before deduplicating: the event's own value leaves out disabled
     // controls, so a programmatic setValue() on one would look unchanged.
     // The merged snapshot is the one `formState` and the sync effect read;
@@ -41,7 +41,7 @@ export function formValueChanges<T>(
     filter(({ fromModel }) => !fromModel),
     map(({ value }) => value),
     tap((value) => {
-      sync.lastEmittedFormValue = value;
+      sync.recordEmitted(value);
     })
   );
 }

@@ -24,12 +24,12 @@ export class ModelFormSync<T> {
   #lastSyncedFormValue: T | null = null;
   #lastSyncedModelValue: T | null = null;
   /**
-   * The last value `formValueChange` handed to the consumer (that stream
-   * sets it). When the form still holds exactly this value, the consumer has
-   * seen the form's latest change, so a model write made in response to it
-   * is not a conflict.
+   * The last value `formValueChange` handed to the consumer (see
+   * {@link recordEmitted}). When the form still holds exactly this value,
+   * the consumer has seen the form's latest change, so a model write made in
+   * response to it is not a conflict.
    */
-  lastEmittedFormValue: T | null = null;
+  #lastEmittedFormValue: T | null = null;
   /** The `formValue` input as the sync effect last read it. */
   #previousModelInput: T | null = null;
   /** True while the sync effect writes the model into the form. */
@@ -72,6 +72,11 @@ export class ModelFormSync<T> {
     return this.#applyingModelValue;
   }
 
+  /** Records the value `formValueChange` just handed to the consumer. */
+  recordEmitted(value: T | null): void {
+    this.#lastEmittedFormValue = value;
+  }
+
   /**
    * One run of the sync effect: compares the merged form value and the
    * model with their baselines, and writes the model into the form when
@@ -108,11 +113,8 @@ export class ModelFormSync<T> {
       // Form was modified by user -> form wins
       // Note: We can't call this.formValue.set() since it's an input()
       // The formValueChange output will emit the new value
-      // Use untracked() to avoid infinite loops - we're updating tracking state here
-      untracked(() => {
-        this.#lastSyncedFormValue = formValue;
-        this.#lastSyncedModelValue = formValue;
-      });
+      this.#lastSyncedFormValue = formValue;
+      this.#lastSyncedModelValue = formValue;
     } else if (modelChanged && !formChanged) {
       if (!modelInputChanged) {
         // The consumer passed no new model; only the baseline moved. The
@@ -121,13 +123,12 @@ export class ModelFormSync<T> {
         // one-way `[formValue]` binding that echo never comes, and treating
         // the stale input as a model change would write it over the
         // user's edits (or a reset) on the next status change.
-        untracked(() => {
-          this.#lastSyncedModelValue = modelValue;
-        });
+        this.#lastSyncedModelValue = modelValue;
         return;
       }
       // Model was modified programmatically -> model wins
-      // Use untracked() to avoid infinite loops - we're updating tracking state here
+      // untracked(): the form write runs validators and other code that may
+      // read signals; the sync effect must not start tracking those.
       untracked(() => {
         this.#applyModelValue(modelValue);
       });
@@ -139,10 +140,8 @@ export class ModelFormSync<T> {
       if (valuesEqual) {
         // Both changed to the same value - this is a synchronized change, not a conflict
         // Just update tracking to acknowledge the change
-        untracked(() => {
-          this.#lastSyncedFormValue = formValue;
-          this.#lastSyncedModelValue = formValue;
-        });
+        this.#lastSyncedFormValue = formValue;
+        this.#lastSyncedModelValue = formValue;
       } else if (!formValue) {
         // The merged form snapshot is null (e.g. an empty form with no
         // controls yet, or all controls removed) while the model changed.
@@ -156,7 +155,7 @@ export class ModelFormSync<T> {
         });
       } else if (
         modelInputChanged &&
-        this.#snapshot.isEqual(formValue, this.lastEmittedFormValue)
+        this.#snapshot.isEqual(formValue, this.#lastEmittedFormValue)
       ) {
         // The consumer already received this form value through
         // `formValueChange` and wrote a different model in response, e.g.
@@ -198,10 +197,8 @@ export class ModelFormSync<T> {
         // forever — permanently dropping later programmatic `formValue`
         // updates. Advancing the baselines lets the next single-sided
         // change synchronize correctly.
-        untracked(() => {
-          this.#lastSyncedFormValue = formValue;
-          this.#lastSyncedModelValue = formValue;
-        });
+        this.#lastSyncedFormValue = formValue;
+        this.#lastSyncedModelValue = formValue;
 
         if (isDevMode()) {
           logDiagnostic(NGX_VEST_FORMS_DIAGNOSTICS.SYNC_CONFLICT_DROPPED);

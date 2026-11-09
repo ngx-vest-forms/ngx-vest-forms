@@ -1,11 +1,11 @@
-import { computed, type Signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { computed, type Signal, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   type FormGroup,
   StatusChangeEvent,
   ValueChangeEvent,
 } from '@angular/forms';
-import { filter, scan, startWith, tap } from 'rxjs';
+import { filter, type Observable, tap } from 'rxjs';
 import type { NgxEqualityFn } from '../tokens/equality.token';
 import { mergeValuesAndRawValues } from '../utils/form-utils';
 
@@ -15,10 +15,11 @@ import { mergeValuesAndRawValues } from '../utils/form-utils';
  * signal, plus the memoized deep-equality check that `FormDirective` uses to
  * compare form snapshots and models.
  *
- * Must be created in an injection context (it uses `toSignal`), and before
- * anything else subscribes to `form.events` that reads the snapshot: the
- * snapshot tick (and the cleared equality memo) must already be current when
- * the `formValueChange` pipeline reads the snapshot.
+ * Must be created in an injection context (its `form.events` subscription
+ * ends with the injector). A stream that reads the snapshot on a form event
+ * builds on {@link valueChanges}, which brings the tick (and the cleared
+ * equality memo) up to date for each event before passing it on, whatever
+ * the subscription order.
  */
 export class FormValueSnapshot<T> {
   readonly #form: FormGroup;
@@ -44,15 +45,17 @@ export class FormValueSnapshot<T> {
    */
   #lastValueEvent: { source: unknown; rootValue: unknown } | null = null;
 
+  /** The last form event {@link observe} handled, so each counts once. */
+  #lastObservedEvent: unknown = null;
+
   // Internal signal tracking changes that can affect the merged form snapshot.
   // ValueChangeEvent keeps the cache fresh for blur-driven consumers like
   // draft auto-save, even when a value update doesn't change form validity.
   //
-  // This subscription is made when the snapshot is created (in the directive
-  // constructor), before any consumer binds `formValueChange`, so the tick
-  // (and the cleared `isEqual` memo) is already current when the
-  // `formValueChange` pipeline reads the snapshot.
-  readonly #formSnapshotTick: Signal<number>;
+  // Both the snapshot's own `form.events` subscription and `valueChanges`
+  // feed each event through `#observe`, so the tick (and the cleared
+  // `isEqual` memo) is current for whichever of them sees an event first.
+  readonly #formSnapshotTick = signal(0);
 
   /**
    * The merged form value (including disabled controls), recomputed whenever
@@ -63,21 +66,24 @@ export class FormValueSnapshot<T> {
    */
   readonly value: Signal<T | null>;
 
+  /**
+   * The root form's `ValueChangeEvent`s, each passed on only after the
+   * snapshot has taken it into account, so `value()` and `isEqual()` are
+   * current for it. The `formValueChange` output is built on this.
+   */
+  readonly valueChanges: Observable<ValueChangeEvent<unknown>>;
+
   constructor(form: FormGroup, equal: NgxEqualityFn) {
     this.#form = form;
     this.#equal = equal;
-    this.#formSnapshotTick = toSignal(
-      form.events.pipe(
-        tap((event) => {
-          if (event instanceof ValueChangeEvent) {
-            this.#equalMemo = [];
-          }
-        }),
-        filter((event) => this.#changesFormSnapshot(event)),
-        scan((count) => count + 1, 0),
-        startWith(0)
-      ),
-      { initialValue: 0 }
+    form.events.pipe(takeUntilDestroyed()).subscribe((event) => {
+      this.#observe(event);
+    });
+    this.valueChanges = form.events.pipe(
+      filter((event) => event instanceof ValueChangeEvent),
+      tap((event) => {
+        this.#observe(event);
+      })
     );
     this.value = computed(() => {
       // Track changes that affect the merged form snapshot.
@@ -117,6 +123,24 @@ export class FormValueSnapshot<T> {
       return null;
     }
     return mergeValuesAndRawValues<T>(this.#form);
+  }
+
+  /**
+   * Takes one root form event into account, once: a value event clears the
+   * equality memo, and an event that can change the merged snapshot moves
+   * the tick.
+   */
+  #observe(event: unknown): void {
+    if (event === this.#lastObservedEvent) {
+      return;
+    }
+    this.#lastObservedEvent = event;
+    if (event instanceof ValueChangeEvent) {
+      this.#equalMemo = [];
+    }
+    if (this.#changesFormSnapshot(event)) {
+      this.#formSnapshotTick.update((count) => count + 1);
+    }
   }
 
   /**
