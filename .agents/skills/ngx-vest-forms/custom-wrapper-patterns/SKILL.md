@@ -14,6 +14,8 @@ First check whether the built-in wrapper's CSS custom properties or `NGX_PENDING
 | `FormErrorControlDirective` (`ngxErrorControl`) | everything below, plus stable `errorId`/`warningId`/`pendingId`, managed `aria-describedby`/`aria-invalid`, debounced `showPendingMessage()`, `pendingLabel()`, `ariaAssociationMode` | production wrappers; the default choice     |
 | `FormErrorDisplayDirective` (`ngxErrorDisplay`) | `errors()`, `warnings()`, `shouldShowErrors()`, `shouldShowWarnings()`, `isPending()`, touched/dirty/valid state, `formSubmitted`, display-mode inputs                                | wrappers that do all ARIA wiring themselves |
 
+Render `errors()`/`warnings()` and gate on `shouldShowErrors()`/`shouldShowWarnings()`: while a field re-validates they keep what was shown of the latest settled result (cleared at once by `reset()`, `resetForm()` or `resetField()`), so the message and `aria-invalid` don't flicker. `errorMessages()`/`warningMessages()` are raw state with no hold: `errorMessages()` is empty while pending; `warningMessages()` still lists the field's last warnings from `FormDirective.fieldWarnings` until the next result.
+
 ## Build it
 
 1. A component with `<ng-content />`, so the directive's `contentChild(NgModel)` finds the projected control.

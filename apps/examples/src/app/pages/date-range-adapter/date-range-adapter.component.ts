@@ -5,8 +5,8 @@ import { Component, computed, input, output, signal } from '@angular/core';
  * Uses named fields instead of positional tuples for clarity.
  */
 export type DateRangeValue = {
-  departureDate?: string;
-  returnDate?: string;
+  departureDate?: string | undefined;
+  returnDate?: string | undefined;
 };
 
 let nextId = 0;

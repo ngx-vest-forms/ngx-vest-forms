@@ -1,6 +1,10 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { FormErrorDisplayDirective } from '../../directives/form-error-display.directive';
 import { injectPendingLabel } from '../../tokens/pending-label.token';
+import {
+  buildMessageDescribedBy,
+  MessageRegionIds,
+} from '../../utils/aria-association.utils';
 import { NgxIdGenerator } from '../../utils/id-generator';
 import { createDebouncedPendingState } from '../../utils/pending-state.utils';
 
@@ -54,6 +58,11 @@ export class FormGroupWrapperComponent {
   readonly errorId = `${this.uniqueId}-error`;
   readonly warningId = `${this.uniqueId}-warning`;
   readonly pendingId = `${this.uniqueId}-pending`;
+  readonly #regionIds: MessageRegionIds = {
+    errorId: this.errorId,
+    warningId: this.warningId,
+    pendingId: this.pendingId,
+  };
 
   private readonly pendingState = createDebouncedPendingState(
     this.errorDisplay.isPending,
@@ -66,21 +75,11 @@ export class FormGroupWrapperComponent {
   /**
    * Helpful if consumers want to wire aria-describedby manually (e.g. fieldset/legend pattern).
    */
-  readonly describedByIds = computed(() => {
-    const ids: string[] = [];
-
-    if (this.errorDisplay.shouldShowErrors()) {
-      ids.push(this.errorId);
-    }
-
-    if (this.errorDisplay.shouldShowWarnings()) {
-      ids.push(this.warningId);
-    }
-
-    if (this.showPendingMessage()) {
-      ids.push(this.pendingId);
-    }
-
-    return ids.length > 0 ? ids.join(' ') : null;
-  });
+  readonly describedByIds = computed(() =>
+    buildMessageDescribedBy(this.#regionIds, {
+      errors: this.errorDisplay.shouldShowErrors(),
+      warnings: this.errorDisplay.shouldShowWarnings(),
+      pending: this.showPendingMessage(),
+    })
+  );
 }

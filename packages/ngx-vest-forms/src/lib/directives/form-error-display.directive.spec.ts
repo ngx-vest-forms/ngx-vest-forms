@@ -5,15 +5,26 @@ import {
   inject,
   input,
   signal,
+  viewChild,
 } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormsModule, NgForm } from '@angular/forms';
+import {
+  AsyncValidator,
+  FormsModule,
+  NG_ASYNC_VALIDATORS,
+  NgForm,
+  ValidationErrors,
+} from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import userEvent from '@testing-library/user-event';
+import { Observable, Subject, take } from 'rxjs';
+import { create } from 'vest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { NgxVestForms } from '../exports';
 import type { NgxErrorDisplayMode } from './form-error-display.directive';
 import { FormErrorDisplayDirective } from './form-error-display.directive';
 import { getFormSubmittedSignal } from './form-submitted-state';
+import { FormDirective } from './form.directive';
 
 @Directive({
   selector: '[ngxDummy]',
@@ -535,5 +546,434 @@ describe('FormErrorDisplayDirective', () => {
         )
         .toBe('true');
     });
+  });
+});
+
+/**
+ * Async validator under test control: each run returns a fresh Subject the
+ * test settles with `settle()`, so the pending window is deterministic.
+ */
+@Directive({
+  selector: '[ngxControlledAsync]',
+  providers: [
+    {
+      provide: NG_ASYNC_VALIDATORS,
+      useExisting: ControlledAsyncValidatorDirective,
+      multi: true,
+    },
+  ],
+})
+class ControlledAsyncValidatorDirective implements AsyncValidator {
+  readonly runs: Array<Subject<ValidationErrors | null>> = [];
+
+  validate(): Observable<ValidationErrors | null> {
+    const run = new Subject<ValidationErrors | null>();
+    this.runs.push(run);
+    return run.pipe(take(1));
+  }
+
+  settle(result: ValidationErrors | null): void {
+    this.runs.at(-1)?.next(result);
+  }
+}
+
+@Component({
+  imports: [
+    FormsModule,
+    FormErrorDisplayDirective,
+    ControlledAsyncValidatorDirective,
+  ],
+  template: `
+    <form #form="ngForm">
+      <input
+        ngxErrorDisplay
+        ngxControlledAsync
+        #display="ngxErrorDisplay"
+        [errorDisplayMode]="mode()"
+        name="username"
+        [(ngModel)]="model"
+      />
+      @if (display.shouldShowErrors()) {
+        <span id="hold-errors">{{ display.errors().join(',') }}</span>
+      }
+      @if (display.shouldShowWarnings()) {
+        <span id="hold-warnings">{{ display.warnings().join(',') }}</span>
+      }
+    </form>
+  `,
+})
+class PendingHoldHostComponent {
+  model = '';
+  readonly mode = signal<NgxErrorDisplayMode>('on-blur-or-submit');
+  readonly display = viewChild.required(FormErrorDisplayDirective);
+  readonly validator = viewChild.required(ControlledAsyncValidatorDirective);
+  readonly ngForm = viewChild.required(NgForm);
+}
+
+describe('FormErrorDisplayDirective while re-validating', () => {
+  let fixture: ComponentFixture<PendingHoldHostComponent>;
+  let host: PendingHoldHostComponent;
+
+  const taken = { errors: ['Username is taken'], warnings: ['Short name'] };
+
+  function control() {
+    const ctrl = host.ngForm().form.get('username');
+    if (!ctrl) throw new Error('username control missing');
+    return ctrl;
+  }
+
+  async function stable(): Promise<void> {
+    fixture.detectChanges();
+    await TestBed.inject(ApplicationRef).whenStable();
+  }
+
+  /** Types a value: marks the control dirty and touched and re-validates. */
+  async function edit(value: string): Promise<void> {
+    control().markAsTouched();
+    control().markAsDirty();
+    control().setValue(value);
+    await stable();
+  }
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [PendingHoldHostComponent],
+    }).compileComponents();
+    fixture = TestBed.createComponent(PendingHoldHostComponent);
+    host = fixture.componentInstance;
+    await stable();
+  });
+
+  it('shows nothing while the first validation is pending', async () => {
+    await edit('ada');
+
+    const display = host.display();
+    expect(display.isPending()).toBe(true);
+    expect(display.errors()).toEqual([]);
+    expect(display.warnings()).toEqual([]);
+    expect(display.shouldShowErrors()).toBe(false);
+    expect(display.shouldShowWarnings()).toBe(false);
+  });
+
+  it('keeps the last settled messages until the next result settles', async () => {
+    const display = host.display();
+    await edit('taken');
+    host.validator().settle(taken);
+    await stable();
+    expect(display.errors()).toEqual(['Username is taken']);
+    expect(display.shouldShowErrors()).toBe(true);
+    expect(display.warnings()).toEqual(['Short name']);
+    expect(display.shouldShowWarnings()).toBe(true);
+
+    await edit('taken2');
+    expect(display.isPending()).toBe(true);
+    expect(
+      fixture.nativeElement.querySelector('#hold-errors')?.textContent
+    ).toBe('Username is taken');
+    expect(
+      fixture.nativeElement.querySelector('#hold-warnings')?.textContent
+    ).toBe('Short name');
+    expect(display.errors()).toEqual(['Username is taken']);
+    expect(display.shouldShowErrors()).toBe(true);
+    expect(display.warnings()).toEqual(['Short name']);
+    expect(display.shouldShowWarnings()).toBe(true);
+
+    host.validator().settle({ errors: ['Username is reserved'] });
+    await stable();
+    expect(display.isPending()).toBe(false);
+    expect(display.errors()).toEqual(['Username is reserved']);
+    expect(display.warnings()).toEqual([]);
+    expect(display.shouldShowWarnings()).toBe(false);
+  });
+
+  it('clears the messages when the new result settles valid', async () => {
+    const display = host.display();
+    await edit('taken');
+    host.validator().settle(taken);
+    await stable();
+
+    await edit('ada');
+    expect(display.errors()).toEqual(['Username is taken']);
+
+    host.validator().settle(null);
+    await stable();
+    expect(display.errors()).toEqual([]);
+    expect(display.shouldShowErrors()).toBe(false);
+    expect(display.warnings()).toEqual([]);
+    expect(display.shouldShowWarnings()).toBe(false);
+  });
+
+  it('clears the held messages at once when the form is reset', async () => {
+    const display = host.display();
+    await edit('taken');
+    host.validator().settle(taken);
+    await stable();
+    expect(display.shouldShowErrors()).toBe(true);
+
+    host.ngForm().resetForm();
+    await stable();
+
+    // The reset re-validates the control; nothing from before the reset
+    // may stay on screen while that check is pending.
+    expect(control().pending).toBe(true);
+    expect(display.errors()).toEqual([]);
+    expect(display.shouldShowErrors()).toBe(false);
+    expect(display.warnings()).toEqual([]);
+    expect(display.shouldShowWarnings()).toBe(false);
+  });
+
+  it('clears the held messages when only the control is reset', async () => {
+    const display = host.display();
+    await edit('taken');
+    host.validator().settle(taken);
+    await stable();
+
+    control().reset('');
+    await stable();
+
+    expect(control().pending).toBe(true);
+    expect(display.errors()).toEqual([]);
+    expect(display.shouldShowErrors()).toBe(false);
+  });
+
+  it('does not hold messages the display mode was still hiding', async () => {
+    const display = host.display();
+    // Settled with an error while untouched: on-blur-or-submit hides it.
+    control().markAsDirty();
+    control().setValue('taken');
+    await stable();
+    host.validator().settle({ errors: ['Username is taken'] });
+    await stable();
+    expect(display.shouldShowErrors()).toBe(false);
+
+    // Blurring during the next check must not reveal the stale message.
+    await edit('taken2');
+    expect(display.isPending()).toBe(true);
+    expect(display.shouldShowErrors()).toBe(false);
+    expect(display.errors()).toEqual([]);
+
+    host.validator().settle({ errors: ['Username is reserved'] });
+    await stable();
+    expect(display.shouldShowErrors()).toBe(true);
+    expect(display.errors()).toEqual(['Username is reserved']);
+  });
+
+  it('clears the held messages when a never-touched control is reset', async () => {
+    const display = host.display();
+    host.mode.set('always');
+    // No touch, no dirty: only the display mode shows the error.
+    control().setValue('taken');
+    await stable();
+    host.validator().settle(taken);
+    await stable();
+    expect(display.errors()).toEqual(['Username is taken']);
+
+    control().reset('');
+    await stable();
+
+    expect(control().pending).toBe(true);
+    expect(display.errors()).toEqual([]);
+    expect(display.shouldShowErrors()).toBe(false);
+  });
+
+  it('keeps the hold when the control is marked untouched or pristine mid-check', async () => {
+    const display = host.display();
+    await edit('taken');
+    host.validator().settle(taken);
+    await stable();
+
+    await edit('taken2');
+    control().markAsUntouched();
+    control().markAsPristine();
+    await stable();
+
+    expect(control().pending).toBe(true);
+    expect(display.errors()).toEqual(['Username is taken']);
+    expect(display.shouldShowErrors()).toBe(true);
+  });
+
+  it('holds the latest settled result when a check re-pends before change detection', async () => {
+    const display = host.display();
+    await edit('taken');
+    host.validator().settle(taken);
+    await stable();
+    await edit('ada');
+    expect(display.errors()).toEqual(['Username is taken']);
+
+    // Settles valid and re-validates in the same stack (as a
+    // validationConfig dependent does), with no render in between.
+    host.validator().settle(null);
+    control().updateValueAndValidity();
+    await stable();
+
+    expect(control().pending).toBe(true);
+    expect(display.errors()).toEqual([]);
+    expect(display.shouldShowErrors()).toBe(false);
+    expect(display.warnings()).toEqual([]);
+  });
+});
+
+/** Wrapper whose projected NgModel the test swaps. */
+@Component({
+  selector: 'ngx-test-hold-wrapper',
+  hostDirectives: [
+    { directive: FormErrorDisplayDirective, inputs: ['errorDisplayMode'] },
+  ],
+  template: `
+    <ng-content />
+    @if (display.shouldShowErrors()) {
+      <span class="hold-errors">{{ display.errors().join(',') }}</span>
+    }
+  `,
+})
+class TestHoldWrapperComponent {
+  readonly display = inject(FormErrorDisplayDirective);
+}
+
+@Component({
+  imports: [
+    FormsModule,
+    TestHoldWrapperComponent,
+    ControlledAsyncValidatorDirective,
+  ],
+  template: `
+    <form>
+      <ngx-test-hold-wrapper errorDisplayMode="always">
+        @if (useA()) {
+          <input name="a" ngModel ngxControlledAsync />
+        } @else {
+          <input
+            name="b"
+            ngModel
+            [ngModelOptions]="{ standalone: standaloneB() }"
+            ngxControlledAsync
+          />
+        }
+      </ngx-test-hold-wrapper>
+    </form>
+  `,
+})
+class SwappedControlHostComponent {
+  readonly useA = signal(true);
+  readonly standaloneB = signal(false);
+  readonly wrapper = viewChild.required(TestHoldWrapperComponent);
+  readonly validator = viewChild.required(ControlledAsyncValidatorDirective);
+}
+
+describe('FormErrorDisplayDirective hold across controls', () => {
+  it.each([
+    ['registered with the form', false],
+    ['standalone (pending as soon as it is created)', true],
+  ])(
+    "does not show one control's messages during the next control's first validation (%s)",
+    async (_label, standalone) => {
+      await TestBed.configureTestingModule({
+        imports: [SwappedControlHostComponent],
+      }).compileComponents();
+      const fixture = TestBed.createComponent(SwappedControlHostComponent);
+      const host = fixture.componentInstance;
+      host.standaloneB.set(standalone);
+      const stable = async () => {
+        fixture.detectChanges();
+        await TestBed.inject(ApplicationRef).whenStable();
+      };
+      await stable();
+
+      host.validator().settle({ errors: ['A is wrong'] });
+      await stable();
+      const display = host.wrapper().display;
+      expect(display.errors()).toEqual(['A is wrong']);
+
+      host.useA.set(false);
+      await stable();
+
+      // b's first validation is pending: nothing of a's may show.
+      expect(display.hasPendingValidation()).toBe(true);
+      expect(display.errors()).toEqual([]);
+      expect(display.shouldShowErrors()).toBe(false);
+
+      host.validator().settle({ errors: ['B is wrong'] });
+      await stable();
+      expect(display.errors()).toEqual(['B is wrong']);
+    }
+  );
+});
+
+const noTestsSuite = create(() => {
+  // The controlled async validator supplies the errors in this spec.
+});
+
+@Component({
+  imports: [NgxVestForms, ControlledAsyncValidatorDirective],
+  template: `
+    <form ngxVestForm [suite]="suite">
+      <input
+        ngxErrorDisplay
+        ngxControlledAsync
+        name="username"
+        [ngModel]="''"
+      />
+    </form>
+  `,
+})
+class ResetFieldHostComponent {
+  readonly suite = noTestsSuite;
+  readonly vestForm = viewChild.required(FormDirective);
+  readonly display = viewChild.required(FormErrorDisplayDirective);
+  readonly validator = viewChild.required(ControlledAsyncValidatorDirective);
+}
+
+describe('FormErrorDisplayDirective and FormDirective.resetField', () => {
+  it('drops the held messages when the field is reset', async () => {
+    await TestBed.configureTestingModule({
+      imports: [ResetFieldHostComponent],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(ResetFieldHostComponent);
+    const host = fixture.componentInstance;
+    const stable = async () => {
+      fixture.detectChanges();
+      await TestBed.inject(ApplicationRef).whenStable();
+    };
+    await stable();
+    const control = host.vestForm().ngForm.form.get('username');
+    if (!control) throw new Error('username control missing');
+
+    control.markAsTouched();
+    control.markAsDirty();
+    control.setValue('taken');
+    host.validator().settle({ errors: ['Username is taken'] });
+    await stable();
+    await expect
+      .poll(() => host.display().errors())
+      .toEqual(['Username is taken']);
+
+    host.vestForm().resetField('username');
+    await stable();
+
+    expect(control.pending).toBe(true);
+    expect(host.display().errors()).toEqual([]);
+    expect(host.display().shouldShowErrors()).toBe(false);
+  });
+
+  it('leaves the raw warningMessages() on the last fieldWarnings while pending', async () => {
+    await TestBed.configureTestingModule({
+      imports: [ResetFieldHostComponent],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(ResetFieldHostComponent);
+    const host = fixture.componentInstance;
+    fixture.detectChanges();
+    await TestBed.inject(ApplicationRef).whenStable();
+    const control = host.vestForm().ngForm.form.get('username');
+    if (!control) throw new Error('username control missing');
+
+    host.vestForm().fieldWarnings.set(new Map([['username', ['Short name']]]));
+    control.setValue('x');
+    fixture.detectChanges();
+
+    // Documented in CUSTOM-CONTROL-WRAPPERS.md: the raw signal has no hold,
+    // but the warnings map is only replaced when the next result lands.
+    expect(control.pending).toBe(true);
+    expect(host.display().errorMessages()).toEqual([]);
+    expect(host.display().warningMessages()).toEqual(['Short name']);
   });
 });

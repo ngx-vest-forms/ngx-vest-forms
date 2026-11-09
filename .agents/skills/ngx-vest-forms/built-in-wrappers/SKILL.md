@@ -42,6 +42,7 @@ Warnings (Vest `warn()`) never make a control invalid, and they can appear on an
 ## Pending, ARIA and required
 
 - `[pendingDebounce]="{ showAfter: 500, minimumDisplay: 500 }"` (the defaults) keeps "Validating…" from flashing; a binding that changes at runtime takes effect. The text comes from `NGX_PENDING_LABEL`.
+- While a field re-validates, both wrappers keep the last settled errors and warnings (and `aria-invalid`/`aria-describedby`) next to the pending message; they change when the new result settles. Nothing shows during a control's first validation, messages the display mode was hiding stay hidden until the check settles, and `reset()`, `resetForm()` or `resetField()` clears them at once. Tests that assert a message is gone right after typing must wait for the check to settle.
 - `ariaAssociationMode` on `<ngx-control-wrapper>`: `'all-controls'` (default) stamps `aria-describedby`/`aria-invalid` on every descendant input and every element with a form-widget role (`combobox`, `radiogroup`, `slider`, `switch`, …); `'single-control'` stamps only when exactly one control is inside (input plus extra buttons); `'none'` leaves ARIA to you. Raise it only when the wrapper content is non-standard.
 - `ariaRequired` sets `aria-required="true"`. It is opt-in because Vest rules are often conditional.
 

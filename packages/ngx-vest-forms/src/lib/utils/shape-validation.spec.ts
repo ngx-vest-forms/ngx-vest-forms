@@ -66,6 +66,42 @@ describe('validateShape function', () => {
       ).toBe(true);
     });
 
+    it('should report an unknown object key as an extra property, not a type mismatch', () => {
+      const formValue = {
+        name: 'John',
+        addresss: { city: 'New York' },
+      };
+      const shape = {
+        name: '',
+        address: { city: '' },
+      };
+
+      validateShape(formValue, shape);
+
+      const calls = consoleWarnSpy.mock.calls.map((call: unknown[]) =>
+        String(call[0])
+      );
+      expect(calls).toHaveLength(1);
+      expect(calls[0]).toContain('NGX-001');
+      expect(calls[0]).toContain("'addresss'");
+      expect(calls.some((msg: string) => msg.includes('NGX-002'))).toBe(false);
+    });
+
+    it('should report keys the shape only inherits as extra properties', () => {
+      validateShape(
+        { name: 'John', toString: 'x', constructor: { city: 'y' } },
+        { name: '' }
+      );
+
+      const calls = consoleWarnSpy.mock.calls.map((call: unknown[]) =>
+        String(call[0])
+      );
+      expect(calls).toHaveLength(2);
+      expect(calls.every((msg: string) => msg.includes('NGX-001'))).toBe(true);
+      expect(calls.join(' ')).toContain("'toString'");
+      expect(calls.join(' ')).toContain("'constructor'");
+    });
+
     it('should warn when nested property has typo', () => {
       const formValue = {
         address: {
@@ -146,6 +182,17 @@ describe('validateShape function', () => {
 
       validateShape(formValue, shape);
       expect(consoleWarnSpy).toHaveBeenCalled();
+    });
+
+    it('should report one type mismatch for an object where the shape has a primitive, not its children', () => {
+      validateShape({ name: { first: 'John', last: 'Doe' } }, { name: '' });
+
+      const calls = consoleWarnSpy.mock.calls.map((call: unknown[]) =>
+        String(call[0])
+      );
+      expect(calls).toHaveLength(1);
+      expect(calls[0]).toContain('NGX-002');
+      expect(calls[0]).toContain("'name'");
     });
 
     it('should warn when formValue has opaque leaf (Date) but shape expects primitive', () => {

@@ -130,28 +130,6 @@ function getControlPath(
 }
 
 /**
- * Returns the dotted key path from `formGroup` down to `control`, or `''` when
- * `control` is not below `formGroup`. It descends only through nested
- * FormGroups, not FormArrays.
- * @param formGroup
- * @param control
- */
-function getGroupPath(formGroup: FormGroup, control: AbstractControl): string {
-  for (const [key, ctrl] of getChildEntries(formGroup)) {
-    if (ctrl === control) {
-      return key;
-    }
-    if (isFormGroup(ctrl)) {
-      const path = getGroupPath(ctrl, control);
-      if (path) {
-        return `${key}.${path}`;
-      }
-    }
-  }
-  return '';
-}
-
-/**
  * @internal
  * Internal utility for calculating form control field paths.
  *
@@ -185,7 +163,10 @@ export function getFormGroupField(
   rootForm: FormGroup,
   control: AbstractControl
 ): string {
-  return getGroupPath(rootForm, control);
+  // Same lookup as for a control: the parent chain first, then a search
+  // through nested FormGroups and FormArrays (an index is a string segment,
+  // e.g. `items.0`).
+  return getControlPath(rootForm, control);
 }
 
 function isPlainRecord(value: unknown): value is UnknownRecord {

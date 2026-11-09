@@ -108,6 +108,7 @@ import {
   setAngularFormSubmittedState,
 } from './form-submitted-state';
 import { ValidationOptions } from './validation-options';
+import { notifyValidationReset } from './validation-reset';
 
 /**
  * Timing options passed to the validation-config pipeline.
@@ -129,9 +130,10 @@ const PIPELINE_OPTIONS = {
  *
  * Since 3.0.0 the untyped `Record<string, string[]>` escape hatch is gone, so
  * typo'd field paths in a `[validationConfig]` binding fail to compile instead
- * of silently never triggering. For genuinely dynamic path strings (e.g.
- * runtime array indices such as `'addresses.0.street'`), build the object
- * separately and cast it to `NgxValidationConfig<T>` explicitly.
+ * of silently never triggering. Array items are addressed by index
+ * (`'addresses.0.street'`, or `` `addresses.${i}.street` `` inline or
+ * `as const`). Only path strings `FieldPath<T>` cannot express, such as
+ * paths read from a server, need an explicit cast to `NgxValidationConfig<T>`.
  */
 export type NgxValidationConfig<T = unknown> = ValidationConfigMap<T> | null;
 
@@ -1515,6 +1517,9 @@ export class FormDirective<T extends Record<string, unknown>> {
     // Reset Angular control validation state
     const control = this.ngForm.form.get(field);
     if (control) {
+      // Error display holds the last settled messages while a field
+      // re-validates; a reset field must not keep showing them.
+      notifyValidationReset(control);
       control.updateValueAndValidity({ emitEvent: true });
       this.#blurTick.update((v) => v + 1);
     }

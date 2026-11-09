@@ -22,11 +22,12 @@ import { FormDirective } from './form.directive';
 import { ValidationOptions } from './validation-options';
 
 /**
- * Hooks into `ngModelGroup`/`ngxModelGroup` and runs async group-level validation
+ * Hooks into `ngModelGroup` and runs async group-level validation
  * through the parent `FormDirective` Vest suite bridge.
  */
 @Directive({
-  selector: '[ngModelGroup],[ngxModelGroup]',
+  // eslint-disable-next-line @angular-eslint/directive-selector -- attaches to Angular's own ngModelGroup, so it shares that selector
+  selector: '[ngModelGroup]',
   providers: [
     {
       provide: NG_ASYNC_VALIDATORS,

@@ -26,7 +26,7 @@ const whenStable = () => TestBed.inject(ApplicationRef).whenStable();
 const typeInto = async (
   element: HTMLInputElement | HTMLTextAreaElement,
   value: string,
-  user: Pick<ReturnType<typeof userEvent.setup>, 'clear' | 'type'> = userEvent
+  user: Pick<typeof userEvent, 'clear' | 'type'> = userEvent
 ) => {
   await user.clear(element);
   if (value) {

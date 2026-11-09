@@ -1,11 +1,27 @@
-import { Component, forwardRef, signal } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import {
+  Component,
+  Directive,
+  forwardRef,
+  signal,
+  viewChild,
+} from '@angular/core';
+import {
+  AsyncValidator,
+  ControlValueAccessor,
+  FormsModule,
+  NG_ASYNC_VALIDATORS,
+  NG_VALUE_ACCESSOR,
+  NgForm,
+  ValidationErrors,
+} from '@angular/forms';
 import { fireEvent, render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
+import { Observable, Subject, take } from 'rxjs';
 import { create, enforce, test as vestTest, warn } from 'vest';
 import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { NgxVestForms } from '../../exports';
 import { NGX_PENDING_LABEL } from '../../tokens/pending-label.token';
+import { ControlWrapperComponent } from './control-wrapper.component';
 
 // Test validation suite for the component tests
 type TestModel = {
@@ -1985,6 +2001,113 @@ describe('ControlWrapperComponent', () => {
         { timeout: 3000 }
       );
       expect(warning).toBeInTheDocument();
+    });
+  });
+});
+
+/** Async validator the test settles by hand, for a deterministic pending window. */
+@Directive({
+  selector: '[ngxManualAsync]',
+  providers: [
+    {
+      provide: NG_ASYNC_VALIDATORS,
+      useExisting: ManualAsyncValidatorDirective,
+      multi: true,
+    },
+  ],
+})
+class ManualAsyncValidatorDirective implements AsyncValidator {
+  #latest: Subject<ValidationErrors | null> | null = null;
+
+  validate(): Observable<ValidationErrors | null> {
+    this.#latest = new Subject<ValidationErrors | null>();
+    return this.#latest.pipe(take(1));
+  }
+
+  settle(result: ValidationErrors | null): void {
+    this.#latest?.next(result);
+  }
+}
+
+@Component({
+  imports: [
+    FormsModule,
+    ControlWrapperComponent,
+    ManualAsyncValidatorDirective,
+  ],
+  template: `
+    <form>
+      <ngx-control-wrapper>
+        <label for="handle">Handle</label>
+        <input
+          id="handle"
+          name="handle"
+          ngxManualAsync
+          aria-describedby="handle-hint"
+          [(ngModel)]="model"
+        />
+        <span id="handle-hint">Pick a handle</span>
+      </ngx-control-wrapper>
+    </form>
+  `,
+})
+class HeldMessagesHostComponent {
+  model = '';
+  readonly validator = viewChild.required(ManualAsyncValidatorDirective);
+  readonly ngForm = viewChild.required(NgForm);
+}
+
+describe('ControlWrapperComponent while re-validating', () => {
+  it('keeps the error, aria-invalid and aria-describedby until the new result settles', async () => {
+    const { fixture } = await render(HeldMessagesHostComponent);
+    const host = fixture.componentInstance;
+    const input = screen.getByLabelText('Handle');
+    const control = host.ngForm().form.get('handle');
+    if (!control) throw new Error('handle control missing');
+
+    const editTo = async (value: string): Promise<void> => {
+      control.markAsTouched();
+      control.markAsDirty();
+      control.setValue(value);
+      fixture.detectChanges();
+      await fixture.whenStable();
+    };
+
+    await editTo('taken');
+    host.validator().settle({ errors: ['Handle is taken'] });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    await waitFor(() => {
+      expect(input).toHaveAttribute('aria-invalid', 'true');
+    });
+    const errorRegion = screen.getByText('Handle is taken').closest('[id]');
+    const errorId = errorRegion?.getAttribute('id') ?? '';
+    expect(errorId).toMatch(/-error$/);
+    expect(input.getAttribute('aria-describedby')?.split(' ')).toEqual([
+      'handle-hint',
+      errorId,
+    ]);
+
+    // Re-check pending: the message, aria-invalid and the error association
+    // stay; the hint the app set is untouched.
+    await editTo('taken2');
+    expect(control.pending).toBe(true);
+    expect(screen.getByText('Handle is taken')).toBeInTheDocument();
+    expect(input).toHaveAttribute('aria-invalid', 'true');
+    expect(input.getAttribute('aria-describedby')?.split(' ')).toEqual([
+      'handle-hint',
+      errorId,
+    ]);
+
+    host.validator().settle(null);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    await waitFor(() => {
+      expect(screen.queryByText('Handle is taken')).not.toBeInTheDocument();
+      expect(input).not.toHaveAttribute('aria-invalid');
+      expect(input).toHaveAttribute('aria-describedby', 'handle-hint');
     });
   });
 });

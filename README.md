@@ -632,7 +632,7 @@ The `[formShape]` input on `<form ngxVestForm>` is replaced by `[formContract]`,
 <form ngxVestForm [suite]="suite" [formContract]="zodSchema"></form>
 ```
 
-`@standard-schema/spec` is now declared as a `peerDependency` (`>=1.0.0`). Most consumers don't need to install it directly — bring it in only if you author your own `StandardSchemaV1<T>` literals. The internal `validateShape()` helper has been removed; use `toFormContract()` if you need explicit shape→schema conversion.
+`@standard-schema/spec` provides the `StandardSchemaV1` types and is a regular dependency of ngx-vest-forms, so it is installed automatically. The internal `validateShape()` helper has been removed; use `toFormContract()` if you need explicit shape→schema conversion.
 
 Browser support follows Angular 22+ targets (no `structuredClone` polyfill required).
 

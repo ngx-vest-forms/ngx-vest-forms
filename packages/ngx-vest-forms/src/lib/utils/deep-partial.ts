@@ -82,7 +82,15 @@ export type NgxDeepPartial<T> =
                           : number extends keyof T
                             ? T
                             : T extends {}
-                              ? { [K in keyof T]?: NgxDeepPartial<T[K]> }
+                              ? // `| undefined` lets consumers compiling with
+                                // `exactOptionalPropertyTypes` write an
+                                // explicit `undefined` (an empty field) into
+                                // a form model. Without that flag it is a no-op.
+                                {
+                                  [K in keyof T]?:
+                                    | NgxDeepPartial<T[K]>
+                                    | undefined;
+                                }
                               : _IsUnknown<T> extends true
                                 ? unknown
                                 : Partial<T>;

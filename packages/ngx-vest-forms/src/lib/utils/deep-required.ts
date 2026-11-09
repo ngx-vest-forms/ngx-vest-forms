@@ -62,5 +62,13 @@ export type NgxDeepRequired<T> = T extends Error
                         ? Array<Exclude<NgxDeepRequired<U>, undefined>>
                         : ReadonlyArray<Exclude<NgxDeepRequired<U>, undefined>>
                     : T extends {}
-                      ? { [K in keyof T]-?: NgxDeepRequired<T[K]> }
+                      ? {
+                          // An optional property loses its `undefined`, also
+                          // when it is spelled out (`?: X | undefined`, as
+                          // NgxDeepPartial emits): under
+                          // `exactOptionalPropertyTypes`, `-?` alone keeps it.
+                          [K in keyof T]-?: {} extends Pick<T, K>
+                            ? NgxDeepRequired<Exclude<T[K], undefined>>
+                            : NgxDeepRequired<T[K]>;
+                        }
                       : Required<T>;

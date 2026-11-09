@@ -51,7 +51,7 @@ type LukeApiResponse = z.infer<typeof lukeApiResponseSchema>;
 type FetchErrorNotice = {
   title: string;
   message: string;
-  detail?: string;
+  detail?: string | undefined;
 };
 
 export type FetchErrorScenario =
@@ -155,9 +155,9 @@ export class PurchaseForm {
 
       return {
         url: `/api/people/${request.personId}`,
-        params: request.errorScenario
-          ? { errorScenario: request.errorScenario }
-          : undefined,
+        ...(request.errorScenario
+          ? { params: { errorScenario: request.errorScenario } }
+          : {}),
       };
     },
     {
@@ -175,8 +175,8 @@ export class PurchaseForm {
     const nameParts = data.name.split(' ');
     return {
       userId: data.id,
-      firstName: nameParts[0],
-      lastName: nameParts[1],
+      firstName: nameParts[0] ?? '',
+      lastName: nameParts[1] ?? '',
       gender: data.gender,
     };
   });

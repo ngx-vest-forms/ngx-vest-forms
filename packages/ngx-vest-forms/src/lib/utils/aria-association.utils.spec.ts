@@ -1,5 +1,7 @@
 import {
+  buildMessageDescribedBy,
   mergeAriaDescribedBy,
+  messageRegionIdList,
   parseAriaIdTokens,
   resolveAssociationTargets,
 } from './aria-association.utils';
@@ -108,5 +110,51 @@ describe('resolveAssociationTargets', () => {
     ];
 
     expect(resolveAssociationTargets(controls, 'none')).toEqual([]);
+  });
+});
+
+describe('buildMessageDescribedBy', () => {
+  const ids = { errorId: 'e', warningId: 'w', pendingId: 'p' };
+
+  it('returns null when no region is visible', () => {
+    expect(
+      buildMessageDescribedBy(ids, {
+        errors: false,
+        warnings: false,
+        pending: false,
+      })
+    ).toBeNull();
+  });
+
+  it('lists visible regions in error, warning, pending order', () => {
+    expect(
+      buildMessageDescribedBy(ids, {
+        errors: true,
+        warnings: true,
+        pending: true,
+      })
+    ).toBe('e w p');
+    expect(
+      buildMessageDescribedBy(ids, {
+        errors: false,
+        warnings: true,
+        pending: true,
+      })
+    ).toBe('w p');
+    expect(
+      buildMessageDescribedBy(ids, {
+        errors: true,
+        warnings: false,
+        pending: false,
+      })
+    ).toBe('e');
+  });
+});
+
+describe('messageRegionIdList', () => {
+  it('returns every owned region id', () => {
+    expect(
+      messageRegionIdList({ errorId: 'e', warningId: 'w', pendingId: 'p' })
+    ).toEqual(['e', 'w', 'p']);
   });
 });
