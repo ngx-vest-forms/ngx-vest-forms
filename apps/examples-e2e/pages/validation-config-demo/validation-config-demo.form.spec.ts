@@ -436,7 +436,7 @@ test.describe('ValidationConfig Demo', () => {
           .locator('text=Cascade Validation')
           .locator('..');
         await expect(cascadeSection).toMatchAriaSnapshot(`
-          - heading "Cascade Validation" [level=2]
+          - heading "Cascade Validation" [level=3]
           - paragraph: Changing country triggers state and zip code validation.
         `);
       });
@@ -569,7 +569,7 @@ test.describe('ValidationConfig Demo', () => {
           .locator('text=Date Range Validation')
           .locator('..');
         await expect(dateSection).toMatchAriaSnapshot(`
-          - heading "Date Range Validation" [level=2]
+          - heading "Date Range Validation" [level=3]
           - paragraph: Start and end dates validate against each other.
           - text: Start Date
           - textbox "Start Date": /\\d{4}-\\d{2}-\\d{2}/

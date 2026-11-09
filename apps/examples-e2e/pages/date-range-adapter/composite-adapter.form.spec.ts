@@ -31,7 +31,7 @@ async function setAdapterDate(field: Locator, value: string): Promise<void> {
 async function switchToCompositeAdapter(page: Page): Promise<void> {
   await page.getByRole('radio', { name: /composite adapter/i }).check();
   await expect(
-    page.getByRole('heading', { name: /composite adapter/i, level: 2 })
+    page.getByRole('heading', { name: /composite adapter/i, level: 3 })
   ).toBeVisible();
 }
 

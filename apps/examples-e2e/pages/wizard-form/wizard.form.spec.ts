@@ -528,15 +528,15 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
 
         // After navigating to step 2, step 1 should show completed state
         // The wizard-steps component shows a checkmark SVG for completed steps
-        // and applies blue background color (bg-blue-600) to completed steps
+        // and applies primary (teal) background color (bg-primary-600) to completed steps
         const step1Circle = page
           .locator('ngx-wizard-steps li')
           .first()
           .locator('span')
           .first();
 
-        // Completed steps have bg-blue-600 class and show checkmark
-        await expect(step1Circle).toHaveClass(/bg-blue-600/);
+        // Completed steps have bg-primary-600 class and show checkmark
+        await expect(step1Circle).toHaveClass(/bg-primary-600/);
         await expect(step1Circle.locator('svg')).toBeVisible();
       });
 

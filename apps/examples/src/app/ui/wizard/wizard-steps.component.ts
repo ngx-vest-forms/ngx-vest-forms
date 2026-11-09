@@ -46,9 +46,9 @@ export type WizardStepConfig = {
             @if (!last) {
               <div
                 class="h-0.5 flex-1 transition-colors duration-300"
-                [class.bg-blue-600]="getStepStatus(step.id) === 'completed'"
+                [class.bg-primary-600]="getStepStatus(step.id) === 'completed'"
                 [class.bg-gray-200]="getStepStatus(step.id) !== 'completed'"
-                [class.dark:bg-blue-500]="
+                [class.dark:bg-primary-500]="
                   getStepStatus(step.id) === 'completed'
                 "
                 [class.dark:bg-gray-700]="
@@ -83,19 +83,19 @@ export type WizardStepConfig = {
                 <!-- Step circle with screen reader text -->
                 <span
                   class="flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-colors duration-300"
-                  [class.bg-blue-600]="status === 'completed'"
+                  [class.bg-primary-600]="status === 'completed'"
                   [class.text-white]="status === 'completed'"
                   [class.border-2]="status !== 'completed'"
-                  [class.border-blue-600]="status === 'current'"
-                  [class.text-blue-600]="status === 'current'"
+                  [class.border-primary-600]="status === 'current'"
+                  [class.text-primary-600]="status === 'current'"
                   [class.border-gray-300]="status === 'upcoming'"
                   [class.bg-white]="status !== 'completed'"
                   [class.text-gray-500]="status === 'upcoming'"
                   [class.dark:bg-gray-800]="
                     status === 'current' || status === 'upcoming'
                   "
-                  [class.dark:border-blue-500]="status === 'current'"
-                  [class.dark:text-blue-400]="status === 'current'"
+                  [class.dark:border-primary-500]="status === 'current'"
+                  [class.dark:text-primary-400]="status === 'current'"
                   [class.dark:border-gray-600]="status === 'upcoming'"
                   [class.dark:text-gray-400]="status === 'upcoming'"
                   aria-hidden="true"
@@ -124,11 +124,11 @@ export type WizardStepConfig = {
                   [class.text-left]="i === 0"
                   [class.text-center]="i > 0 && !last"
                   [class.text-right]="last"
-                  [class.text-blue-600]="
+                  [class.text-primary-600]="
                     status === 'current' || status === 'completed'
                   "
                   [class.text-gray-500]="status === 'upcoming'"
-                  [class.dark:text-blue-400]="
+                  [class.dark:text-primary-400]="
                     status === 'current' || status === 'completed'
                   "
                   [class.dark:text-gray-400]="status === 'upcoming'"

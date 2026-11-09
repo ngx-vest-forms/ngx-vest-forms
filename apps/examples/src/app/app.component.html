@@ -86,7 +86,7 @@
           [style.animation-delay.ms]="g * 60"
         >
           <h2
-            class="px-3 pb-2 text-[0.7rem] font-semibold tracking-[0.18em] text-gray-400 uppercase dark:text-gray-500"
+            class="px-3 pb-2 text-[0.7rem] font-semibold tracking-[0.18em] text-gray-600 uppercase dark:text-gray-400"
             [class.lg:hidden]="sidebarCollapsed()"
           >
             {{ group.category }}
@@ -145,7 +145,7 @@
                       [class]="
                         rla.isActive
                           ? 'text-primary-700 dark:text-primary-300'
-                          : 'text-gray-400 group-hover:text-gray-700 dark:text-gray-500 dark:group-hover:text-gray-200'
+                          : 'text-gray-600 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-gray-200'
                       "
                       aria-hidden="true"
                       >{{ navAbbr(item.label) }}</span
@@ -187,7 +187,7 @@
       >
         <button
           type="button"
-          class="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 focus:ring-2 focus:ring-gray-300 focus:outline-hidden dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-300 dark:focus:ring-gray-700"
+          class="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 focus:ring-2 focus:ring-gray-300 focus:outline-hidden dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200 dark:focus:ring-gray-700"
           [attr.aria-label]="
             sidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'
           "

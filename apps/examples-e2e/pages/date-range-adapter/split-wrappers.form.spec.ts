@@ -200,11 +200,11 @@ test.describe('Split Wrappers - Form Behavior', () => {
     // the one that is about to be destroyed.
     await page.getByRole('radio', { name: /composite adapter/i }).check();
     await expect(
-      page.getByRole('heading', { name: /composite adapter/i, level: 2 })
+      page.getByRole('heading', { name: /composite adapter/i, level: 3 })
     ).toBeVisible();
     await page.getByRole('radio', { name: /split wrappers/i }).check();
     await expect(
-      page.getByRole('heading', { name: /split wrappers/i, level: 2 })
+      page.getByRole('heading', { name: /split wrappers/i, level: 3 })
     ).toBeVisible();
     await expect(departure).toBeVisible();
 
