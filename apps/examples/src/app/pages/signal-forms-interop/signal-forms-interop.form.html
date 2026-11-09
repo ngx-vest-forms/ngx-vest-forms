@@ -13,10 +13,9 @@
     output itself. [disabled] goes to NgModel, which disables the control and
     writes the disabled state into the component's disabled input.
 
-    ngxSignalControlValidators is a workaround for an Angular 22.2 gap: on
-    this custom-control path NgModel does not attach the element's
-    validators, so without it Vest never runs for this field. See
-    signal-control-validators.directive.ts.
+    On this custom-control path Angular 22.2 does not attach the element's
+    validators to the control; ngx-vest-forms attaches them itself, so Vest
+    validates the field with no extra directive.
   -->
   <ngx-control-wrapper class="form-field">
     <label for="seats" class="label-text">Seats</label>
@@ -28,7 +27,6 @@
       name="seats"
       inputId="seats"
       hintId="seats-hint"
-      ngxSignalControlValidators
       [ngModel]="formValue().seats"
       [disabled]="formValue().lockSeats === true"
     />
@@ -50,13 +48,16 @@
     </label>
   </div>
 
-  <!-- A Signal Forms FormCheckboxControl: NgModel binds its checked model. -->
+  <!--
+    A Signal Forms FormCheckboxControl: NgModel binds its checked model.
+    "Must be checked" is a Vest test: Angular's required attribute does not
+    mean that on a custom checkbox control.
+  -->
   <ngx-control-wrapper class="form-field">
     <div class="flex items-center gap-3">
       <ngx-consent-switch
         name="acceptTerms"
         switchId="acceptTerms"
-        ngxSignalControlValidators
         [ngModel]="formValue().acceptTerms"
       />
       <label

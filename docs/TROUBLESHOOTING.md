@@ -93,6 +93,17 @@ then continued after its safety timeout so validation would not stall forever.
 
 **Fix:** make async validators resolve/cancel, keep `name` paths aligned with `[ngModel]`, and pair dynamic structures with field-clearing utilities plus `omitWhen(...)` in the Vest suite.
 
+## `NGX-108` — Signal Forms control not registered in time
+
+**Meaning:** an `[ngModel]` on a Signal Forms control (`FormValueControl` / `FormCheckboxControl`) never became reachable at its path in its form, so ngx-vest-forms gave up attaching its validators (Angular 22.2 does not attach them on this path; see [Custom control wrappers](./CUSTOM-CONTROL-WRAPPERS.md#signal-forms-controls-inside-a-wrapper)). Vest does not validate that field.
+
+**Usually caused by:**
+
+- a `name` that the form cannot register (empty, or changed again before registration finished)
+- code that replaces or removes the control from the form right after it renders
+
+**Fix:** give the control a stable `name` inside the form. An `ngModel` without a form container (`[ngModelOptions]="{ standalone: true }"`, or a child component that does not provide `ControlContainer`) counts as set up and does not log this.
+
 ## Duplicate `ValidationConfigBuilder` warnings
 
 **Meaning:** the fluent builder received the same dependency twice. The builder deduplicates automatically, but warns in development mode because duplicate dependencies often indicate unclear dependency ownership.

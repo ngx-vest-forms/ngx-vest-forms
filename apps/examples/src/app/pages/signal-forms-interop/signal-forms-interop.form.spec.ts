@@ -109,7 +109,9 @@ describe('Signal Forms controls with ngModel in ngxVestForm', () => {
   it('runs Vest and shows errors with ARIA on the inner input and the switch after submit', async () => {
     await submit();
 
-    expect(host.submitted()?.valid).toBe(false);
+    // The first Vest run of a Signal Forms control may still be pending at
+    // submit time; submitSettled waits for it.
+    await eventually(() => expect(host.submitted()?.valid).toBe(false));
     expect(seatsInput().getAttribute('aria-invalid')).toBe('true');
     expect(describedText(seatsInput())).toContain(
       'Choose how many seats you need'
@@ -150,7 +152,9 @@ describe('Signal Forms controls with ngModel in ngxVestForm', () => {
     await settle();
 
     expect(control.touched).toBe(true);
-    expect(termsSwitch().getAttribute('aria-invalid')).toBe('true');
+    await eventually(() =>
+      expect(termsSwitch().getAttribute('aria-invalid')).toBe('true')
+    );
   });
 
   it('propagates the disabled state from the control into the component', async () => {

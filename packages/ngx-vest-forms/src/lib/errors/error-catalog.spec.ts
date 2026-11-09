@@ -55,7 +55,14 @@ describe('NGX_VEST_FORMS_DIAGNOSTICS', () => {
       'NGX-105',
       'NGX-106',
       'NGX-107',
+      'NGX-108',
     ]);
+  });
+
+  it('NGX-108 SIGNAL_CONTROL_NOT_REGISTERED names the control', () => {
+    expect(
+      NGX_VEST_FORMS_DIAGNOSTICS.SIGNAL_CONTROL_NOT_REGISTERED.message('seats')
+    ).toContain('ngModel "seats" on a Signal Forms control was not registered');
   });
 
   it('NGX-100 SYNC_CONFLICT_DROPPED explains the dropped change', () => {

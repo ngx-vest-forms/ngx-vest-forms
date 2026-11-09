@@ -13,16 +13,10 @@ import {
 } from '../../models/signal-forms-interop.model';
 import { ConsentSwitchComponent } from './consent-switch.component';
 import { SeatStepperComponent } from './seat-stepper.component';
-import { SignalControlValidatorsDirective } from './signal-control-validators.directive';
 
 @Component({
   selector: 'ngx-signal-forms-interop-form-body',
-  imports: [
-    NgxVestForms,
-    SeatStepperComponent,
-    ConsentSwitchComponent,
-    SignalControlValidatorsDirective,
-  ],
+  imports: [NgxVestForms, SeatStepperComponent, ConsentSwitchComponent],
   templateUrl: './signal-forms-interop.form.html',
   providers: [provideFormContract(signalFormsInteropContract)],
 })

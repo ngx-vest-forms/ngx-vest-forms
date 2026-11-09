@@ -80,6 +80,13 @@ export const NGX_VEST_FORMS_DIAGNOSTICS = {
       `[ngx-vest-forms] validationConfig: timed out waiting for dependent controls: ${missing}. ` +
       'Continuing without them.',
   },
+  SIGNAL_CONTROL_NOT_REGISTERED: {
+    code: 'NGX-108',
+    message: (name: string) =>
+      `[ngx-vest-forms] ngModel "${name}" on a Signal Forms control was not registered in its ` +
+      'form in time, so its validators were not attached and Vest will not validate it. ' +
+      'Check its name and that it sits inside the form (or uses ngModelOptions standalone).',
+  },
 } as const;
 
 export function logWarning<T extends unknown[]>(
