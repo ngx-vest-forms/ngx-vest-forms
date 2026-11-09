@@ -1,3 +1,16 @@
+/**
+ * Options for {@link FormDirective.focusFirstInvalidControl} and
+ * {@link FormDirective.scrollToFirstInvalidControl}.
+ *
+ * **Security:** `invalidSelector` and `focusSelector` are passed to
+ * `querySelectorAll()` / `matches()` as CSS selectors. Always use the
+ * exported `DEFAULT_INVALID_SELECTOR` / `DEFAULT_FOCUS_SELECTOR` constants or
+ * your own static strings — never build them from user-controlled input.
+ * A malformed `invalidSelector` makes the call return `null`; a malformed
+ * `focusSelector` is caught and the call still returns the matched invalid
+ * element without moving focus. A selector assembled from untrusted data is
+ * still the caller's responsibility.
+ */
 export type NgxFirstInvalidOptions = {
   /** Scroll animation behavior (default: `'smooth'`, or `'auto'` when reduced motion is preferred). */
   behavior?: ScrollBehavior;
@@ -11,9 +24,17 @@ export type NgxFirstInvalidOptions = {
   preventScrollOnFocus?: boolean;
   /** Opens ancestor `<details>` elements before scroll/focus (default: `true`). */
   openCollapsedParents?: boolean;
-  /** Selector used to locate the first invalid element. */
+  /**
+   * Selector used to locate the first invalid element.
+   * Must be a static, developer-controlled CSS selector — never derived from
+   * user input (see the type-level security note above).
+   */
   invalidSelector?: string;
-  /** Selector used to resolve the best focus target within the invalid element. */
+  /**
+   * Selector used to resolve the best focus target within the invalid element.
+   * Must be a static, developer-controlled CSS selector — never derived from
+   * user input (see the type-level security note above).
+   */
   focusSelector?: string;
 };
 
