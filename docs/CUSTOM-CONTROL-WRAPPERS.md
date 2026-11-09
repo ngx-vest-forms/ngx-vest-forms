@@ -614,7 +614,20 @@ The control you put inside a wrapper does not have to be a native input or a `Co
 </ngx-control-wrapper>
 ```
 
-Vest validation runs for that field with no extra directive. In Angular 22.2, `NgModel` binds such a control through its custom-control path, which does not attach the validators collected from `NG_VALIDATORS` / `NG_ASYNC_VALIDATORS` to the `FormControl`. ngx-vest-forms detects that after Angular's setup and attaches `NgModel`'s own composed validators (the same function references Angular attaches for a `ControlValueAccessor`), so the field gets Vest errors and validators like `required` on the same element work as well. When Angular has already attached them, as for native inputs and `ControlValueAccessor` hosts, or in a future Angular version that wires them itself, nothing is added.
+Vest validation runs for that field with no extra directive. In Angular 22.2, `NgModel` binds such a control through its custom-control path, which does not attach the validators collected from `NG_VALIDATORS` / `NG_ASYNC_VALIDATORS` to the `FormControl`. ngx-vest-forms detects that after Angular's setup and attaches `NgModel`'s own composed validators (the same function references Angular attaches for a `ControlValueAccessor`), and revalidates the control so the first result reaches the form's `status()`, `valid()`, `errorsChange` and `submitSettled`. When Angular has already attached them, as for native inputs and `ControlValueAccessor` hosts, or in a future Angular version that wires them itself, nothing is added.
+
+Put every rule in the Vest suite, including "must be checked" for a `FormCheckboxControl`:
+
+```typescript
+test('acceptTerms', 'Accept the terms to continue', () => {
+  enforce(model.acceptTerms).equals(true);
+});
+```
+
+Angular's attribute validators on the same element are attached too, but they do not all mean what they mean on a native input:
+
+- On a `FormValueControl`, `required` (also bound, as `[required]="isRequired()"`; toggling it revalidates the field) reports `required` for an empty value, as on a native input.
+- On a `FormCheckboxControl`, `required` does **not** mean "must be checked". Angular's `CheckboxRequiredValidator` only matches `input[type=checkbox]`, so the plain `RequiredValidator` applies, and it treats `false` as a value. Use the Vest test above instead.
 
 ARIA wiring applies to the native element or ARIA form widget (such as `role="switch"`) inside the control, as described in [When you want automatic ARIA wiring](#when-you-want-automatic-aria-wiring-recommended).
 
