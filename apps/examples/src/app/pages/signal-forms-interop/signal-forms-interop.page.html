@@ -1,0 +1,82 @@
+<div class="page-container">
+  <ngx-page-title />
+
+  <ngx-intro-section title="Why this matters">
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white"
+        >One control for both form systems</strong
+      >
+      — A component written for Angular Signal Forms (<code
+        >FormValueControl</code
+      >
+      or <code>FormCheckboxControl</code>) also works with
+      <code>[ngModel]</code>, so a design system does not need a second
+      ControlValueAccessor version
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white"
+        >Vest validation unchanged</strong
+      >
+      — The suite runs per field, errors render in
+      <code>ngx-control-wrapper</code>, and the wrapper sets
+      <code>aria-invalid</code> and <code>aria-describedby</code> on the
+      control's input or switch
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white"
+        >Touched, disabled and focus</strong
+      >
+      — The control's <code>touch</code> output marks it touched on blur, the
+      disabled state reaches its <code>disabled</code> input, and a failed
+      submit focuses it
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white"
+        >One workaround, for now</strong
+      >
+      — In Angular 22.2, <code>[ngModel]</code> does not attach validators to a
+      Signal Forms control, so without the
+      <code>ngxSignalControlValidators</code> directive Vest never runs for the
+      field. A fix inside ngx-vest-forms is planned; until then, put the
+      directive on each Signal Forms control
+    </ngx-intro-item>
+  </ngx-intro-section>
+
+  <div class="grid grid-cols-1 gap-8 py-12 md:grid-cols-2 md:gap-12 md:py-16">
+    <div class="min-w-0">
+      <ngx-form-state-card [feedback]="feedback()" />
+    </div>
+
+    <div class="min-w-0 space-y-6">
+      @if (submittedValue(); as submitted) {
+        <ngx-alert-panel tone="success" title="Booked">
+          <p>
+            @if (submitted.lockSeats) {
+              Seat count locked at
+              <strong>{{ submitted.seats ?? 'none' }}</strong
+              >; terms accepted.
+            } @else {
+              <strong>{{ submitted.seats }}</strong> seat(s) booked; terms
+              accepted.
+            }
+          </p>
+        </ngx-alert-panel>
+      }
+
+      <ngx-card
+        title="Book seats"
+        subtitle="The stepper and the switch are Signal Forms controls. Submit empty to see validation and focus."
+      >
+        <ngx-signal-forms-interop-form-body
+          [formValue]="formValue()"
+          [suite]="suite"
+          (formValueChange)="formValue.set($event)"
+          (submitted)="onSubmit($event)"
+          (resetRequested)="reset()"
+        />
+      </ngx-card>
+    </div>
+  </div>
+
+  <ngx-example-cards [content]="exampleContent" class="mt-8 block" />
+</div>

@@ -16,6 +16,7 @@
           />
           <button
             type="button"
+            data-row-remove
             (click)="removePhoneNumber(item.key)"
             class="btn-input-action btn-input-action-danger"
             [attr.aria-label]="'Remove phone number ' + (+item.key + 1)"
@@ -30,6 +31,7 @@
   <ngx-control-wrapper>
     <div class="relative flex items-center gap-2">
       <input
+        #addPhoneInput
         type="tel"
         [ngModel]="newPhoneNumber()"
         [ngModelOptions]="{ standalone: true }"
@@ -50,4 +52,7 @@
       </button>
     </div>
   </ngx-control-wrapper>
+
+  <!-- Confirms a removal; see RemovalFeedback. -->
+  <p class="sr-only" role="status">{{ removal.message() }}</p>
 </div>

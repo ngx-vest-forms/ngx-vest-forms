@@ -29,6 +29,7 @@
 
           <button
             type="button"
+            data-row-remove
             (click)="removeBusinessHour(item.key, valuesGroup)"
             class="business-hours-remove-btn"
             [title]="'Remove business hour slot ' + slot"
@@ -105,4 +106,7 @@
       </button>
     </div>
   </fieldset>
+
+  <!-- Confirms a removal; see RemovalFeedback. -->
+  <p class="sr-only" role="status">{{ removal.message() }}</p>
 </div>

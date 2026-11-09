@@ -6,11 +6,11 @@ import { Component, computed, input } from '@angular/core';
   imports: [JsonPipe],
   template: `
     @if (title()) {
-      <h2
+      <h3
         class="text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400"
       >
         {{ title() }}
-      </h2>
+      </h3>
     }
 
     <pre

@@ -37,7 +37,7 @@
         <div class="form-divider" aria-hidden="true"></div>
 
         <ngx-form-group-wrapper class="form-field" ngModelGroup="address">
-          <h3 class="section-title">Headquarters address</h3>
+          <h4 class="section-title">Headquarters address</h4>
           <ngx-address
             idPrefix="company-hq"
             [address]="formValue().company?.address"
@@ -57,11 +57,12 @@
               [ngModelGroup]="entry[0]"
             >
               <div class="mb-3 flex items-center justify-between gap-2">
-                <h3 class="section-title">Member {{ $index + 1 }}</h3>
+                <h4 class="section-title">Member {{ $index + 1 }}</h4>
                 <button
                   type="button"
                   class="btn btn-danger px-3 py-1.5 text-xs"
-                  (click)="removeMember(entry[0])"
+                  data-row-remove
+                  (click)="removeMember(entry[0], $index)"
                   [attr.aria-label]="'Remove member ' + ($index + 1)"
                 >
                   Remove
@@ -80,9 +81,16 @@
         </ngx-form-group-wrapper>
 
         <div>
-          <button type="button" class="btn btn-secondary" (click)="addMember()">
+          <button
+            #addMemberButton
+            type="button"
+            class="btn btn-secondary"
+            (click)="addMember()"
+          >
             Add member
           </button>
+          <!-- Confirms a removal; see RemovalFeedback. -->
+          <p class="sr-only" role="status">{{ removal.message() }}</p>
         </div>
       </div>
     </ngx-form-section>

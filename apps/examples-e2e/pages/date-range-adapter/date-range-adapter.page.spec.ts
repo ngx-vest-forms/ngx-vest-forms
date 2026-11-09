@@ -12,7 +12,7 @@ test.describe('Composite Adapter Recipe Page', () => {
   test('should render page layout and key sections', async ({ page }) => {
     const sidebar = getMainContentSidebar(page);
     const howItWorksCard = page.locator('ngx-card').filter({
-      has: page.getByRole('heading', { name: /how it works/i, level: 3 }),
+      has: page.getByRole('heading', { name: /how it works/i, level: 2 }),
     });
 
     await expect(
@@ -49,7 +49,7 @@ test.describe('Composite Adapter Recipe Page', () => {
     await expect(splitRadio).toBeChecked();
 
     await expect(
-      page.getByRole('heading', { name: /split wrappers/i, level: 2 })
+      page.getByRole('heading', { name: /split wrappers/i, level: 3 })
     ).toBeVisible();
   });
 
@@ -61,7 +61,7 @@ test.describe('Composite Adapter Recipe Page', () => {
     await compositeRadio.check();
 
     await expect(
-      page.getByRole('heading', { name: /composite adapter/i, level: 2 })
+      page.getByRole('heading', { name: /composite adapter/i, level: 3 })
     ).toBeVisible();
 
     await expect(compositeRadio).toBeChecked();
@@ -82,14 +82,14 @@ test.describe('Composite Adapter Recipe Page', () => {
 
     await expect(compositeRadio).toBeChecked();
     await expect(
-      page.getByRole('heading', { name: /composite adapter/i, level: 2 })
+      page.getByRole('heading', { name: /composite adapter/i, level: 3 })
     ).toBeVisible();
 
     await compositeRadio.press('ArrowLeft');
 
     await expect(splitRadio).toBeChecked();
     await expect(
-      page.getByRole('heading', { name: /split wrappers/i, level: 2 })
+      page.getByRole('heading', { name: /split wrappers/i, level: 3 })
     ).toBeVisible();
   });
 
@@ -97,7 +97,7 @@ test.describe('Composite Adapter Recipe Page', () => {
     page,
   }) => {
     const howItWorksCard = page.locator('ngx-card').filter({
-      has: page.getByRole('heading', { name: /how it works/i, level: 3 }),
+      has: page.getByRole('heading', { name: /how it works/i, level: 2 }),
     });
 
     // Default: split wrappers

@@ -22,6 +22,7 @@
                 [ngModel]="formValue().productId"
                 name="productId"
               >
+                <option value="" disabled>Select a product…</option>
                 @for (product of products(); track product.id) {
                   <option [value]="product.id">{{ product.name }}</option>
                 }
@@ -135,7 +136,6 @@
               <span class="label-text">Birth Date</span>
               <input
                 class="input-field"
-                placeholder="Select birth date"
                 type="date"
                 [ngModel]="formValue().birthDate"
                 name="birthDate"
@@ -165,6 +165,7 @@
                 class="input-field"
                 placeholder="Type your emergency contact"
                 type="text"
+                autocomplete="off"
                 [disabled]="emergencyContactDisabled()"
                 [ngModel]="formValue().emergencyContact"
                 name="emergencyContact"
@@ -192,7 +193,7 @@
         <div class="form-stack">
           <fieldset class="form-field">
             <legend class="label-text radio-group-label">Select gender</legend>
-            <div class="radio-group" role="radiogroup" aria-label="Gender">
+            <div class="radio-group">
               <div class="radio-item">
                 <input
                   id="gender-male"
@@ -254,7 +255,7 @@
             class="form-field mb-6"
             ngModelGroup="billingAddress"
           >
-            <h3 class="section-title">Billing Address</h3>
+            <h4 class="section-title">Billing Address</h4>
             <ngx-address
               idPrefix="billing-address"
               [address]="formValue().addresses?.billingAddress"
@@ -280,9 +281,10 @@
           @if (showShippingAddress()) {
             <ngx-form-group-wrapper
               class="form-field"
+              animate.enter="reveal-enter"
               ngModelGroup="shippingAddress"
             >
-              <h3 class="section-title">Shipping Address</h3>
+              <h4 class="section-title">Shipping Address</h4>
               <ngx-address
                 idPrefix="shipping-address"
                 [address]="currentShippingAddress()"

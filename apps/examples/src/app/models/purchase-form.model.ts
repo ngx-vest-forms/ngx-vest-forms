@@ -6,7 +6,11 @@ export type PurchaseFormModel = NgxDeepPartial<{
   userId: string;
   firstName: string;
   lastName: string;
-  birthDate: Date;
+  /**
+   * ISO date string (`yyyy-mm-dd`). `<input type="date">` with ngModel writes
+   * a string, not a `Date`, so the model says so.
+   */
+  birthDate: string;
   age: number;
   emergencyContact: string;
   passwords: {
@@ -29,12 +33,11 @@ export type PurchaseFormModel = NgxDeepPartial<{
 // Low-dependency fallback contract for an example that does not already own a
 // schema. If your app already has a Standard Schema contract, prefer passing
 // that directly to [formContract].
-// Note: birthDate is initialized with a Date object for type safety.
 export const purchaseFormContract: NgxDeepRequired<PurchaseFormModel> = {
   userId: '',
   firstName: '',
   lastName: '',
-  birthDate: new Date(), // Initialize with Date object for type safety
+  birthDate: '',
   age: 0,
   emergencyContact: '',
   addresses: {
