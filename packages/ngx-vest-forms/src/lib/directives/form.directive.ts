@@ -34,7 +34,6 @@ import {
 } from '@angular/forms';
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 import {
-  catchError,
   distinctUntilChanged,
   filter,
   map,
@@ -78,16 +77,10 @@ import {
 } from '../utils/validation-config-pipeline';
 import type { NgxVestSuite } from '../utils/validation-suite';
 import {
-  extractFieldErrors,
-  extractFieldWarnings,
-  type NgxSuiteFocusSpec,
-  reportToErrorHandler,
-  runFieldValidation,
-} from '../utils/vest-runner';
-import {
   readElementValueForBlur,
   resolveFieldFromBlur,
 } from './field-path-resolver';
+import { createFieldValidator, setFieldWarnings } from './field-validator';
 import type {
   NgxFieldBlurEvent,
   NgxSubmitSettledEvent,
@@ -1099,7 +1092,7 @@ export class FormDirective<T extends Record<string, unknown>> {
     this.suite()?.resetField(field);
 
     // Clear warnings for this field
-    this.#setFieldWarnings(field, undefined);
+    setFieldWarnings(this.fieldWarnings, field, undefined);
 
     // Reset Angular control validation state
     const control = this.ngForm.form.get(field);
@@ -1159,34 +1152,7 @@ export class FormDirective<T extends Record<string, unknown>> {
     this.suite()?.remove(field);
 
     // Clear warnings for this field
-    this.#setFieldWarnings(field, undefined);
-  }
-
-  /**
-   * Stores (or clears, for an empty list) one field's warnings. Leaves the
-   * `fieldWarnings` map untouched when the warnings did not change, so
-   * readers are not notified on every validation run.
-   */
-  #setFieldWarnings(
-    field: string,
-    warnings: readonly string[] | undefined
-  ): void {
-    const current = untracked(this.fieldWarnings);
-    const previous = current.get(field);
-    if (!warnings?.length) {
-      if (previous === undefined) return;
-      const next = new Map(current);
-      next.delete(field);
-      this.fieldWarnings.set(next);
-      return;
-    }
-    if (
-      previous?.length === warnings.length &&
-      previous.every((warning, index) => warning === warnings[index])
-    ) {
-      return;
-    }
-    this.fieldWarnings.set(new Map(current).set(field, warnings));
+    setFieldWarnings(this.fieldWarnings, field, undefined);
   }
 
   /**
@@ -1211,65 +1177,18 @@ export class FormDirective<T extends Record<string, unknown>> {
     const suite = this.suite();
     if (!suite) return () => of(null);
 
-    return (control: AbstractControl) => {
-      // A copy of its own, not the shared `#snapshot` value: the
-      // validator runs inside the control's `updateValueAndValidity`, before
-      // the root form's value event, so that snapshot can still miss this
-      // change or a control registered since; the candidate value is written
-      // into the copy below; and the suite is consumer code that may mutate
-      // the model it is given.
-      // Targeted snapshot with candidate value injected at path
-      // mergeValuesAndRawValues already returns fresh plain objects and arrays,
-      // so we can modify it directly without affecting the form state.
-      const snapshot = mergeValuesAndRawValues<T>(this.ngForm.form);
-      setValueAtPath(snapshot as object, field, control.value);
-
-      const focus: NgxSuiteFocusSpec = {
-        ...this.validationFocus(),
-        only: field,
-      };
-
-      return runFieldValidation(
+    return createFieldValidator(
+      {
+        form: this.ngForm.form,
         suite,
-        focus,
-        snapshot,
-        validationOptions,
-        this.#destroyRef
-      ).pipe(
-        map((result) => {
-          const warnings = extractFieldWarnings(result, field);
-
-          // Store warnings in the fieldWarnings signal for access by control wrappers.
-          // This is necessary because Angular marks a field as invalid when control.errors !== null.
-          // By storing warnings separately, fields can remain valid while still displaying warnings.
-          this.#setFieldWarnings(field, warnings);
-
-          const out = extractFieldErrors(result, field);
-
-          // Ensure DOM validity classes update after async validation sets new
-          // control errors. Angular's template-driven forms update
-          // `ng-valid`/`ng-invalid` host classes during change detection, and
-          // in a zoneless OnPush app no CD pass may be scheduled when the async
-          // validator resolves. markForCheck() is the zoneless-idiomatic way to
-          // request one: it marks the view dirty and notifies the scheduler
-          // without running CD synchronously inside Angular's validation
-          // pipeline (which detectChanges() would do, risking re-entrancy).
-          // Calling it on a destroyed view is a safe no-op.
-          this.#cdr.markForCheck();
-
-          return out;
-        }),
-        // `runFieldValidation` already applies `take(1)` and `takeUntilDestroyed`,
-        // so no additional terminal operators are needed here.
-        // A suite that throws (e.g. reading `model.a.b` while `a` is undefined)
-        // fails closed: the field gets a generic error so the form cannot
-        // submit, and the original error goes to Angular's ErrorHandler so it
-        // is logged with its stack (and reaches a custom handler, if any).
-        catchError((error: unknown) => {
-          reportToErrorHandler(this.#errorHandler, error);
-          return of({ vestInternalError: 'Validation failed' });
-        })
-      );
-    };
+        validationFocus: () => this.validationFocus(),
+        fieldWarnings: this.fieldWarnings,
+        cdr: this.#cdr,
+        destroyRef: this.#destroyRef,
+        errorHandler: this.#errorHandler,
+      },
+      field,
+      validationOptions
+    );
   }
 }
