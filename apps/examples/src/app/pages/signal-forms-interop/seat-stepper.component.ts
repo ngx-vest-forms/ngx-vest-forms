@@ -113,9 +113,7 @@ export class SeatStepperComponent implements FormValueControl<
 
   protected onInput(event: Event): void {
     const element = event.target as HTMLInputElement;
-    const digits = element.value
-      .replaceAll(/\D/g, '')
-      .slice(0, this.maxDigits);
+    const digits = element.value.replaceAll(/\D/g, '').slice(0, this.maxDigits);
     const next = digits === '' ? undefined : Number(digits);
     // Show what the model holds ("05" becomes "5"). Writing the element
     // directly matters when the model does not change: `[value]` would not
