@@ -31,7 +31,10 @@ from the suite.
   `formState()`.
 - `createFormFeedbackSignals` — derives `formState`,
   `warnings`, `validatedFields`, and `pending` for the sidebar state card.
-- `NgxVestSuite<T>` — typed suite contract.
+- `NgxVestSuite<T>` — the suite contract of the `[suite]` input. The suite is
+  checked against it with `satisfies` rather than annotated, so it keeps the
+  field-name types Vest infers from the schema (`only('emial')` does not
+  compile). See `native-schema-demo.validations.spec.ts`.
 
 ## Key files
 
