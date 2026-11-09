@@ -1,5 +1,4 @@
 import {
-  afterNextRender,
   booleanAttribute,
   ChangeDetectorRef,
   computed,
@@ -17,11 +16,7 @@ import {
   signal,
   untracked,
 } from '@angular/core';
-import {
-  outputFromObservable,
-  takeUntilDestroyed,
-  toSignal,
-} from '@angular/core/rxjs-interop';
+import { outputFromObservable, toSignal } from '@angular/core/rxjs-interop';
 import {
   AsyncValidatorFn,
   NgForm,
@@ -67,7 +62,6 @@ import type {
 } from './form-directive.types';
 import {
   getFormSubmittedSignal,
-  runSubmitValidation,
   setAngularFormSubmittedState,
 } from './form-submitted-state';
 import { formValueChanges } from './form-value-changes';
@@ -77,7 +71,11 @@ import {
   connectValidationConfig,
   revalidateOnSuiteChange,
 } from './revalidation-triggers';
-import { submitOutcomes } from './submit-pipeline';
+import {
+  focusFirstInvalidAfterSubmit,
+  submitOutcomes,
+  touchAndValidateOnSubmit,
+} from './submit-pipeline';
 import { ValidationOptions } from './validation-options';
 import { notifyValidationReset } from './validation-reset';
 
@@ -509,45 +507,22 @@ export class FormDirective<T extends Record<string, unknown>> {
     }
 
     /**
-     * Mark all the fields as touched when the form is submitted
+     * Mark all the fields as touched when the form is submitted, and run the
+     * submit-mode root validation before the consumer's `(ngSubmit)` handler.
      */
-    this.ngForm.ngSubmit
-      .pipe(takeUntilDestroyed(this.#destroyRef))
-      .subscribe(() => {
-        this.ngForm.form.markAllAsTouched();
-        this.#blurTick.update((v) => v + 1);
-        // Run form-level validation (submit-mode `ngxValidateRootForm`) now.
-        // This subscription is made in the constructor, so it runs before
-        // the consumer's `(ngSubmit)` handler. That handler then sees the
-        // settled status for synchronous suites, or PENDING while async Vest
-        // tests run, instead of a stale VALID. Root-level only: field
-        // validators already ran on value changes.
-        if (this.ngForm.form.asyncValidator) {
-          runSubmitValidation(this.ngForm);
-        }
-      });
+    touchAndValidateOnSubmit(this.ngForm, this.#destroyRef, () => {
+      this.#blurTick.update((v) => v + 1);
+    });
 
     // Focus only once the submit has settled, dependents included: a field
     // that is still pending matches neither `ng-invalid` nor the wrapper.
-    this.#submitOutcome$
-      .pipe(takeUntilDestroyed(this.#destroyRef))
-      .subscribe(() => {
-        if (this.ngForm.form.valid || !this.focusFirstInvalidOnSubmit()) {
-          return;
-        }
-        // Wait for the render that follows the submit: wrapper `--invalid`
-        // classes and `aria-invalid` only appear then, and for a custom
-        // control they are the only way to find the failing field.
-        this.#cdr.markForCheck();
-        afterNextRender(
-          () => {
-            if (!this.ngForm.form.valid) {
-              this.focusFirstInvalidControl();
-            }
-          },
-          { injector: this.#injector }
-        );
-      });
+    focusFirstInvalidAfterSubmit(this.#submitOutcome$, this.ngForm.form, {
+      enabled: () => this.focusFirstInvalidOnSubmit(),
+      focus: () => this.focusFirstInvalidControl(),
+      cdr: this.#cdr,
+      injector: this.#injector,
+      destroyRef: this.#destroyRef,
+    });
 
     // Re-run every control's validators when the `suite` input changes
     // (a lazily supplied suite or a runtime swap); see the helper for why.

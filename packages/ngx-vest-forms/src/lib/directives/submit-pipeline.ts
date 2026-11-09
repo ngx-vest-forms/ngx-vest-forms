@@ -1,3 +1,10 @@
+import {
+  afterNextRender,
+  type ChangeDetectorRef,
+  type DestroyRef,
+  type Injector,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import type {
   AbstractControl,
   FormControlStatus,
@@ -14,6 +21,8 @@ import {
   switchMap,
   take,
 } from 'rxjs';
+import type { NgxValidationConfig } from './form-directive.types';
+import { runSubmitValidation } from './form-submitted-state';
 
 /** Number of ancestors above `control`. */
 function depth(control: AbstractControl): number {
@@ -38,9 +47,9 @@ function depth(control: AbstractControl): number {
  * handlers: they read the status synchronously, and a revalidation would
  * turn it PENDING under them.
  */
-export function revalidateConfigDependents(
+export function revalidateConfigDependents<T>(
   form: FormGroup,
-  validationConfig: unknown
+  validationConfig: NgxValidationConfig<T>
 ): void {
   const config = validationConfig as Record<
     string,
@@ -91,9 +100,9 @@ export function settledStatus(form: FormGroup): Observable<FormControlStatus> {
  * time). The stream is shared, so that runs once per submit for all
  * subscribers.
  */
-export function submitOutcomes(
+export function submitOutcomes<T>(
   ngForm: NgForm,
-  validationConfig: () => unknown
+  validationConfig: () => NgxValidationConfig<T>
 ): Observable<FormControlStatus> {
   return ngForm.ngSubmit.pipe(
     observeOn(asapScheduler),
@@ -103,4 +112,72 @@ export function submitOutcomes(
     }),
     share()
   );
+}
+
+/**
+ * @internal
+ * On every `ngSubmit`, marks all controls touched, calls `onTouched`, and
+ * runs the form-level (submit-mode root) validation.
+ *
+ * `FormDirective` calls it from its constructor, so this subscription runs
+ * before the consumer's `(ngSubmit)` handler.
+ */
+export function touchAndValidateOnSubmit(
+  ngForm: NgForm,
+  destroyRef: DestroyRef,
+  onTouched: () => void
+): void {
+  ngForm.ngSubmit.pipe(takeUntilDestroyed(destroyRef)).subscribe(() => {
+    ngForm.form.markAllAsTouched();
+    onTouched();
+    // Run form-level validation (submit-mode `ngxValidateRootForm`) now.
+    // This subscription is made in the constructor, so it runs before
+    // the consumer's `(ngSubmit)` handler. That handler then sees the
+    // settled status for synchronous suites, or PENDING while async Vest
+    // tests run, instead of a stale VALID. Root-level only: field
+    // validators already ran on value changes.
+    if (ngForm.form.asyncValidator) {
+      runSubmitValidation(ngForm);
+    }
+  });
+}
+
+/** What {@link focusFirstInvalidAfterSubmit} needs from `FormDirective`. */
+export type SubmitFocusContext = {
+  /** Read per submit: the `focusFirstInvalidOnSubmit` input. */
+  enabled: () => boolean;
+  /** Moves focus to the first invalid control. */
+  focus: () => void;
+  cdr: ChangeDetectorRef;
+  injector: Injector;
+  destroyRef: DestroyRef;
+};
+
+/**
+ * @internal
+ * After each settled submit that left `form` invalid, focuses the first
+ * invalid control once the next render is done (when `enabled()`).
+ */
+export function focusFirstInvalidAfterSubmit(
+  outcomes: Observable<FormControlStatus>,
+  form: FormGroup,
+  context: SubmitFocusContext
+): void {
+  outcomes.pipe(takeUntilDestroyed(context.destroyRef)).subscribe(() => {
+    if (form.valid || !context.enabled()) {
+      return;
+    }
+    // Wait for the render that follows the submit: wrapper `--invalid`
+    // classes and `aria-invalid` only appear then, and for a custom
+    // control they are the only way to find the failing field.
+    context.cdr.markForCheck();
+    afterNextRender(
+      () => {
+        if (!form.valid) {
+          context.focus();
+        }
+      },
+      { injector: context.injector }
+    );
+  });
 }
