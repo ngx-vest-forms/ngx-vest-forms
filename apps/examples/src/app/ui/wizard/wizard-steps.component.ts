@@ -87,7 +87,7 @@ export type WizardStepConfig = {
                   [class.text-white]="status === 'completed'"
                   [class.border-2]="status !== 'completed'"
                   [class.border-primary-600]="status === 'current'"
-                  [class.text-primary-600]="status === 'current'"
+                  [class.text-primary-700]="status === 'current'"
                   [class.border-gray-300]="status === 'upcoming'"
                   [class.bg-white]="status !== 'completed'"
                   [class.text-gray-500]="status === 'upcoming'"
@@ -124,7 +124,7 @@ export type WizardStepConfig = {
                   [class.text-left]="i === 0"
                   [class.text-center]="i > 0 && !last"
                   [class.text-right]="last"
-                  [class.text-primary-600]="
+                  [class.text-primary-700]="
                     status === 'current' || status === 'completed'
                   "
                   [class.text-gray-500]="status === 'upcoming'"
