@@ -288,6 +288,80 @@ describe('resolveFieldFromBlur', () => {
     });
   });
 
+  it('does not match an index from a nested array to the outer array', () => {
+    // Only the inner `lines` items carry ngModelGroup; the order items do
+    // not. orders[1].lines[0]'s `ngModelGroup="0"` must not pick orders[0].
+    const form = document.createElement('form');
+    const orderElements = [0, 1].map(() => {
+      const order = document.createElement('div');
+      const line = document.createElement('div');
+      line.setAttribute('ngModelGroup', '0');
+      const sku = document.createElement('input');
+      sku.name = 'sku';
+      line.append(sku);
+      order.append(line);
+      form.append(order);
+      return sku;
+    });
+    const target = orderElements[1];
+    if (!target) throw new Error('missing input');
+
+    const order = () =>
+      new FormGroup({
+        lines: new FormArray([new FormGroup({ sku: new FormControl('') })]),
+      });
+    const ngForm = createNgForm(
+      new FormGroup({ orders: new FormArray([order(), order()]) })
+    );
+
+    // Both orders fit the DOM equally well: no unique answer, so null
+    // rather than the wrong control.
+    expect(resolveFieldFromBlur(ngForm, target)).toBeNull();
+  });
+
+  it('resolves nested array items when every level carries its index', () => {
+    const form = document.createElement('form');
+    const inputs: HTMLInputElement[] = [];
+    for (const orderIndex of ['0', '1']) {
+      const order = document.createElement('div');
+      order.setAttribute('ngModelGroup', orderIndex);
+      for (const lineIndex of ['0', '1']) {
+        const line = document.createElement('div');
+        line.setAttribute('ngModelGroup', lineIndex);
+        const sku = document.createElement('input');
+        sku.name = 'sku';
+        line.append(sku);
+        order.append(line);
+        inputs.push(sku);
+      }
+      form.append(order);
+    }
+
+    const skus: FormControl[] = [];
+    const order = () =>
+      new FormGroup({
+        lines: new FormArray(
+          [0, 1].map(() => {
+            const sku = new FormControl('');
+            skus.push(sku);
+            return new FormGroup({ sku });
+          })
+        ),
+      });
+    const ngForm = createNgForm(
+      new FormGroup({ orders: new FormArray([order(), order()]) })
+    );
+
+    // orders[1].lines[0]
+    const target = inputs[2];
+    if (!target) throw new Error('missing input');
+    expect(resolveFieldFromBlur(ngForm, target)).toEqual({
+      field: 'orders.1.lines.0.sku',
+      control: skus[2],
+      element: target,
+    });
+  });
+
   it('returns null when no strategy matches', () => {
     const form = document.createElement('form');
     const input = document.createElement('input');
