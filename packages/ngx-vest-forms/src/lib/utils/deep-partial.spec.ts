@@ -240,4 +240,21 @@ describe('NgxDeepPartial', () => {
     const wrongPosition: PartialType = { point: ['x', 'y'] };
     expect(wrongPosition).toBeDefined();
   });
+
+  it('should accept an explicit undefined under exactOptionalPropertyTypes', () => {
+    // The workspace compiles with `exactOptionalPropertyTypes`, so this only
+    // type-checks because NgxDeepPartial spells out `| undefined`.
+    type Model = NgxDeepPartial<{
+      birthDate: Date;
+      address: { street: string };
+    }>;
+
+    const value: Model = {
+      birthDate: undefined,
+      address: { street: undefined },
+    };
+
+    expectTypeOf<Model['birthDate']>().toEqualTypeOf<Date | undefined>();
+    expect(value.birthDate).toBeUndefined();
+  });
 });

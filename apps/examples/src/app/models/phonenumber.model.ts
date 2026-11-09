@@ -1,4 +1,4 @@
-import { NgxDeepRequired } from 'ngx-vest-forms';
+import { NgxDeepPartial, NgxDeepRequired } from 'ngx-vest-forms';
 
 /**
  * Map of phone numbers indexed by numeric keys
@@ -6,7 +6,7 @@ import { NgxDeepRequired } from 'ngx-vest-forms';
  */
 export type PhoneNumberMap = Record<string, string>;
 
-export type PhoneNumberModel = Partial<{
+export type PhoneNumberModel = NgxDeepPartial<{
   addValue: string;
   values: PhoneNumberMap;
 }>;

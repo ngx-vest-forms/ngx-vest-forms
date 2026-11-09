@@ -57,7 +57,7 @@ protected readonly validationConfig = createValidationConfig<Signup>()
   .build();
 ```
 
-A raw object works too when it is clearer; annotate it as `NgxValidationConfig<Model>` so the paths are checked. Runtime paths `FieldPath<T>` cannot express (`'addresses.0.street'`) need an explicit cast of the built object.
+A raw object works too when it is clearer; annotate it as `NgxValidationConfig<Model>` so the paths are checked. Array items are addressed by index, one per array level: `'addresses.0.street'`, the form the runtime registers controls under. The index-free `'addresses.street'` and the bracket form `'addresses[0].street'` are not `FieldPath`s; the index-free form never matches a control. A runtime index type-checks inline (`` `addresses.${i}.street` ``) or in a variable declared with `as const`; a plain `const key = ...` widens to `string`. Only paths `FieldPath<T>` cannot express at all, such as strings read from a server, need an explicit cast of the built object.
 
 ## Calm dependents
 

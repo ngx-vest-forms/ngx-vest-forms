@@ -43,7 +43,7 @@ If you already have a schema, pass it directly and let that remain your structur
 <form ngxVestForm [suite]="suite" [formContract]="zodSchema"></form>
 ```
 
-`@standard-schema/spec` is now a `peerDependency` (`>=1.0.0`). Most consumers don't need to install it directly — bring it in only if you author your own `StandardSchemaV1<T>` literals. The internal `validateShape()` helper has been removed; use `toFormContract()` from `ngx-vest-forms` if you need explicit shape→schema conversion.
+`@standard-schema/spec` (`^1.0.0`) is now a regular dependency of ngx-vest-forms and is installed automatically; you do not need to add it yourself. The internal `validateShape()` helper has been removed; use `toFormContract()` from `ngx-vest-forms` if you need explicit shape→schema conversion.
 
 Unknown-key warnings now depend on the strictness of the supplied Standard Schema. If you keep using a raw `NgxDeepRequired<T>` contract, the legacy extra-property typo checks still apply. The directive only consumes **synchronous** contract results for its development-only diagnostics; async schema results are ignored by that pass.
 
@@ -334,7 +334,16 @@ protected validationConfig = createValidationConfig<PurchaseFormModel>()
   .build();
 ```
 
-For genuinely dynamic path strings that `FieldPath<T>` cannot express (e.g. runtime array indices such as `'addresses.0.street'`), build the object separately and cast it explicitly: `config as NgxValidationConfig<MyModel>`.
+### Array paths carry an index
+
+`FieldPath<T>` and `LeafFieldPath<T>` address array items by index: for `addresses: Address[]` they produce `` `addresses.${number}.street` ``, which accepts `'addresses.0.street'`. v2 produced the index-free `'addresses.street'` instead. That form never worked at runtime: template-driven forms register array items as `ngModelGroup`s keyed by index, so `form.get('addresses.street')` finds no control and a `validationConfig` entry keyed by it never fires. It is no longer a `FieldPath`.
+
+- Replace index-free array paths in `validationConfig`, `createValidationConfig()` calls and `FormFieldName<T>` values with the indexed form, one index per array level: `'orders.lines.sku'` → `'orders.0.lines.0.sku'`, or `` `orders.${i}.lines.${j}.sku` `` built inline.
+- A path stored in a variable must keep its literal type. Write it inline or add `as const`; `` const key = `addresses.${i}.street` `` widens to `string` and is rejected.
+- The element itself (`'addresses.0'`) is a path, and a leaf when the element type includes a primitive (`string[]`, `Array<string | { x: number }>`). Elements typed `any` or `unknown` accept any sub-path below the index.
+- Code that relies on the exact union, for example an exhaustive `switch` over `FieldPath<T>` that ends in a `never` check, sees template-literal members.
+
+For path strings that `FieldPath<T>` cannot express, such as paths read from a server, build the object separately and cast it explicitly: `config as NgxValidationConfig<MyModel>`.
 
 ## Wrapper ARIA, message ids and the pending label
 
@@ -352,6 +361,32 @@ v2 wrote `[formValue]` into the form with `patchValue(value, { emitEvent: false 
 ## `objectToArray` converts only what you list
 
 v2's `objectToArray` also turned an unlisted numeric-keyed object into an array whenever its items were objects, so `objectToArray({ notes: { 0: { tag: 'a' } } }, [])` returned `{ notes: [{ tag: 'a' }] }`. v3 leaves `notes` an object. A numeric-keyed object still becomes an array when its key is listed, when it sits inside a converted branch, or when it contains a converted key. If your save code relied on the old behaviour, add the missing keys to the `keys` argument.
+
+## `NgxDeepPartial` allows an explicit `undefined`
+
+`NgxDeepPartial<T>` now emits `prop?: X | undefined` for object properties instead of `prop?: X`. Without `exactOptionalPropertyTypes` the two are identical. With it, you can now write an empty field as `{ birthDate: undefined }` in a form model, which the form itself does when a control is cleared. `NgxDeepRequired<T>` strips that `undefined` again from optional properties, so contracts built from a partial model stay fully required.
+
+If you compile with `exactOptionalPropertyTypes` and pass part of an `NgxDeepPartial` model to a parameter typed with the built-in `Partial<X>`, the call no longer type-checks, because `Partial<X>` rejects the explicit `undefined`. Type that parameter as `NgxDeepPartial<X>` instead.
+
+## `NgxVestSuite` no longer exposes `any`
+
+v2 typed `subscribe`, `dump` and `resume` on `NgxVestSuite<T>` as `any`. v3 types them as follows; real `create(...)` suites are assignable as before.
+
+- `subscribe(callback)` and `subscribe(event, callback)` return the unsubscribe function, typed `() => void`. The event name is a `string` and the payload `unknown`.
+- `dump()` returns `unknown`, and `resume(state)` takes `unknown`. The precise type is Vest's internal isolate tree, which ngx-vest-forms does not re-export; pass the value from `dump()` straight to `resume()`.
+
+Code that read properties off `dump()`'s result through `NgxVestSuite` needs a cast or the suite's own inferred type. A hand-written suite fake whose `subscribe` returned nothing must now return a function, for example `subscribe: () => () => {}`.
+
+## Internal type parameters removed
+
+v3 drops type parameters that were recursion internals or did nothing. Calls and type references that let TypeScript infer them, which is how the docs and examples use them, need no change. Only code that passes these type arguments explicitly gets a compile error ("Expected N type arguments"):
+
+| v2                                                                                     | v3                                      | Change                                                                                                                                     |
+| -------------------------------------------------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `FieldPath<T, Prefix, Depth>`                                                          | `FieldPath<T>`                          | `Prefix` and `Depth` were documented as internal. For prefixed paths write the template literal yourself: `` `user.${FieldPath<User>}` ``. |
+| `LeafFieldPath<T, Prefix, Depth>`                                                      | `LeafFieldPath<T>`                      | Same as `FieldPath`.                                                                                                                       |
+| `builder.whenChanged<K>(…)`, `builder.bidirectional<K1, K2>(…)`, `builder.group<K>(…)` | the same methods without type arguments | The parameters are typed `FieldPath<T>` directly; autocomplete and checking are unchanged.                                                 |
+| `objectToArray<K>(object, keys)`                                                       | `objectToArray(object, keys)`           | `K` never reached the return type, which stays `unknown`.                                                                                  |
 
 ## Known limitations (v3)
 
@@ -380,6 +415,7 @@ v3.0.0 removes the legacy `sc-` selectors, duplicate directive aliases, duplicat
 - `[ngx-control-wrapper]`
 - `sc-form-group-wrapper`, `[scFormGroupWrapper]`
 - `SC_ERROR_DISPLAY_MODE_TOKEN`
+- `[ngxModel]` and `[ngxModelGroup]`: alias selectors of the directives that hook into `ngModel` and `ngModelGroup`. Nothing in the docs or examples used them, and on their own they validated nothing, because only `ngModel` and `ngModelGroup` create the control that runs the validator. If you added `ngxModel` or `ngxModelGroup` next to `ngModel` or `ngModelGroup`, delete the attribute; validation is unchanged.
 
 ### Renamed symbols
 

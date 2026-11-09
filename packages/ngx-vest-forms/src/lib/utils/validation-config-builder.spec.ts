@@ -36,6 +36,42 @@ type TestFormModel = NgxDeepPartial<{
 }>;
 
 describe('ValidationConfigBuilder', () => {
+  describe('indexed array paths', () => {
+    type ListModel = NgxDeepPartial<{
+      title: string;
+      contacts: Array<{ email: string; confirmEmail: string }>;
+    }>;
+
+    it('should accept runtime array indices in every method', () => {
+      const index = 1;
+      const config = createValidationConfig<ListModel>()
+        .whenChanged('contacts.0.email', 'contacts.0.confirmEmail')
+        .bidirectional(
+          `contacts.${index}.email`,
+          `contacts.${index}.confirmEmail`
+        )
+        .group(['title', 'contacts.2.email'])
+        .build();
+
+      expect(config).toEqual({
+        'contacts.0.email': ['contacts.0.confirmEmail'],
+        'contacts.1.email': ['contacts.1.confirmEmail'],
+        'contacts.1.confirmEmail': ['contacts.1.email'],
+        title: ['contacts.2.email'],
+        'contacts.2.email': ['title'],
+      });
+    });
+
+    it('should reject an unknown property below an index', () => {
+      const builder = createValidationConfig<ListModel>();
+
+      // @ts-expect-error `phone` is not a property of a contact
+      builder.whenChanged('contacts.0.phone', 'title');
+
+      expect(builder.build()).toEqual({ 'contacts.0.phone': ['title'] });
+    });
+  });
+
   describe('whenChanged()', () => {
     it('should add single dependent field', () => {
       const config = createValidationConfig<TestFormModel>()

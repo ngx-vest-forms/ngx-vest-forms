@@ -117,7 +117,6 @@ function recursivelyConvertArrays<T>(object: T): DeepArrayToObject<T> {
  * Security: Unsafe prototype-related keys (`__proto__`, `prototype`,
  * `constructor`) are left out at every level.
  *
- * @typeParam K - The literal keys whose numeric-keyed sub-objects become arrays.
  * @param object - The (object-shaped) form model being converted.
  * @param keys - The keys whose numeric-keyed sub-objects become arrays.
  * @returns The converted value as `unknown` (assert the concrete shape).
@@ -133,9 +132,9 @@ function recursivelyConvertArrays<T>(object: T): DeepArrayToObject<T> {
  * // => [{ id: 1 }]
  * ```
  */
-export function objectToArray<const K extends readonly string[]>(
+export function objectToArray(
   object: object,
-  keys: K
+  keys: readonly string[]
 ): unknown {
   const { value: processed } = objectToArrayInternal(object, keys);
   if (processed && typeof processed === 'object' && !Array.isArray(processed)) {

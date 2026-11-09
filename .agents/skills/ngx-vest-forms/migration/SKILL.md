@@ -15,7 +15,7 @@ v3 requires Angular `>=22 <23` (core and forms), Vest `>=6.3.4 <7`, TypeScript `
 npm install ngx-vest-forms@beta vest@^6.3.4   # use ngx-vest-forms@^3 once 3.0.0 is stable
 ```
 
-`@standard-schema/spec` is a peer only for apps that hand-write `StandardSchemaV1` objects. `@angular/common` is no longer a peer.
+`@standard-schema/spec` is a regular dependency of ngx-vest-forms and installs with it; do not add it to the app. `@angular/common` is no longer a peer.
 
 ## 2. Take the inventory
 
@@ -24,7 +24,7 @@ Run this from the project root and keep the output; every hit is a site some lat
 ```bash
 grep -rnE --include='*.ts' --include='*.html' --include='*.css' --include='*.scss' --exclude-dir=node_modules --exclude-dir=dist \
   -e '\bsc-(control|form-group)-wrapper\b|\bsc(VestForm|ControlWrapper|FormGroupWrapper)\b|\sngx-control-wrapper[\s=>]' \
-  -e '\bvalidateRootForm(Mode)?\b|\bform(ControlState|ErrorDisplay|ErrorControl)\b' \
+  -e '\bvalidateRootForm(Mode)?\b|\bform(ControlState|ErrorDisplay|ErrorControl)\b|\bngxModel(Group)?\b' \
   -e '\b(vestForms|ROOT_FORM_CONSTANT|DeepPartial|DeepRequired|NgxTypedVestSuite|(Ngx)?FormCompatibleDeepRequired|cloneDeep|validateShape|SC_ERROR_DISPLAY_MODE_TOKEN|ScErrorDisplayMode)\b' \
   -e '\b(fastDeepEqual|shallowEqual|parseFieldPath|getFormControlField|getFormGroupField|mergeValuesAndRawValues)\b' \
   -e '\bformShape\b|\bstaticSuite\b|\bpromisify\b|\btest\.memo\b|\bonly\(' \
@@ -46,6 +46,8 @@ Run the codemod in [`SELECTOR-PREFIX-MIGRATION.md`](https://github.com/ngx-vest-
 | `<sc-form-group-wrapper>`, `[scFormGroupWrapper]`                                                     | `<ngx-form-group-wrapper>`, `ngxFormGroupWrapper`       |
 
 Update CSS that targets removed `sc-` host classes.
+
+Delete any `ngxModel` or `ngxModelGroup` attribute. They were aliases of the directives behind `ngModel` and `ngModelGroup` and are gone in v3; the `ngModel` / `ngModelGroup` next to them carries the validation unchanged.
 
 ## 4. Rename removed exports
 
@@ -103,7 +105,7 @@ For Vest changes beyond these (enforce rules, `group`, `each`, result access), u
 
 ## 8. Type `validationConfig`
 
-The `[validationConfig]` binding is checked against the model, so a typo'd path is now a compile error. Annotate the object as `NgxValidationConfig<Model>` or build it with `createValidationConfig<Model>()`. For runtime paths `FieldPath<T>` cannot express (`'addresses.0.street'`), cast the built object: `config as NgxValidationConfig<Model>`.
+The `[validationConfig]` binding is checked against the model, so a typo'd path is now a compile error. Annotate the object as `NgxValidationConfig<Model>` or build it with `createValidationConfig<Model>()`. Array paths need an index per array level (`'addresses.0.street'`, or `` `addresses.${i}.street` `` inline or `as const`); rewrite v2's index-free `'addresses.street'`, which never matched a control. Only paths `FieldPath<T>` cannot express at all, such as strings from a server, need a cast: `config as NgxValidationConfig<Model>`.
 
 ## 9. Review behavior changes
 

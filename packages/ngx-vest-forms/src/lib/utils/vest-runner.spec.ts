@@ -110,7 +110,7 @@ function createSuiteResult(
     return Promise.resolve(resolved).then(
       onfulfilled ?? undefined
     ) as PromiseLike<TResult1>;
-  }) as NgxSuiteRunResult['then'];
+  }) as NonNullable<NgxSuiteRunResult['then']>;
 
   return thenable;
 }
