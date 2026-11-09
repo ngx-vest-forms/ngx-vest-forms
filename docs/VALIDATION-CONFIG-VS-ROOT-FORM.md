@@ -631,10 +631,10 @@ validationConfig = { password: ['confirmPassword'] };
 
 ## Additional Resources
 
-- **[README: Validation](../README.md#validation)** - Core validation concepts
+- **[README: Validation](../README.md#validation-config)** - Core validation concepts
 - **[README: Field Blur Events & Draft Auto-Save](../README.md#field-blur-events--draft-auto-save)** - Blur-driven persistence pattern
-- **[README: Dependent Field Validation](../README.md#dependent-field-validation-with-conditional-rendering)** - validationConfig patterns
-- **[README: Root Form Validation](../README.md#validations-on-the-root-form)** - ngxValidateRootForm usage
+- **[README: Dependent Field Validation](../README.md#validation-config)** - validationConfig patterns
+- **[README: Root Form Validation](../README.md#root-form-validation)** - ngxValidateRootForm usage
 - **[Auto-Save on Blur](./AUTO-SAVE-ON-BLUR.md)** - Draft persistence pattern with `fieldBlur`
 - **[Complete Example](./COMPLETE-EXAMPLE.md)** - Full working example
 - **[Migration Guide (v1.x → v2.0.0)](./migration/MIGRATION-v1.x-to-v2.0.0.md)** - Upgrading guide (ngxValidateRootFormMode change)

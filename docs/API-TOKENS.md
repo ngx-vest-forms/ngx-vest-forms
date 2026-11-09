@@ -261,7 +261,7 @@ type NgxErrorDisplayMode =
 ```
 
 - **`on-blur-or-submit`** (default): Show errors after field loses focus OR after form submission
-- **`on-blur`**: Show errors only after the field loses focus
+- **`on-blur`**: Show errors after the field loses focus, or after form submission (currently behaves the same as `on-blur-or-submit`)
 - **`on-submit`**: Show errors only after form submission attempt
 - **`on-dirty`**: Show errors as soon as value changes (or after blur/submit)
 - **`always`**: Show errors immediately, including pristine fields
@@ -552,8 +552,8 @@ This is purely additive — if you don't provide the token, behavior is unchange
 
 ```typescript
 import { bootstrapApplication } from '@angular/platform-browser';
-import { NGX_EQUALITY_FN } from 'ngx-vest-forms';
 import { dequal } from 'dequal/lite';
+import { NGX_EQUALITY_FN } from 'ngx-vest-forms';
 import { AppComponent } from './app/app.component';
 
 bootstrapApplication(AppComponent, {

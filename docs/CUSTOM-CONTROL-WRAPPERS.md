@@ -606,7 +606,7 @@ Once created, use your custom wrapper just like the built-in `ngx-control-wrappe
 ## Best Practices
 
 1. **Use `hostDirectives`** - Always apply `FormErrorDisplayDirective` as a host directive for automatic state management
-2. **Respect accessibility** - Use proper ARIA attributes (`role="alert"`, `aria-live`, `aria-busy`)
+2. **Respect accessibility** - Use proper ARIA attributes: `role="status"` with `aria-live="polite"` for field-level messages (reserve `role="alert"` for a form-level error summary), plus `aria-busy` while validating
 3. **Filter during pending** - The directive's `errors()` and `warnings()` signals automatically filter during validation
 4. **Leverage computed signals** - All exposed signals are computed, so they update automatically
 5. **Style based on state** - Use host bindings to apply CSS classes based on error display state

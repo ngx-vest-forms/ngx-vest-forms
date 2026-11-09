@@ -1,7 +1,7 @@
 # Release Process
 
 Every release, stable or prerelease, runs through one workflow:
-[Actions > Release](../../actions/workflows/cd.yml) (`cd.yml`). Merging or
+[Actions > Release](https://github.com/ngx-vest-forms/ngx-vest-forms/actions/workflows/cd.yml) (`cd.yml`). Merging or
 pushing never publishes. The workflow publishes through npm Trusted Publishing
 (OIDC), and the provenance of every published version names this file.
 
@@ -15,7 +15,7 @@ The workflow has two jobs:
 
 **How to trigger:**
 
-1. Go to [Actions > Release](../../actions/workflows/cd.yml), click "Run
+1. Go to [Actions > Release](https://github.com/ngx-vest-forms/ngx-vest-forms/actions/workflows/cd.yml), click "Run
    workflow" and set **Use workflow from** to the branch you release.
    semantic-release picks the channel from that branch.
 2. `dry_run` is on by default: the run prints the computed version and
