@@ -228,13 +228,27 @@ export const EXAMPLE_ROUTES: readonly ExampleRouteMeta[] = [
       ),
   },
   {
+    path: 'signal-forms-interop',
+    label: 'Signal Forms Controls',
+    title: 'Signal Forms Controls with ngModel',
+    subtitle:
+      'Use FormValueControl and FormCheckboxControl components from Angular Signal Forms in a template-driven ngx-vest-forms form.',
+    category: 'Controls',
+    order: 2,
+    badge: 'new',
+    loadComponent: () =>
+      import('../pages/signal-forms-interop/signal-forms-interop.page').then(
+        (m) => m.SignalFormsInteropPageComponent
+      ),
+  },
+  {
     path: 'accessible-wrapper',
     label: 'Accessible Wrapper',
     title: 'Accessible Custom Wrapper',
     subtitle:
       'Use directive-based ARIA wiring when the built-in wrapper markup is not the right fit.',
     category: 'Controls',
-    order: 2,
+    order: 3,
     badge: 'new',
     loadComponent: () =>
       import('../pages/accessible-wrapper-demo/accessible-wrapper.page').then(

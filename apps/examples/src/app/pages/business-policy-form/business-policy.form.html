@@ -74,7 +74,10 @@
             formValue().accountType === 'business' &&
             isEuCountry(formValue().country)
           ) {
-            <ngx-control-wrapper class="form-field">
+            <ngx-control-wrapper
+              class="form-field"
+              animate.enter="reveal-enter"
+            >
               <label>
                 <span class="label-text">VAT ID</span>
                 <input

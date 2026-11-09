@@ -284,7 +284,7 @@ test.describe('Purchase Form', () => {
         // Wait for shipping section to appear and verify it's visible
         const shippingHeading = page.getByRole('heading', {
           name: 'Shipping Address',
-          level: 3,
+          level: 4,
         });
         await expect(shippingHeading).toBeVisible();
 
@@ -321,7 +321,7 @@ test.describe('Purchase Form', () => {
         // Wait for shipping address section to appear (it's conditionally rendered)
         const shippingHeading = page.getByRole('heading', {
           name: /shipping address/i,
-          level: 3,
+          level: 4,
         });
         await expect(shippingHeading).toBeVisible();
 

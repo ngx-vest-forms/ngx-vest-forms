@@ -48,7 +48,7 @@ type AlertLive = 'polite' | 'assertive' | 'off';
       [attr.aria-label]="title() || null"
     >
       @if (title()) {
-        <h2 class="mb-2 text-sm font-semibold">{{ title() }}</h2>
+        <h3 class="mb-2 text-sm font-semibold">{{ title() }}</h3>
       }
       <div class="text-sm">
         <ng-content></ng-content>

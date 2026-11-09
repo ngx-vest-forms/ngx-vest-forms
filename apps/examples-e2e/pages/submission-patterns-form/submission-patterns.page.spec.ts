@@ -14,7 +14,7 @@ test.describe('Submission Patterns Page', () => {
     ).toBeVisible();
 
     await expect(
-      page.getByRole('heading', { name: /simulated outcome/i, level: 3 })
+      page.getByRole('heading', { name: /simulated outcome/i, level: 2 })
     ).toBeVisible();
     await expect(sidebar).toContainText(/form state/i);
     await expect(sidebar).toContainText(/form value/i);

@@ -99,6 +99,12 @@ test.describe('Complex Nested Form', () => {
 
     await expect(memberFullName).toHaveCount(1);
     await expect(form.getByText(/email is required/i)).toHaveCount(1);
+    // Focus stays on the Remove button now in the removed row's place
+    // (the former member 2), not on <body>.
+    await expect(
+      page.getByRole('button', { name: 'Remove member 1' })
+    ).toBeFocused();
+    await expect(page.getByText('Member 1 removed')).toBeAttached();
 
     // The removed member's errors must not block a later valid submit.
     await fillAndBlur(memberFullName.first(), 'Ada Lovelace');

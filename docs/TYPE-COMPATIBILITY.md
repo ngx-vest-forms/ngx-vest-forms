@@ -82,6 +82,41 @@ A repo-wide find-and-replace from `NgxTypedVestSuite` to `NgxVestSuite` is safe.
 - `run(model)` for full validation
 - `get()`, `reset()`, `resetField(field)`, and `remove(field)`
 
+## Schema-typed suites
+
+Vest 6 types a suite from a schema passed as the second argument of `create()`. With `enforce.shape(...)` (or any Standard Schema), the callback's `model` gets the schema's output type, `run()` takes its input type, and `only()`, `focus()`, `afterField()` and result lookups such as `getErrors()`, `hasErrors()` and `isValid()` accept only the schema's field names. A misspelled field becomes a compile error.
+
+An annotation such as `const suite: NgxVestSuite<Model> = create(...)` widens those field names back to `string`. To keep them, leave the suite's type inferred and check it with `satisfies`. The suite still binds to `[suite]`, because `NgxVestSuite<T>` declares its methods with method syntax and TypeScript checks their parameters bivariantly.
+
+```typescript
+import { NgxDeepPartial, NgxVestSuite } from 'ngx-vest-forms';
+import { create, enforce, test } from 'vest';
+
+type SignupModel = NgxDeepPartial<{ email: string; age: number }>;
+
+// Every key optional: the directive runs one field at a time against a
+// partial model, and a focused run checks only that field's part of the schema.
+const signupSchema = enforce.shape({
+  email: enforce.optional(enforce.isString()),
+  age: enforce.optional(enforce.isNumber()),
+});
+
+export const signupSuite = create((model) => {
+  test('email', 'Email is required', () => {
+    enforce(model.email).isNotBlank();
+  });
+  test('age', 'You must be 18 or older', () => {
+    enforce(model.age).greaterThanOrEquals(18);
+  });
+}, signupSchema) satisfies NgxVestSuite<SignupModel>;
+
+signupSuite.only('email').run({ email: 'a@b.c' }); // OK
+// @ts-expect-error 'emial' is not a field of the schema.
+signupSuite.only('emial');
+```
+
+The field names are the schema's top-level keys. Nested Field Paths such as `'address.city'` are not in that union: `test('address.city', ...)` still works, and you read their messages from `result.getErrors()`, a record keyed by any path. The [native schema example](../apps/examples/src/app/pages/native-schema-demo/native-schema-demo.validations.ts) uses this pattern, and its spec checks the typing.
+
 ## Date field compatibility
 
 When using `Date` fields in deep-partial form models, prefer expressing the contract in your Standard Schema if you already have one. For schema-less forms, the legacy `NgxDeepRequired<T>` fallback still supports the common pattern where form controls start with empty strings before a date is selected:
