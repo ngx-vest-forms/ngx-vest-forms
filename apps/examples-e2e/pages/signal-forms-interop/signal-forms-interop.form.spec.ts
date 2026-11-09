@@ -73,11 +73,13 @@ test.describe('Signal Forms controls with ngModel', () => {
     await expect(seats).not.toHaveAttribute('aria-invalid');
   });
 
-  test('should disable the stepper through ngModel and drop it from the form value', async ({
+  test('should disable the stepper through ngModel and still submit its value', async ({
     page,
   }) => {
     const seats = page.getByRole('spinbutton', { name: 'Seats' });
 
+    // Out of range: the suite skips the field while it is locked.
+    await seats.fill('12');
     await page.getByLabel(/lock the seat count/i).check();
 
     await expect(seats).toBeDisabled();
@@ -90,7 +92,7 @@ test.describe('Signal Forms controls with ngModel', () => {
 
     await expect(
       page.getByRole('status').filter({ hasText: /booked/i })
-    ).toContainText(/seat count locked/i);
+    ).toContainText(/seat count locked at 12/i);
   });
 
   test('should submit once both controls are valid', async ({ page }) => {

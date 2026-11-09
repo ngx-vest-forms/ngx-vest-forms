@@ -11,8 +11,9 @@ import {
  */
 export const signalFormsInteropSuite: NgxVestSuite<SignalFormsInteropModel> =
   create((model: SignalFormsInteropModel) => {
-    // A locked (disabled) stepper drops out of the form value and is not
-    // validated, just like a disabled native input.
+    // A locked (disabled) stepper is not validated. Its value still reaches
+    // the suite and the submitted value: ngx-vest-forms builds the form value
+    // from getRawValue(), which includes disabled controls.
     omitWhen(model.lockSeats === true, () => {
       test('seats', 'Choose how many seats you need', () => {
         enforce(model.seats).isNotNullish();

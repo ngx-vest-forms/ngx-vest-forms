@@ -2,7 +2,9 @@ import { Directive, inject, OnInit } from '@angular/core';
 import { NgModel } from '@angular/forms';
 
 /**
- * WORKAROUND for an Angular 22.2 gap, not an ngx-vest-forms requirement.
+ * WORKAROUND for an Angular 22.2 gap. Required for now: without this
+ * directive, Vest never runs for a Signal Forms control bound with
+ * `[ngModel]`. The field shows no errors and the form reports it valid.
  *
  * When `[ngModel]` sits on a Signal Forms control (`FormValueControl` or
  * `FormCheckboxControl`) instead of a `ControlValueAccessor`, Angular's
@@ -17,7 +19,11 @@ import { NgModel } from '@angular/forms';
  * This directive attaches `NgModel`'s composed validators to the control
  * itself, with public Angular API only. Put it on Signal Forms controls only;
  * a native input or a ControlValueAccessor host already gets its validators.
- * Remove it once Angular wires validators on the custom-control path.
+ *
+ * A fix inside ngx-vest-forms is planned, so `[ngModel]` on a Signal Forms
+ * control gets the Vest validator without this directive. Remove the
+ * directive from this example when that fix lands (or when Angular wires
+ * validators on the custom-control path, whichever comes first).
  */
 @Directive({
   selector: '[ngModel][ngxSignalControlValidators]',

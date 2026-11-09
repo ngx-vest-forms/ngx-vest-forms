@@ -9,7 +9,8 @@ export const signalFormsInteropContent = defineExampleContent({
       'Both bound with plain [ngModel] inside ngx-control-wrapper inside an ngxVestForm, with no ControlValueAccessor and no NG_VALUE_ACCESSOR provider',
       'Per-field Vest validation, errors in the wrapper, aria-invalid and aria-describedby on the inner input and the switch button',
       'The touch output marking the field touched on blur, so errors appear on the usual on-blur timing',
-      'A native checkbox disabling the stepper through ngModel; the disabled state reaches the control and the field drops out of the form value',
+      'A native checkbox disabling the stepper through ngModel; the disabled state reaches the control, the suite skips the field, and its value stays in the submitted value (ngx-vest-forms reads getRawValue())',
+      'A small workaround directive, ngxSignalControlValidators, without which Vest never runs for these fields in Angular 22.2',
     ],
   },
   learn: {

@@ -30,6 +30,16 @@
       disabled state reaches its <code>disabled</code> input, and a failed
       submit focuses it
     </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white"
+        >One workaround, for now</strong
+      >
+      — In Angular 22.2, <code>[ngModel]</code> does not attach validators to a
+      Signal Forms control, so without the
+      <code>ngxSignalControlValidators</code> directive Vest never runs for the
+      field. A fix inside ngx-vest-forms is planned; until then, put the
+      directive on each Signal Forms control
+    </ngx-intro-item>
   </ngx-intro-section>
 
   <div class="grid grid-cols-1 gap-8 py-12 md:grid-cols-2 md:gap-12 md:py-16">
@@ -42,7 +52,9 @@
         <ngx-alert-panel tone="success" title="Booked">
           <p>
             @if (submitted.lockSeats) {
-              Seat count locked; terms accepted.
+              Seat count locked at
+              <strong>{{ submitted.seats ?? 'none' }}</strong
+              >; terms accepted.
             } @else {
               <strong>{{ submitted.seats }}</strong> seat(s) booked; terms
               accepted.

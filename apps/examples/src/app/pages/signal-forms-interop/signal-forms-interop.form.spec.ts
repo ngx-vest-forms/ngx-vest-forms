@@ -165,7 +165,12 @@ describe('Signal Forms controls with ngModel in ngxVestForm', () => {
     expect(seatsInput().disabled).toBe(false);
   });
 
-  it('disables the stepper through [disabled] on ngModel and drops it from validation', async () => {
+  it('disables the stepper through [disabled] on ngModel and keeps its value in the submitted value', async () => {
+    const input = seatsInput();
+    input.value = '12';
+    input.dispatchEvent(new Event('input'));
+    await settle();
+
     root.querySelector<HTMLInputElement>('#lockSeats')!.click();
     await settle();
 
@@ -175,7 +180,15 @@ describe('Signal Forms controls with ngModel in ngxVestForm', () => {
     termsSwitch().click();
     await submit();
 
+    // The suite skips the locked field, so 12 (out of range) does not block
+    // the submit. The value is still submitted: ngx-vest-forms builds the
+    // form value from getRawValue(), which includes disabled controls.
     await eventually(() => expect(host.submitted()?.valid).toBe(true));
+    expect(host.submitted()?.value).toEqual({
+      seats: 12,
+      lockSeats: true,
+      acceptTerms: true,
+    });
   });
 
   it('submits valid once both controls have valid values', async () => {

@@ -29,19 +29,27 @@ instead of a Signal Forms version and a `ControlValueAccessor` version.
 - First-invalid focus: a failed submit focuses the inner input, or the switch
   when it is the only invalid field.
 - Disabled: `[disabled]` on the `ngModel` host disables the control, and
-  `NgModel` writes the state into the component's `disabled` input. The field
-  leaves the form value.
+  `NgModel` writes the state into the component's `disabled` input. The
+  value stays in `formValue` and in the `submitSettled` value, because
+  ngx-vest-forms builds both from `getRawValue()`, which includes disabled
+  controls. The suite skips the field with `omitWhen` while it is locked.
 
-## Workaround: `ngxSignalControlValidators`
+## Workaround: `ngxSignalControlValidators` (required for now)
 
-In Angular 22.2, `NgModel`'s custom-control path (`setupCustomControl()`)
-does not call `setUpValidators()`. Validators provided on the element are
-never attached to the `FormControl`: ngx-vest-forms' Vest validator, and
-Angular's own `required` too. The control stays `VALID`.
+Without this directive, Vest never runs for a Signal Forms control bound
+with `[ngModel]` in Angular 22.2: the field shows no errors and the form
+reports it valid whatever its value.
+
+The cause: `NgModel`'s custom-control path (`setupCustomControl()`) does not
+call `setUpValidators()`. Validators provided on the element are never
+attached to the `FormControl`: ngx-vest-forms' Vest validator, and Angular's
+own `required` too. The control stays `VALID`.
 
 `signal-control-validators.directive.ts` attaches `NgModel`'s composed
-validators to its control with public Angular API. Put it on Signal Forms
-controls only, and remove it once Angular wires validators on that path.
+validators to its control with public Angular API. Put it on every Signal
+Forms control bound with `[ngModel]`, and on nothing else. A fix inside
+ngx-vest-forms is planned; it will make the directive unnecessary, and this
+example will drop it then.
 
 ## Design notes for your own control
 
