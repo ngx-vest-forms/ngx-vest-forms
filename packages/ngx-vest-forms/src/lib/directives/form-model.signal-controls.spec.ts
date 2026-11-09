@@ -740,9 +740,8 @@ describe('FormModelDirective with Signal Forms controls: value events on attach'
     });
 
     // A native input reports the initial value once (the emitting setValue
-    // NgModel runs after setup). The attach revalidates with events too, so
-    // Angular emits valueChanges with the unchanged value once more; it must
-    // not add a second formValueChange.
+    // NgModel runs after setup). The attach announces only the status, so the
+    // Signal Forms control reports it once too.
     expect(nativeFixture.componentInstance.valueChanges).toEqual([
       { note: 'filled' },
     ]);
