@@ -235,7 +235,11 @@ export class FormControlStateDirective {
       this.#subscribedControl = attached;
       this.#attached.set({
         control: attached,
-        path: (control as { path?: string[] }).path,
+        // Read live: a dynamic `[ngModelGroup]` or a re-indexed array row
+        // changes the directive's path while the control stays the same.
+        get path() {
+          return (control as { path?: string[] }).path;
+        },
       });
       const sub = attached.statusChanges.subscribe(() => {
         const {

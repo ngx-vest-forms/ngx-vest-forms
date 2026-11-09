@@ -87,6 +87,21 @@ describe('validateShape function', () => {
       expect(calls.some((msg: string) => msg.includes('NGX-002'))).toBe(false);
     });
 
+    it('should report keys the shape only inherits as extra properties', () => {
+      validateShape(
+        { name: 'John', toString: 'x', constructor: { city: 'y' } },
+        { name: '' }
+      );
+
+      const calls = consoleWarnSpy.mock.calls.map((call: unknown[]) =>
+        String(call[0])
+      );
+      expect(calls).toHaveLength(2);
+      expect(calls.every((msg: string) => msg.includes('NGX-001'))).toBe(true);
+      expect(calls.join(' ')).toContain("'toString'");
+      expect(calls.join(' ')).toContain("'constructor'");
+    });
+
     it('should warn when nested property has typo', () => {
       const formValue = {
         address: {

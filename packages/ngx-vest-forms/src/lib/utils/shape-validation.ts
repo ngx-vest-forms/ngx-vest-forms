@@ -70,7 +70,8 @@ function validateFormValueAgainstShape(
     // Array shapes provide one example item at index 0, so every numeric key maps to '0'.
     const shapeKey = isNumericKey && key !== '0' ? '0' : key;
     const shapeValue = shape?.[shapeKey];
-    const hasShapeKey = shape != null && shapeKey in shape;
+    // Own keys only: `toString` or `constructor` are not declared by the shape.
+    const hasShapeKey = shape != null && Object.hasOwn(shape, shapeKey);
 
     // Skip Date fields receiving empty strings (common in date picker libraries)
     if (shapeValue instanceof Date && value === '') {
