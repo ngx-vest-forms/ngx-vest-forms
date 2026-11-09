@@ -13,14 +13,12 @@ import type {
 } from '@angular/forms';
 import {
   asapScheduler,
-  filter,
   type Observable,
   observeOn,
-  of,
   share,
   switchMap,
-  take,
 } from 'rxjs';
+import { settledStatus } from '../utils/settled-status';
 import type { NgxValidationConfig } from './form-directive.types';
 import { runSubmitValidation } from './form-submitted-state';
 
@@ -47,7 +45,7 @@ function depth(control: AbstractControl): number {
  * handlers: they read the status synchronously, and a revalidation would
  * turn it PENDING under them.
  */
-export function revalidateConfigDependents<T>(
+function revalidateConfigDependents<T>(
   form: FormGroup,
   validationConfig: NgxValidationConfig<T>
 ): void {
@@ -72,21 +70,6 @@ export function revalidateConfigDependents<T>(
   for (const ancestor of [...ancestors].sort((a, b) => depth(b) - depth(a))) {
     ancestor.updateValueAndValidity({ onlySelf: true, emitEvent: true });
   }
-}
-
-/**
- * @internal
- * The root status once it is no longer PENDING: emits right away when
- * validation already settled, otherwise on the next settled status.
- */
-export function settledStatus(form: FormGroup): Observable<FormControlStatus> {
-  if (form.status !== 'PENDING') {
-    return of(form.status);
-  }
-  return form.statusChanges.pipe(
-    filter((status) => status !== 'PENDING'),
-    take(1)
-  );
 }
 
 /**
@@ -143,7 +126,7 @@ export function touchAndValidateOnSubmit(
 }
 
 /** What {@link focusFirstInvalidAfterSubmit} needs from `FormDirective`. */
-export type SubmitFocusContext = {
+type SubmitFocusContext = {
   /** Read per submit: the `focusFirstInvalidOnSubmit` input. */
   enabled: () => boolean;
   /** Moves focus to the first invalid control. */
