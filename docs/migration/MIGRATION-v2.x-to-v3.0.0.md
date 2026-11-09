@@ -334,9 +334,16 @@ protected validationConfig = createValidationConfig<PurchaseFormModel>()
   .build();
 ```
 
-Paths with a runtime array index type-check: `FieldPath<T>` accepts `'addresses.0.street'` (and `` `addresses.${i}.street` `` for `i: number`) next to the flattened `'addresses.street'`. For path strings that `FieldPath<T>` still cannot express, such as paths read from a server, build the object separately and cast it explicitly: `config as NgxValidationConfig<MyModel>`.
+### Array paths carry an index
 
-`FieldPath<T>` and `LeafFieldPath<T>` of a model with arrays therefore include more members than before (the indexed forms). Code that assigns or compares paths is unaffected. Code that relies on the exact union, for example an exhaustive `switch` over `FieldPath<T>` that ends in a `never` check, sees the new template-literal members.
+`FieldPath<T>` and `LeafFieldPath<T>` address array items by index: for `addresses: Address[]` they produce `` `addresses.${number}.street` ``, which accepts `'addresses.0.street'`. v2 produced the index-free `'addresses.street'` instead. That form never worked at runtime: template-driven forms register array items as `ngModelGroup`s keyed by index, so `form.get('addresses.street')` finds no control and a `validationConfig` entry keyed by it never fires. It is no longer a `FieldPath`.
+
+- Replace index-free array paths in `validationConfig`, `createValidationConfig()` calls and `FormFieldName<T>` values with the indexed form, one index per array level: `'orders.lines.sku'` → `'orders.0.lines.0.sku'`, or `` `orders.${i}.lines.${j}.sku` `` built inline.
+- A path stored in a variable must keep its literal type. Write it inline or add `as const`; `` const key = `addresses.${i}.street` `` widens to `string` and is rejected.
+- The element itself (`'addresses.0'`) is a path, and a leaf when the element type includes a primitive (`string[]`, `Array<string | { x: number }>`). Elements typed `any` or `unknown` accept any sub-path below the index.
+- Code that relies on the exact union, for example an exhaustive `switch` over `FieldPath<T>` that ends in a `never` check, sees template-literal members.
+
+For path strings that `FieldPath<T>` cannot express, such as paths read from a server, build the object separately and cast it explicitly: `config as NgxValidationConfig<MyModel>`.
 
 ## Wrapper ARIA, message ids and the pending label
 

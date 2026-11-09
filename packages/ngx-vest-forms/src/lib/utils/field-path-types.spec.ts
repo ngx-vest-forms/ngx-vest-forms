@@ -72,10 +72,14 @@ describe('field-path-types', () => {
         }>;
       };
 
-      // Array elements generate paths without index notation
-      const validPaths: FieldPath<TestModel>[] = ['items', 'items.name'];
+      // Array elements are addressed by index, as at runtime
+      const validPaths: FieldPath<TestModel>[] = [
+        'items',
+        'items.0',
+        'items.0.name',
+      ];
 
-      expect(validPaths.length).toBe(2);
+      expect(validPaths.length).toBe(3);
     });
 
     it('should stop at primitive types', () => {
@@ -149,13 +153,10 @@ describe('field-path-types', () => {
       tags: string[];
     };
 
-    it('should emit every array path in flattened and indexed form', () => {
+    it('should emit every array path with an index segment', () => {
       expectTypeOf<FieldPath<Model>>().toEqualTypeOf<
         | 'name'
         | 'addresses'
-        | 'addresses.street'
-        | 'addresses.geo'
-        | 'addresses.geo.lat'
         | `addresses.${number}`
         | `addresses.${number}.street`
         | `addresses.${number}.geo`
@@ -192,14 +193,14 @@ describe('field-path-types', () => {
         'addresses.0.street',
         'addresses.12.geo.lat',
         'tags.3',
-        // The flattened form still works.
-        'addresses.street',
       ];
 
-      expect(paths).toHaveLength(5);
+      expect(paths).toHaveLength(4);
     });
 
-    it('should reject indexed paths that do not exist', () => {
+    it('should reject paths that do not exist or do not resolve at runtime', () => {
+      // @ts-expect-error index-free paths never match a control (see array-field-paths.spec.ts)
+      const flattened: FieldPath<Model> = 'addresses.street';
       // @ts-expect-error unknown property below an index
       const unknownProperty: FieldPath<Model> = 'addresses.0.nope';
       // @ts-expect-error the index segment must be a number
@@ -214,13 +215,14 @@ describe('field-path-types', () => {
       const bracketIndex: FieldPath<Model> = 'addresses[0].street';
 
       expect([
+        flattened,
         unknownProperty,
         nonNumericIndex,
         indexOnPrimitive,
         belowPrimitiveElement,
         missingDot,
         bracketIndex,
-      ]).toHaveLength(6);
+      ]).toHaveLength(7);
     });
 
     it('should index optional arrays in an NgxDeepPartial model', () => {
@@ -231,7 +233,6 @@ describe('field-path-types', () => {
 
       expectTypeOf<FieldPath<FormModel>>().toEqualTypeOf<
         | 'contacts'
-        | 'contacts.email'
         | `contacts.${number}`
         | `contacts.${number}.email`
         | 'notes'
@@ -250,21 +251,19 @@ describe('field-path-types', () => {
 
       const paths: FieldPath<Orders>[] = [
         'orders.0.lines.3.sku',
-        'orders.0.lines.sku',
-        'orders.lines.3.sku',
-        'orders.lines.sku',
+        'orders.0.lines',
         'matrix.1',
         'matrix.1.2',
       ];
+      // @ts-expect-error every array level needs its index
+      const missingInnerIndex: FieldPath<Orders> = 'orders.0.lines.sku';
 
-      expect(paths).toHaveLength(6);
+      expect([...paths, missingInnerIndex]).toHaveLength(5);
     });
 
     it('should emit indexed primitive elements as leaves', () => {
       expectTypeOf<LeafFieldPath<Model>>().toEqualTypeOf<
         | 'name'
-        | 'addresses.street'
-        | 'addresses.geo.lat'
         | `addresses.${number}.street`
         | `addresses.${number}.geo.lat`
         | `tags.${number}`
@@ -272,6 +271,109 @@ describe('field-path-types', () => {
 
       const tag: LeafFieldPath<Model> = 'tags.0';
       expect(tag).toBe('tags.0');
+    });
+
+    it('should treat an element of a mixed primitive/object union as a leaf too', () => {
+      type Mixed = { mixed: Array<string | { x: number }> };
+
+      expectTypeOf<FieldPath<Mixed>>().toEqualTypeOf<
+        'mixed' | `mixed.${number}` | `mixed.${number}.x`
+      >();
+      expectTypeOf<LeafFieldPath<Mixed>>().toEqualTypeOf<
+        `mixed.${number}` | `mixed.${number}.x`
+      >();
+
+      const element: LeafFieldPath<Mixed> = 'mixed.0';
+      expect(element).toBe('mixed.0');
+    });
+
+    it('should not treat an optional object element as a leaf', () => {
+      type Sparse = { slots: Array<{ id: string } | undefined> };
+
+      expectTypeOf<
+        LeafFieldPath<Sparse>
+      >().toEqualTypeOf<`slots.${number}.id`>();
+
+      const id: LeafFieldPath<Sparse> = 'slots.0.id';
+      expect(id).toBe('slots.0.id');
+    });
+
+    it('should accept any sub-path below an any or unknown element', () => {
+      type Loose = { items: any[]; extras: unknown[] };
+
+      const paths: FieldPath<Loose>[] = [
+        'items',
+        'items.0',
+        'items.0.name',
+        'items.0.deep.er',
+        'extras.1',
+        'extras.1.anything',
+      ];
+      const leaves: LeafFieldPath<Loose>[] = ['items.0', 'items.0.name'];
+      // @ts-expect-error the index is still required
+      const noIndex: FieldPath<Loose> = 'items.name';
+
+      expect([...paths, ...leaves, noIndex]).toHaveLength(9);
+    });
+
+    it('should compile recursive models', () => {
+      type Tree = { name: string; children: Tree[] };
+
+      const config: ValidationConfigMap<Tree> = {
+        name: ['children.0.name', 'children.0.children.1.name'],
+      };
+      const deep: FieldPath<Tree> = 'children.0.children.0.children.0.name';
+
+      expect(config.name).toHaveLength(2);
+      expect(deep).toBe('children.0.children.0.children.0.name');
+    });
+
+    it('should compile a wide model with three levels of nested arrays', () => {
+      // Regression guard: emitting two forms per array level made this
+      // config literal cost ~35k instantiations; one form keeps it ~5k.
+      type Fields = {
+        f1: string;
+        f2: string;
+        f3: string;
+        f4: string;
+        f5: string;
+        f6: string;
+        f7: string;
+        f8: string;
+        f9: string;
+        f10: string;
+        f11: string;
+        f12: string;
+        f13: string;
+        f14: string;
+      };
+      type L3 = Fields & { f15: string };
+      type L2 = Fields & { items: L3[] };
+      type L1 = Fields & { items: L2[] };
+      type Wide = Fields & { items: L1[] };
+
+      const config: ValidationConfigMap<Wide> = {
+        f1: ['f2', 'items.0.items.1.items.2.f15'],
+      };
+
+      expect(config.f1).toHaveLength(2);
+    });
+
+    it('should accept a runtime-built path inline or as const, not once widened to string', () => {
+      const index: number = 2;
+
+      const inline: FieldPath<Model> = `addresses.${index}.street`;
+      const asConst = `addresses.${index}.street` as const;
+      const fromConst: FieldPath<Model> = asConst;
+      const widened = `addresses.${index}.street`;
+      // @ts-expect-error a template literal stored without `as const` widens to string
+      const fromWidened: FieldPath<Model> = widened;
+
+      expect([inline, fromConst, fromWidened]).toEqual([
+        'addresses.2.street',
+        'addresses.2.street',
+        'addresses.2.street',
+      ]);
     });
 
     it('should resolve FieldPathValue for an indexed path', () => {

@@ -129,9 +129,10 @@ const PIPELINE_OPTIONS = {
  *
  * Since 3.0.0 the untyped `Record<string, string[]>` escape hatch is gone, so
  * typo'd field paths in a `[validationConfig]` binding fail to compile instead
- * of silently never triggering. For genuinely dynamic path strings (e.g.
- * runtime array indices such as `'addresses.0.street'`), build the object
- * separately and cast it to `NgxValidationConfig<T>` explicitly.
+ * of silently never triggering. Array items are addressed by index
+ * (`'addresses.0.street'`, or `` `addresses.${i}.street` `` inline or
+ * `as const`). Only path strings `FieldPath<T>` cannot express, such as
+ * paths read from a server, need an explicit cast to `NgxValidationConfig<T>`.
  */
 export type NgxValidationConfig<T = unknown> = ValidationConfigMap<T> | null;
 

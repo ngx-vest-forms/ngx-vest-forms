@@ -105,7 +105,7 @@ For Vest changes beyond these (enforce rules, `group`, `each`, result access), u
 
 ## 8. Type `validationConfig`
 
-The `[validationConfig]` binding is checked against the model, so a typo'd path is now a compile error. Annotate the object as `NgxValidationConfig<Model>` or build it with `createValidationConfig<Model>()`. For runtime paths `FieldPath<T>` cannot express (`'addresses.0.street'`), cast the built object: `config as NgxValidationConfig<Model>`.
+The `[validationConfig]` binding is checked against the model, so a typo'd path is now a compile error. Annotate the object as `NgxValidationConfig<Model>` or build it with `createValidationConfig<Model>()`. Array paths need an index per array level (`'addresses.0.street'`, or `` `addresses.${i}.street` `` inline or `as const`); rewrite v2's index-free `'addresses.street'`, which never matched a control. Only paths `FieldPath<T>` cannot express at all, such as strings from a server, need a cast: `config as NgxValidationConfig<Model>`.
 
 ## 9. Review behavior changes
 
