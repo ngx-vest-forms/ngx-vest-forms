@@ -1,4 +1,4 @@
-import { signal, WritableSignal } from '@angular/core';
+import { Signal, signal, WritableSignal } from '@angular/core';
 import { FormResetEvent, FormSubmittedEvent, NgForm } from '@angular/forms';
 
 const formSubmittedSignals = new WeakMap<NgForm, WritableSignal<boolean>>();
@@ -33,6 +33,31 @@ export function getFormSubmittedSignal(
     submitted = state;
   }
   return submitted;
+}
+
+const formResetCounts = new WeakMap<NgForm, Signal<number>>();
+
+/**
+ * A counter that goes up each time the root form emits a `FormResetEvent`
+ * (`NgForm.resetForm()`, `form.reset()`), shared by every directive on the
+ * form. Error display reads it to drop the messages it holds while a field
+ * re-validates, so a reset clears them at once instead of when the post-reset
+ * validation settles.
+ */
+export function getFormResetCount(ngForm: NgForm): Signal<number> {
+  let count = formResetCounts.get(ngForm);
+  if (!count) {
+    const state = signal(0);
+    const form = ngForm.form;
+    form.events.subscribe((event) => {
+      if (event.source === form && event instanceof FormResetEvent) {
+        state.update((value) => value + 1);
+      }
+    });
+    count = state.asReadonly();
+    formResetCounts.set(ngForm, count);
+  }
+  return count;
 }
 
 export function setAngularFormSubmittedState(

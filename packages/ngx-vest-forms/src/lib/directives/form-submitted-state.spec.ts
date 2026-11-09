@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { FormControl, NgForm, ValidationErrors } from '@angular/forms';
 import { describe, expect, it } from 'vitest';
 import {
+  getFormResetCount,
   getFormSubmittedSignal,
   isSubmitValidationPass,
   runSubmitValidation,
@@ -62,6 +63,31 @@ describe('getFormSubmittedSignal', () => {
     child.reset();
 
     expect(submitted()).toBe(true);
+  });
+});
+
+describe('getFormResetCount', () => {
+  it('counts root form resets and is shared per form', () => {
+    const ngForm = createNgForm();
+    const count = getFormResetCount(ngForm);
+    expect(count()).toBe(0);
+    expect(getFormResetCount(ngForm)).toBe(count);
+
+    ngForm.resetForm();
+    ngForm.form.reset();
+
+    expect(count()).toBe(2);
+  });
+
+  it('ignores resets of a child control', () => {
+    const ngForm = createNgForm();
+    const child = new FormControl('');
+    ngForm.form.addControl('child', child);
+    const count = getFormResetCount(ngForm);
+
+    child.reset();
+
+    expect(count()).toBe(0);
   });
 });
 

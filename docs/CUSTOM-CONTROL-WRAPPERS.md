@@ -468,8 +468,8 @@ The directive exposes these computed signals for building custom UIs:
 ```typescript
 // Error display control
 shouldShowErrors(); // boolean - Whether to show errors based on mode and state
-errors(); // string[] - Filtered errors (empty during pending)
-warnings(); // string[] - Filtered warnings (empty during pending)
+errors(); // string[] - Errors to render (last settled ones while re-validating)
+warnings(); // string[] - Warnings to render (last settled ones while re-validating)
 isPending(); // boolean - Whether async validation is running
 
 // Raw state signals (from FormControlStateDirective)
@@ -607,7 +607,7 @@ Once created, use your custom wrapper just like the built-in `ngx-control-wrappe
 
 1. **Use `hostDirectives`** - Always apply `FormErrorDisplayDirective` as a host directive for automatic state management
 2. **Respect accessibility** - Use proper ARIA attributes: `role="status"` with `aria-live="polite"` for field-level messages (reserve `role="alert"` for a form-level error summary), plus `aria-busy` while validating
-3. **Filter during pending** - The directive's `errors()` and `warnings()` signals automatically filter during validation
+3. **Render the display signals, not the raw ones** - While a field re-validates, `errors()`, `warnings()`, `shouldShowErrors()` and `shouldShowWarnings()` keep the last settled result, so messages and `aria-invalid` don't flicker and the live region doesn't re-announce. They change when the new result settles, and clear at once on reset. `errorMessages()`/`warningMessages()` are the raw state and are empty while pending
 4. **Leverage computed signals** - All exposed signals are computed, so they update automatically
 5. **Style based on state** - Use host bindings to apply CSS classes based on error display state
 
