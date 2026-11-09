@@ -197,9 +197,9 @@ Add a one-way dependency: when the trigger field changes, revalidate dependent f
 **Signature:**
 
 ```typescript
-whenChanged<K extends FieldPath<T>>(
-  trigger: K,
-  revalidate: FieldPath<T> | FieldPath<T>[]
+whenChanged(
+  trigger: FieldPath<T>,
+  revalidate: FieldPath<T> | ReadonlyArray<FieldPath<T>>
 ): this
 ```
 
@@ -246,10 +246,7 @@ Add a two-way dependency: when either field changes, revalidate the other.
 **Signature:**
 
 ```typescript
-bidirectional<K1 extends FieldPath<T>, K2 extends FieldPath<T>>(
-  field1: K1,
-  field2: K2
-): this
+bidirectional(field1: FieldPath<T>, field2: FieldPath<T>): this
 ```
 
 **Examples:**
@@ -298,7 +295,7 @@ Create a validation group where all fields revalidate each other.
 **Signature:**
 
 ```typescript
-group<K extends FieldPath<T>>(fields: K[]): this
+group(fields: ReadonlyArray<FieldPath<T>>): this
 ```
 
 **Examples:**

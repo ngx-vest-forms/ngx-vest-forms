@@ -1,27 +1,29 @@
-import { DebugElement } from '@angular/core';
+import { DebugElement, Type } from '@angular/core';
 import { By } from '@angular/platform-browser';
 
 /**
- * Type-safe alternative to `By.directive(directive) as any`
+ * Typed alternative to `debugElement.query(By.directive(directive as any))`.
  *
- * This helper properly types the DebugElement query result to avoid using `as any`
- * while maintaining the same functionality.
+ * Returns the first descendant `DebugElement` that hosts `directive`.
  */
-export function queryDirective<T>(
+export function queryDirective(
   debugElement: DebugElement,
-  directive: any
+  directive: Type<unknown>
 ): DebugElement {
   return debugElement.query(By.directive(directive));
 }
 
 /**
- * Type-safe alternative for getting injector from queried directive
+ * Typed alternative for reading a directive instance from the injector of
+ * the element that hosts it.
  *
- * This helper properly types the injector access to avoid using `as any`
+ * The result type follows from the `directive` class, so no cast is needed:
+ * `getDirectiveInjector(fixture.debugElement, FormDirective)` returns a
+ * `FormDirective`.
  */
 export function getDirectiveInjector<T>(
   debugElement: DebugElement,
-  directive: any
+  directive: Type<T>
 ): T {
   return debugElement.query(By.directive(directive)).injector.get(directive);
 }

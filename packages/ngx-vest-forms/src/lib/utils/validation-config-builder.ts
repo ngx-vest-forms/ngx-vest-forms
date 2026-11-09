@@ -86,8 +86,8 @@ export class ValidationConfigBuilder<T> {
    * /// Result: { password: ['confirmPassword', 'securityScore'] }
    * ```
    */
-  whenChanged<K extends FieldPath<T>>(
-    trigger: K,
+  whenChanged(
+    trigger: FieldPath<T>,
     revalidate: FieldPath<T> | ReadonlyArray<FieldPath<T>>
   ): this {
     const deps = Array.isArray(revalidate) ? revalidate : [revalidate];
@@ -164,10 +164,7 @@ export class ValidationConfigBuilder<T> {
    * /// }
    * ```
    */
-  bidirectional<K1 extends FieldPath<T>, K2 extends FieldPath<T>>(
-    field1: K1,
-    field2: K2
-  ): this {
+  bidirectional(field1: FieldPath<T>, field2: FieldPath<T>): this {
     // Development mode warning for exact duplicate
     if (typeof ngDevMode !== 'undefined' && ngDevMode) {
       const hasField1ToField2 =
@@ -245,7 +242,7 @@ export class ValidationConfigBuilder<T> {
    * builder.group(['street', 'city', 'state', 'zipCode']);
    * ```
    */
-  group<K extends FieldPath<T>>(fields: readonly K[]): this {
+  group(fields: ReadonlyArray<FieldPath<T>>): this {
     // Each field triggers validation of all other fields in the group
     for (const field of fields) {
       const others = fields.filter((f) => f !== field);

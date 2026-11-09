@@ -355,6 +355,17 @@ v2 wrote `[formValue]` into the form with `patchValue(value, { emitEvent: false 
 
 v2's `objectToArray` also turned an unlisted numeric-keyed object into an array whenever its items were objects, so `objectToArray({ notes: { 0: { tag: 'a' } } }, [])` returned `{ notes: [{ tag: 'a' }] }`. v3 leaves `notes` an object. A numeric-keyed object still becomes an array when its key is listed, when it sits inside a converted branch, or when it contains a converted key. If your save code relied on the old behaviour, add the missing keys to the `keys` argument.
 
+## Internal type parameters removed
+
+v3 drops type parameters that were recursion internals or did nothing. Calls and type references that let TypeScript infer them, which is how the docs and examples use them, need no change. Only code that passes these type arguments explicitly gets a compile error ("Expected N type arguments"):
+
+| v2                                                                                     | v3                                      | Change                                                                                                                                     |
+| -------------------------------------------------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `FieldPath<T, Prefix, Depth>`                                                          | `FieldPath<T>`                          | `Prefix` and `Depth` were documented as internal. For prefixed paths write the template literal yourself: `` `user.${FieldPath<User>}` ``. |
+| `LeafFieldPath<T, Prefix, Depth>`                                                      | `LeafFieldPath<T>`                      | Same as `FieldPath`.                                                                                                                       |
+| `builder.whenChanged<K>(…)`, `builder.bidirectional<K1, K2>(…)`, `builder.group<K>(…)` | the same methods without type arguments | The parameters are typed `FieldPath<T>` directly; autocomplete and checking are unchanged.                                                 |
+| `objectToArray<K>(object, keys)`                                                       | `objectToArray(object, keys)`           | `K` never reached the return type, which stays `unknown`.                                                                                  |
+
 ## Known limitations (v3)
 
 These are accepted, documented limitations in the v3 line. Each links to an Architecture Decision Record (ADR) with the full rationale and the conditions under which it will be revisited.

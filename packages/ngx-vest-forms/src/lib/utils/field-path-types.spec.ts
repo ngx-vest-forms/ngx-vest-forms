@@ -123,6 +123,24 @@ describe('field-path-types', () => {
     });
   });
 
+  describe('public type parameters', () => {
+    it('should take only the model type', () => {
+      type Model = { user: { name: string } };
+
+      // @ts-expect-error the recursion prefix is no longer a public parameter
+      type Prefixed = FieldPath<Model, 'root.'>;
+      // @ts-expect-error the recursion prefix is no longer a public parameter
+      type PrefixedLeaf = LeafFieldPath<Model, 'root.'>;
+
+      // The replacement for a prefix is a template literal.
+      expectTypeOf<`root.${LeafFieldPath<Model>}`>().toEqualTypeOf<'root.user.name'>();
+      expectTypeOf<Prefixed | PrefixedLeaf>().not.toBeNever();
+
+      const prefixed: `root.${LeafFieldPath<Model>}` = 'root.user.name';
+      expect(prefixed).toBe('root.user.name');
+    });
+  });
+
   describe('FieldPath with runtime array indices', () => {
     type Address = { street: string; geo: { lat: number } };
     type Model = {
@@ -145,6 +163,9 @@ describe('field-path-types', () => {
         | 'tags'
         | `tags.${number}`
       >();
+
+      const indexed: FieldPath<Model> = 'addresses.0.geo.lat';
+      expect(indexed).toBe('addresses.0.geo.lat');
     });
 
     it('should keep paths of a model without arrays unchanged', () => {
@@ -160,6 +181,9 @@ describe('field-path-types', () => {
         | 'profile.address'
         | 'profile.address.city'
       >();
+
+      const path: FieldPath<Flat> = 'profile.address.city';
+      expect(path).toBe('profile.address.city');
     });
 
     it('should accept indexed paths', () => {
@@ -213,6 +237,9 @@ describe('field-path-types', () => {
         | 'notes'
         | `notes.${number}`
       >();
+
+      const note: FieldPath<FormModel> = 'notes.0';
+      expect(note).toBe('notes.0');
     });
 
     it('should index nested arrays at every level', () => {
@@ -242,6 +269,9 @@ describe('field-path-types', () => {
         | `addresses.${number}.geo.lat`
         | `tags.${number}`
       >();
+
+      const tag: LeafFieldPath<Model> = 'tags.0';
+      expect(tag).toBe('tags.0');
     });
 
     it('should resolve FieldPathValue for an indexed path', () => {

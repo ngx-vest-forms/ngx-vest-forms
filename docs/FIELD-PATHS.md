@@ -715,7 +715,7 @@ class PurchaseForm {
 
 ```typescript
 // Core field path type
-export type FieldPath<T, Prefix = '', Depth = []>;
+export type FieldPath<T>;
 
 // Validation configuration map
 export type ValidationConfigMap<T>;
@@ -730,7 +730,7 @@ export type FieldPathValue<T, Path>;
 export type ValidateFieldPath<T, Path>;
 
 // Extract only leaf paths
-export type LeafFieldPath<T, Prefix = '', Depth = []>;
+export type LeafFieldPath<T>;
 
 // Canonical suite type
 export type NgxVestSuite<T>;

@@ -17,58 +17,6 @@ type Primitive =
   | undefined;
 
 /**
- * Recursively generates all valid field paths for a type as string literals.
- * This provides full IDE autocomplete and compile-time validation for field names.
- *
- * **Key Features:**
- * - Supports nested objects with dot notation (e.g., 'user.address.city')
- * - Works with optional properties from NgxDeepPartial types
- * - Handles arrays and readonly arrays, in the flattened form
- *   (`'addresses.street'`) and the indexed form the runtime reports
- *   (`'addresses.0.street'`, typed as `` `addresses.${number}.street` ``)
- * - Stops recursion at primitive types
- * - Maximum depth of 10 levels to prevent infinite recursion
- *
- * **Type Safety Benefits:**
- * - IDE autocomplete for all valid field paths
- * - Compile-time errors for typos in field names
- * - Refactoring support (rename property → all usages update)
- * - Self-documenting code through type inference
- *
- * @template T - The model type to extract field paths from
- * @template Prefix - Internal recursion prefix (do not use directly)
- * @template Depth - Internal depth counter to prevent infinite recursion
- *
- * @example
- * ```typescript
- * type Model = {
- *   name: string;
- *   profile: {
- *     age: number;
- *     address: {
- *       city: string;
- *     }
- *   }
- * };
- *
- * type Paths = FieldPath<Model>;
- * /// Result: 'name' | 'profile' | 'profile.age' | 'profile.address' | 'profile.address.city'
- * ```
- *
- * @example With NgxDeepPartial
- * ```typescript
- * type FormModel = NgxDeepPartial<{
- *   user: {
- *     email: string;
- *     phone: string;
- *   }
- * }>;
- *
- * type Paths = FieldPath<FormModel>;
- * /// Result: 'user' | 'user.email' | 'user.phone'
- * ```
- */
-/**
  * @internal
  * Single shared generator for {@link FieldPath} and {@link LeafFieldPath}.
  *
@@ -140,11 +88,57 @@ type ArrayElementPaths<
       | FieldPathInternal<U, Leaves, Prefix, Depth>
       | FieldPathInternal<U, Leaves, `${Prefix}${number}.`, Depth>;
 
-export type FieldPath<
-  T,
-  Prefix extends string = '',
-  Depth extends readonly number[] = [],
-> = FieldPathInternal<T, false, Prefix, Depth>;
+/**
+ * Recursively generates all valid field paths for a type as string literals.
+ * This provides full IDE autocomplete and compile-time validation for field names.
+ *
+ * **Key Features:**
+ * - Supports nested objects with dot notation (e.g., 'user.address.city')
+ * - Works with optional properties from NgxDeepPartial types
+ * - Handles arrays and readonly arrays, in the flattened form
+ *   (`'addresses.street'`) and the indexed form the runtime reports
+ *   (`'addresses.0.street'`, typed as `` `addresses.${number}.street` ``)
+ * - Stops recursion at primitive types
+ * - Maximum depth of 10 levels to prevent infinite recursion
+ *
+ * **Type Safety Benefits:**
+ * - IDE autocomplete for all valid field paths
+ * - Compile-time errors for typos in field names
+ * - Refactoring support (rename property → all usages update)
+ * - Self-documenting code through type inference
+ *
+ * @template T - The model type to extract field paths from
+ *
+ * @example
+ * ```typescript
+ * type Model = {
+ *   name: string;
+ *   profile: {
+ *     age: number;
+ *     address: {
+ *       city: string;
+ *     }
+ *   }
+ * };
+ *
+ * type Paths = FieldPath<Model>;
+ * /// Result: 'name' | 'profile' | 'profile.age' | 'profile.address' | 'profile.address.city'
+ * ```
+ *
+ * @example With NgxDeepPartial
+ * ```typescript
+ * type FormModel = NgxDeepPartial<{
+ *   user: {
+ *     email: string;
+ *     phone: string;
+ *   }
+ * }>;
+ *
+ * type Paths = FieldPath<FormModel>;
+ * /// Result: 'user' | 'user.email' | 'user.phone'
+ * ```
+ */
+export type FieldPath<T> = FieldPathInternal<T, false>;
 
 /**
  * Type-safe validation configuration map.
@@ -371,8 +365,4 @@ export type ValidateFieldPath<T, Path extends string> =
  * /// Note: 'user' and 'user.profile' are excluded (not leaves)
  * ```
  */
-export type LeafFieldPath<
-  T,
-  Prefix extends string = '',
-  Depth extends readonly number[] = [],
-> = FieldPathInternal<T, true, Prefix, Depth>;
+export type LeafFieldPath<T> = FieldPathInternal<T, true>;
