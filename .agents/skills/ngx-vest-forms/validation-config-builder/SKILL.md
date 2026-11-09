@@ -57,7 +57,7 @@ protected readonly validationConfig = createValidationConfig<Signup>()
   .build();
 ```
 
-A raw object works too when it is clearer; annotate it as `NgxValidationConfig<Model>` so the paths are checked. Runtime paths `FieldPath<T>` cannot express (`'addresses.0.street'`) need an explicit cast of the built object.
+A raw object works too when it is clearer; annotate it as `NgxValidationConfig<Model>` so the paths are checked. Paths with an array index type-check in the dot form (`'addresses.0.street'`, or `` `addresses.${i}.street` `` for `i: number`), next to the flattened `'addresses.street'`; the bracket form `'addresses[0].street'` does not. Only paths `FieldPath<T>` cannot express at all, such as strings read from a server, need an explicit cast of the built object.
 
 ## Calm dependents
 

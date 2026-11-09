@@ -334,7 +334,9 @@ protected validationConfig = createValidationConfig<PurchaseFormModel>()
   .build();
 ```
 
-For genuinely dynamic path strings that `FieldPath<T>` cannot express (e.g. runtime array indices such as `'addresses.0.street'`), build the object separately and cast it explicitly: `config as NgxValidationConfig<MyModel>`.
+Paths with a runtime array index type-check: `FieldPath<T>` accepts `'addresses.0.street'` (and `` `addresses.${i}.street` `` for `i: number`) next to the flattened `'addresses.street'`. For path strings that `FieldPath<T>` still cannot express, such as paths read from a server, build the object separately and cast it explicitly: `config as NgxValidationConfig<MyModel>`.
+
+`FieldPath<T>` and `LeafFieldPath<T>` of a model with arrays therefore include more members than before (the indexed forms). Code that assigns or compares paths is unaffected. Code that relies on the exact union, for example an exhaustive `switch` over `FieldPath<T>` that ends in a `never` check, sees the new template-literal members.
 
 ## Wrapper ARIA, message ids and the pending label
 

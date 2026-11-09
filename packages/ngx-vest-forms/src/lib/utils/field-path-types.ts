@@ -23,7 +23,9 @@ type Primitive =
  * **Key Features:**
  * - Supports nested objects with dot notation (e.g., 'user.address.city')
  * - Works with optional properties from NgxDeepPartial types
- * - Handles arrays and readonly arrays
+ * - Handles arrays and readonly arrays, in the flattened form
+ *   (`'addresses.street'`) and the indexed form the runtime reports
+ *   (`'addresses.0.street'`, typed as `` `addresses.${number}.street` ``)
  * - Stops recursion at primitive types
  * - Maximum depth of 10 levels to prevent infinite recursion
  *
@@ -89,8 +91,9 @@ type FieldPathInternal<
   : T extends Primitive
     ? never // Don't traverse primitives
     : T extends ReadonlyArray<infer U>
-      ? // For arrays, generate paths for the element type
-        FieldPathInternal<U, Leaves, Prefix, [...Depth, 1]>
+      ? // Arrays reached through an optional (`| undefined`) property land
+        // here: generate the element paths in both forms.
+        ArrayElementPaths<U, Leaves, Prefix, [...Depth, 1]>
       : {
           [K in keyof T & string]: T[K] extends Primitive
             ? // Primitive property: just the field name (always a leaf)
@@ -98,14 +101,7 @@ type FieldPathInternal<
             : T[K] extends ReadonlyArray<infer U>
               ? // Array property: optionally the container path, plus element paths
                 | (Leaves extends true ? never : `${Prefix}${K}`)
-                | (U extends Primitive
-                    ? never
-                    : FieldPathInternal<
-                        U,
-                        Leaves,
-                        `${Prefix}${K}.`,
-                        [...Depth, 1]
-                      >)
+                | ArrayElementPaths<U, Leaves, `${Prefix}${K}.`, [...Depth, 1]>
               : // Object property: optionally the container path, plus nested paths
                 | (Leaves extends true ? never : `${Prefix}${K}`)
                 | FieldPathInternal<
@@ -115,6 +111,34 @@ type FieldPathInternal<
                     [...Depth, 1]
                   >;
         }[keyof T & string];
+
+/**
+ * @internal
+ * Paths below an array whose element type is `U`. `Prefix` is the array's own
+ * path plus a trailing dot (or `''` for a top-level array).
+ *
+ * Emits two forms of every element path:
+ * - flattened, without an index (`addresses.street`), the form v3 has always
+ *   produced and the one `validationConfig` keys usually use;
+ * - indexed with a `${number}` segment (`addresses.0.street`), the form the
+ *   runtime reports (control names, `getAllFormErrors` keys, Vest field names
+ *   inside `each()`).
+ *
+ * The element itself (`addresses.${number}`) is a leaf when `U` is a
+ * primitive and a container otherwise. Both forms recurse at the same depth,
+ * so the depth limit is unchanged.
+ */
+type ArrayElementPaths<
+  U,
+  Leaves extends boolean,
+  Prefix extends string,
+  Depth extends readonly number[],
+> = [U] extends [Primitive]
+  ? `${Prefix}${number}`
+  :
+      | (Leaves extends true ? never : `${Prefix}${number}`)
+      | FieldPathInternal<U, Leaves, Prefix, Depth>
+      | FieldPathInternal<U, Leaves, `${Prefix}${number}.`, Depth>;
 
 export type FieldPath<
   T,

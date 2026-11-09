@@ -47,7 +47,29 @@ type UserPaths = FieldPath<UserModel>;
 - ✅ Refactoring support
 - ✅ Supports nested objects up to 10 levels deep
 - ✅ Works with optional properties
-- ✅ Handles arrays
+- ✅ Handles arrays, with and without a runtime index
+
+#### Array paths
+
+Every path below an array comes in two forms: the flattened form without an index (`addresses.street`) and the indexed form with a `${number}` segment (`addresses.0.street`). The indexed form is the one the library reports at runtime: control names, `getAllFormErrors` keys, and the Vest field names a suite uses inside `each()`. The element itself (`addresses.0`) is a path too. For an array of primitives, `tags.0` is a leaf.
+
+```typescript
+type Model = {
+  addresses: Array<{ street: string }>;
+  tags: string[];
+};
+
+// 'addresses' | 'addresses.street' | `addresses.${number}` | `addresses.${number}.street`
+// | 'tags' | `tags.${number}`
+type Paths = FieldPath<Model>;
+
+const ok: Paths = 'addresses.0.street'; // ✅
+const flat: Paths = 'addresses.street'; // ✅
+const typo: Paths = 'addresses.0.stret'; // ❌ compile error
+const bracket: Paths = 'addresses[0].street'; // ❌ use the dot form
+```
+
+`${number}` accepts anything TypeScript reads as a number, so `'addresses.-1.street'` or `'addresses.1.5.street'` also type-check; the type checks the shape of the path, not whether the index exists. Nested arrays get an index segment per level (`orders.0.lines.3.sku`).
 
 ### `ValidationConfigMap<T>`
 
@@ -587,9 +609,9 @@ function isValidFieldPath<T>(model: T, path: string): path is FieldPath<T> {
 ### Issue: Array Index Paths Not Working
 
 **Expected:** Array indices in paths like `'items.0.name'`
-**Actual:** `FieldPath` generates `'items.name'` (without index)
+**Actual:** a compile error on an indexed path
 
-**Explanation:** This is by design. Field paths represent the structure, not specific indices. Use the generated paths with array validation functions. `FieldPathValue` still accepts an indexed path such as `'items.0.name'`.
+**Explanation:** Since 3.0.0, `FieldPath` accepts indexed dot paths (`'items.0.name'`) next to the flattened form (`'items.name'`); see [Array paths](#array-paths). If an indexed path is still rejected, check that it uses dots, not brackets (`'items[0].name'` is not a `FieldPath`), and that the property below the index exists on the element type. A path built at runtime (`` `items.${i}.name` `` with `i: number`) type-checks too.
 
 ---
 

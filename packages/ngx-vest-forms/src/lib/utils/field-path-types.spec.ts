@@ -123,6 +123,163 @@ describe('field-path-types', () => {
     });
   });
 
+  describe('FieldPath with runtime array indices', () => {
+    type Address = { street: string; geo: { lat: number } };
+    type Model = {
+      name: string;
+      addresses: Address[];
+      tags: string[];
+    };
+
+    it('should emit every array path in flattened and indexed form', () => {
+      expectTypeOf<FieldPath<Model>>().toEqualTypeOf<
+        | 'name'
+        | 'addresses'
+        | 'addresses.street'
+        | 'addresses.geo'
+        | 'addresses.geo.lat'
+        | `addresses.${number}`
+        | `addresses.${number}.street`
+        | `addresses.${number}.geo`
+        | `addresses.${number}.geo.lat`
+        | 'tags'
+        | `tags.${number}`
+      >();
+    });
+
+    it('should keep paths of a model without arrays unchanged', () => {
+      type Flat = {
+        name: string;
+        profile: { age: number; address: { city: string } };
+      };
+
+      expectTypeOf<FieldPath<Flat>>().toEqualTypeOf<
+        | 'name'
+        | 'profile'
+        | 'profile.age'
+        | 'profile.address'
+        | 'profile.address.city'
+      >();
+    });
+
+    it('should accept indexed paths', () => {
+      const paths: FieldPath<Model>[] = [
+        'addresses.0',
+        'addresses.0.street',
+        'addresses.12.geo.lat',
+        'tags.3',
+        // The flattened form still works.
+        'addresses.street',
+      ];
+
+      expect(paths).toHaveLength(5);
+    });
+
+    it('should reject indexed paths that do not exist', () => {
+      // @ts-expect-error unknown property below an index
+      const unknownProperty: FieldPath<Model> = 'addresses.0.nope';
+      // @ts-expect-error the index segment must be a number
+      const nonNumericIndex: FieldPath<Model> = 'addresses.first.street';
+      // @ts-expect-error a string field is not an array
+      const indexOnPrimitive: FieldPath<Model> = 'name.0';
+      // @ts-expect-error an array element of a string array has no children
+      const belowPrimitiveElement: FieldPath<Model> = 'tags.0.length';
+      // @ts-expect-error a missing dot before the index
+      const missingDot: FieldPath<Model> = 'addresses0.street';
+      // @ts-expect-error bracket indices are not a FieldPath form
+      const bracketIndex: FieldPath<Model> = 'addresses[0].street';
+
+      expect([
+        unknownProperty,
+        nonNumericIndex,
+        indexOnPrimitive,
+        belowPrimitiveElement,
+        missingDot,
+        bracketIndex,
+      ]).toHaveLength(6);
+    });
+
+    it('should index optional arrays in an NgxDeepPartial model', () => {
+      type FormModel = NgxDeepPartial<{
+        contacts: Array<{ email: string }>;
+        notes: string[];
+      }>;
+
+      expectTypeOf<FieldPath<FormModel>>().toEqualTypeOf<
+        | 'contacts'
+        | 'contacts.email'
+        | `contacts.${number}`
+        | `contacts.${number}.email`
+        | 'notes'
+        | `notes.${number}`
+      >();
+    });
+
+    it('should index nested arrays at every level', () => {
+      type Orders = {
+        orders: Array<{ lines: Array<{ sku: string }> }>;
+        matrix: number[][];
+      };
+
+      const paths: FieldPath<Orders>[] = [
+        'orders.0.lines.3.sku',
+        'orders.0.lines.sku',
+        'orders.lines.3.sku',
+        'orders.lines.sku',
+        'matrix.1',
+        'matrix.1.2',
+      ];
+
+      expect(paths).toHaveLength(6);
+    });
+
+    it('should emit indexed primitive elements as leaves', () => {
+      expectTypeOf<LeafFieldPath<Model>>().toEqualTypeOf<
+        | 'name'
+        | 'addresses.street'
+        | 'addresses.geo.lat'
+        | `addresses.${number}.street`
+        | `addresses.${number}.geo.lat`
+        | `tags.${number}`
+      >();
+    });
+
+    it('should resolve FieldPathValue for an indexed path', () => {
+      expectTypeOf<
+        FieldPathValue<Model, 'addresses.0.street'>
+      >().toEqualTypeOf<string>();
+      expectTypeOf<
+        FieldPathValue<Model, `addresses.${number}.geo.lat`>
+      >().toEqualTypeOf<number>();
+      expectTypeOf<
+        FieldPathValue<Model, 'addresses.1'>
+      >().toEqualTypeOf<Address>();
+      expectTypeOf<FieldPathValue<Model, 'tags.2'>>().toEqualTypeOf<string>();
+
+      const street: FieldPathValue<Model, 'addresses.0.street'> = 'Main St';
+      expect(street).toBe('Main St');
+    });
+
+    it('should accept indexed paths in ValidationConfigMap and NgxValidationConfig', () => {
+      const config: ValidationConfigMap<Model> = {
+        'addresses.0.street': ['addresses.0.geo.lat', 'name'],
+        name: ['addresses.1.street'],
+      };
+      const bound: NgxValidationConfig<Model> = config;
+
+      expect(bound['addresses.0.street']).toEqual([
+        'addresses.0.geo.lat',
+        'name',
+      ]);
+
+      const badConfig: ValidationConfigMap<Model> = {
+        // @ts-expect-error unknown property below an index
+        'addresses.0.nope': ['name'],
+      };
+      expect(badConfig).toBeDefined();
+    });
+  });
+
   describe('ValidationConfigMap', () => {
     it('should provide type-safe validation config', () => {
       type TestModel = {
