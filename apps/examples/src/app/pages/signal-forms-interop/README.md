@@ -34,22 +34,22 @@ instead of a Signal Forms version and a `ControlValueAccessor` version.
   ngx-vest-forms builds both from `getRawValue()`, which includes disabled
   controls. The suite skips the field with `omitWhen` while it is locked.
 
-## Workaround: `ngxSignalControlValidators` (required for now)
+## Validators on the custom-control path (handled by ngx-vest-forms)
 
-Without this directive, Vest never runs for a Signal Forms control bound
-with `[ngModel]` in Angular 22.2: the field shows no errors and the form
-reports it valid whatever its value.
+In Angular 22.2, `NgModel`'s custom-control path (`setupCustomControl()`)
+does not call `setUpValidators()`, so validators provided on the element are
+not attached to the `FormControl`. ngx-vest-forms handles this itself: after
+Angular's setup it attaches `NgModel`'s composed validators (the Vest bridge
+and any attribute validators) with public Angular API, and revalidates so the
+form status, errors and `submitSettled` see the result. No extra directive is
+needed. On native inputs and ControlValueAccessor hosts, or once Angular
+attaches them upstream, it adds nothing.
 
-The cause: `NgModel`'s custom-control path (`setupCustomControl()`) does not
-call `setUpValidators()`. Validators provided on the element are never
-attached to the `FormControl`: ngx-vest-forms' Vest validator, and Angular's
-own `required` too. The control stays `VALID`.
-
-`signal-control-validators.directive.ts` attaches `NgModel`'s composed
-validators to its control with public Angular API. Put it on every Signal
-Forms control bound with `[ngModel]`, and on nothing else. A fix inside
-ngx-vest-forms is planned; it will make the directive unnecessary, and this
-example will drop it then.
+Keep every rule in the Vest suite. "Must be checked" for the consent switch
+is a Vest test: on a `FormCheckboxControl`, Angular's `required` attribute
+does not mean "checked" (`CheckboxRequiredValidator` only matches
+`input[type=checkbox]`). See
+[Custom control wrappers](../../../../../../docs/CUSTOM-CONTROL-WRAPPERS.md#signal-forms-controls-inside-a-wrapper).
 
 ## Design notes for your own control
 
