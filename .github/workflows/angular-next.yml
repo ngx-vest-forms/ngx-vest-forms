@@ -3,6 +3,15 @@ name: Angular next
 # Early warning, not a required check: runs the library unit tests (including
 # the private Angular API contract spec) against the Angular `next` dist-tag,
 # so a rename of NgForm.submittedReactive shows up before an upgrade (#215, #319).
+#
+# Limit: only the runtime packages (@angular/{core,forms,common,compiler,
+# platform-browser,router,compiler-cli}) follow `next`. @angular/build, the CLI
+# and @angular-devkit/* stay on the locked stable version, because the devkit
+# prerelease drops an export that Nx imports. The stable @angular/build also
+# exits at startup when @angular/core is outside its supported range
+# (assertCompatibleAngularVersion, `^22.0.0`, no opt-out), so once `next` moves
+# to 23.x this job fails on purpose with a message saying so; it then needs a
+# build/CLI bump to the next tag before it can run again.
 on:
   schedule:
     # Mondays 06:00 UTC
@@ -38,20 +47,70 @@ jobs:
           mode: firewall
       - name: Override Angular packages with the next dist-tag
         # pnpm overrides also reach the copies pinned in packages/ngx-vest-forms.
-        # @angular/build, @angular/cli and @angular-devkit/* stay on the
-        # locked stable version: the devkit prerelease drops an export Nx
-        # imports, and the builder only compiles and runs the specs.
+        # The release-age embargo stays on; only @angular/* is exempt from it.
         run: |
           for pkg in core forms common compiler platform-browser router compiler-cli; do
             sed -i "/^overrides:/a\\  '@angular/$pkg': next" pnpm-workspace.yaml
           done
+          sed -i "s|^minimumReleaseAgeExclude:.*|&\n  - '@angular/*'|" pnpm-workspace.yaml
           git diff pnpm-workspace.yaml
+          # A silent no-op must not go green.
+          for pkg in core forms common compiler platform-browser router compiler-cli; do
+            grep -qF "'@angular/$pkg': next" pnpm-workspace.yaml || { echo "::error::override for @angular/$pkg was not inserted"; exit 1; }
+          done
+          grep -qF "  - '@angular/*'" pnpm-workspace.yaml || { echo "::error::minimumReleaseAgeExclude entry was not inserted"; exit 1; }
       - name: Install
         # Deliberately not --frozen-lockfile: the overrides change the lockfile,
-        # which is never committed. The 24h release-age embargo is lifted so
-        # a fresh `next` can resolve.
-        run: sfw pnpm install --no-frozen-lockfile --config.minimumReleaseAge=0
-      - name: Show resolved Angular version
-        run: node -p "require('@angular/core/package.json').version"
+        # which is never committed.
+        run: sfw pnpm install --no-frozen-lockfile
+      - name: Check the resolved Angular version
+        run: |
+          resolved=$(node -p "require('@angular/core/package.json').version")
+          locked=$(node -p "require('./package.json').dependencies['@angular/core']")
+          build=$(node -p "require('@angular/build/package.json').version")
+          echo "Resolved @angular/core $resolved (locked $locked), @angular/build $build"
+          if [ "$resolved" = "$locked" ]; then
+            echo "::error::@angular/core did not move off the locked version $locked; the override did not take effect"
+            exit 1
+          fi
+          case "$resolved" in
+            *-*) ;;
+            *)
+              newest=$(printf '%s\n%s\n' "$locked" "$resolved" | sort -V | tail -n1)
+              if [ "$newest" != "$resolved" ]; then
+                echo "::error::resolved $resolved is neither a prerelease nor newer than $locked"
+                exit 1
+              fi
+              ;;
+          esac
+          if [ "${resolved%%.*}" != "${build%%.*}" ]; then
+            echo "::error::Angular next is now major ${resolved%%.*} but the locked @angular/build is major ${build%%.*}, which exits at startup on an unsupported @angular/core. Bump @angular/build, the CLI and @angular-devkit/* to the next tag in this job before it can run again."
+            exit 1
+          fi
       - name: Test library (includes the private API contract spec)
         run: pnpm nx run ngx-vest-forms:test
+
+  report-failure:
+    # Reaches someone when the scheduled run goes red. issues: write is scoped
+    # to this job only; the test job keeps contents: read.
+    needs: unit-tests-next
+    if: ${{ failure() && github.event_name == 'schedule' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - name: Open or update the tracking issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          title="Angular next: library tests failing"
+          body="The weekly run against the Angular next dist-tag failed: $RUN_URL"
+          number=$(gh issue list --state open --search "\"$title\" in:title" --json number,title --jq "[.[] | select(.title == \"$title\")][0].number // empty")
+          if [ -n "$number" ]; then
+            gh issue comment "$number" --body "$body"
+          else
+            gh issue create --title "$title" --body "$body"
+          fi
