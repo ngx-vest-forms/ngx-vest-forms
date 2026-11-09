@@ -255,6 +255,39 @@ describe('resolveFieldFromBlur', () => {
     });
   });
 
+  it('uses the DOM ngModelGroup index to pick between FormArray items', () => {
+    const control = new FormControl('Grace');
+    const form = document.createElement('form');
+    const first = document.createElement('div');
+    first.setAttribute('ngModelGroup', '0');
+    const firstName = document.createElement('input');
+    firstName.name = 'name';
+    first.append(firstName);
+    const second = document.createElement('div');
+    second.setAttribute('ngModelGroup', '1');
+    const secondName = document.createElement('input');
+    secondName.name = 'name';
+    second.append(secondName);
+    const users = document.createElement('div');
+    users.append(first, second);
+    form.append(users);
+
+    const ngForm = createNgForm(
+      new FormGroup({
+        users: new FormArray([
+          new FormGroup({ name: new FormControl('Ada') }),
+          new FormGroup({ name: control }),
+        ]),
+      })
+    );
+
+    expect(resolveFieldFromBlur(ngForm, secondName)).toEqual({
+      field: 'users.1.name',
+      control,
+      element: secondName,
+    });
+  });
+
   it('returns null when no strategy matches', () => {
     const form = document.createElement('form');
     const input = document.createElement('input');

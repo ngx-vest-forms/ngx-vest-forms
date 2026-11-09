@@ -107,6 +107,27 @@ describe('getFormGroupField function', () => {
       }
     }
   });
+
+  it('should return the indexed path for a FormGroup inside a FormArray', () => {
+    const second = new FormGroup({ name: new FormControl('Grace') });
+    const form = new FormGroup({
+      team: new FormGroup({
+        members: new FormArray([
+          new FormGroup({ name: new FormControl('Ada') }),
+          second,
+        ]),
+      }),
+    });
+
+    expect(getFormGroupField(form, second)).toBe('team.members.1');
+  });
+
+  it('should return the path of a FormArray itself', () => {
+    const members = new FormArray([new FormGroup({})]);
+    const form = new FormGroup({ members });
+
+    expect(getFormGroupField(form, members)).toBe('members');
+  });
 });
 
 describe('mergeValuesAndRawValues function', () => {

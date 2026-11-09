@@ -241,8 +241,9 @@ function subtreeContainsElement(
   formEl: HTMLFormElement,
   key: string | number
 ): boolean {
-  if (typeof key !== 'string') return false;
-  const selector = `[ngModelGroup="${CSS.escape(key)}"]`;
+  // FormArray children carry a numeric index; `ngModelGroup="0"` is written
+  // as a string attribute, so compare on the string form.
+  const selector = `[ngModelGroup="${CSS.escape(String(key))}"]`;
   const candidates = formEl.querySelectorAll(selector);
   for (const candidate of candidates) {
     if (candidate.contains(fieldElement)) return true;

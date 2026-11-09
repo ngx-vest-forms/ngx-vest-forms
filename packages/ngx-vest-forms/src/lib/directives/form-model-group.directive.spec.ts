@@ -1,10 +1,13 @@
 import { JsonPipe } from '@angular/common';
 import { Component, signal, viewChild } from '@angular/core';
+import { FormArray, FormControl, FormGroup } from '@angular/forms';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
+import { firstValueFrom } from 'rxjs';
 import { create, enforce, test as vestTest } from 'vest';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NgxVestForms } from '../exports';
+import { FormModelGroupDirective } from './form-model-group.directive';
 import { FormDirective } from './form.directive';
 
 type AddressFormModel = {
@@ -20,6 +23,16 @@ const addressFormSuite = create((data: Partial<AddressFormModel> = {}) => {
   });
   vestTest('address.city', 'City is required', () => {
     enforce(data.address?.city).isNotEmpty();
+  });
+});
+
+type ItemsModel = { items?: Array<{ name: string }> };
+
+// Group-level test on `items.0`: it only runs when the group under the
+// code-added FormArray resolves to that path.
+const itemsSuite = create((data: ItemsModel = {}) => {
+  vestTest('items.0', 'First item needs a name', () => {
+    enforce(data.items?.[0]?.name).isNotEmpty();
   });
 });
 
@@ -60,6 +73,23 @@ class TestGroupComponent {
     viewChild.required<FormDirective<Record<string, any>>>('vestForm');
   model = signal<AddressFormModel>({ address: { street: '', city: '' } });
   suite = addressFormSuite;
+}
+
+@Component({
+  imports: [NgxVestForms],
+  template: `
+    <form ngxVestForm [suite]="suite" #vestForm="ngxVestForm">
+      <div ngModelGroup="meta">
+        <input name="title" [ngModel]="''" />
+      </div>
+    </form>
+  `,
+})
+class FormArrayGroupComponent {
+  readonly vestForm =
+    viewChild.required<FormDirective<Record<string, any>>>('vestForm');
+  readonly groupDirective = viewChild.required(FormModelGroupDirective);
+  suite = itemsSuite;
 }
 
 describe('FormModelGroupDirective', () => {
@@ -165,4 +195,34 @@ describe('FormModelGroupDirective', () => {
     expect(finalErrors).not.toMatch(/Street is required/);
     expect(finalErrors).toMatch(/City is required/);
   }, 20000); // Increase timeout for slower CI runners
+
+  describe('a group under a code-added FormArray', () => {
+    beforeEach(() => {
+      itemsSuite.reset();
+    });
+
+    it('resolves the indexed path and runs its async group validation', async () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      try {
+        const { fixture } = await render(FormArrayGroupComponent);
+        const { vestForm, groupDirective } = fixture.componentInstance;
+        const item = new FormGroup({ name: new FormControl('') });
+        vestForm().ngForm.form.addControl('items', new FormArray([item]));
+
+        const errors = await firstValueFrom(groupDirective().validate(item));
+
+        expect(JSON.stringify(errors)).toContain('First item needs a name');
+        expect(warnSpy).not.toHaveBeenCalledWith(
+          expect.stringContaining('NGX-104')
+        );
+
+        item.controls.name.setValue('Ada', { emitEvent: false });
+        expect(
+          await firstValueFrom(groupDirective().validate(item))
+        ).toBeNull();
+      } finally {
+        warnSpy.mockRestore();
+      }
+    });
+  });
 });

@@ -130,18 +130,21 @@ function getControlPath(
 }
 
 /**
- * Returns the dotted key path from `formGroup` down to `control`, or `''` when
- * `control` is not below `formGroup`. It descends only through nested
- * FormGroups, not FormArrays.
- * @param formGroup
+ * Returns the dotted key path from `container` down to `control`, or `''` when
+ * `control` is not below `container`. It descends through nested FormGroups
+ * and FormArrays; a FormArray index becomes its string segment (`items.0`).
+ * @param container
  * @param control
  */
-function getGroupPath(formGroup: FormGroup, control: AbstractControl): string {
-  for (const [key, ctrl] of getChildEntries(formGroup)) {
+function getGroupPath(
+  container: FormContainer,
+  control: AbstractControl
+): string {
+  for (const [key, ctrl] of getChildEntries(container)) {
     if (ctrl === control) {
       return key;
     }
-    if (isFormGroup(ctrl)) {
+    if (isFormGroup(ctrl) || isFormArray(ctrl)) {
       const path = getGroupPath(ctrl, control);
       if (path) {
         return `${key}.${path}`;
