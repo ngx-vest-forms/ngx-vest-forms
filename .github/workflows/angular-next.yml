@@ -1,0 +1,57 @@
+name: Angular next
+
+# Early warning, not a required check: runs the library unit tests (including
+# the private Angular API contract spec) against the Angular `next` dist-tag,
+# so a rename of NgForm.submittedReactive shows up before an upgrade (#215, #319).
+on:
+  schedule:
+    # Mondays 06:00 UTC
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: angular-next-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests-next:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install pnpm and Node.js
+        uses: pnpm/setup@fa36a5ef7dcdefc3a7cb25655c122e00cf6e636e # v3.1.2
+        with:
+          node-version-file: .node-version
+          install: false
+          cache: true
+          save-cache: false
+      - name: Set up Socket Firewall
+        uses: socketdev/action@ba6de6cc0565af1f42295590380973573297e31f # v1.3.2
+        with:
+          mode: firewall
+      - name: Override Angular packages with the next dist-tag
+        # pnpm overrides also reach the copies pinned in packages/ngx-vest-forms.
+        # @angular/build, @angular/cli and @angular-devkit/* stay on the
+        # locked stable version: the devkit prerelease drops an export Nx
+        # imports, and the builder only compiles and runs the specs.
+        run: |
+          for pkg in core forms common compiler platform-browser router compiler-cli; do
+            sed -i "/^overrides:/a\\  '@angular/$pkg': next" pnpm-workspace.yaml
+          done
+          git diff pnpm-workspace.yaml
+      - name: Install
+        # Deliberately not --frozen-lockfile: the overrides change the lockfile,
+        # which is never committed. The 24h release-age embargo is lifted so
+        # a fresh `next` can resolve.
+        run: sfw pnpm install --no-frozen-lockfile --config.minimumReleaseAge=0
+      - name: Show resolved Angular version
+        run: node -p "require('@angular/core/package.json').version"
+      - name: Test library (includes the private API contract spec)
+        run: pnpm nx run ngx-vest-forms:test
