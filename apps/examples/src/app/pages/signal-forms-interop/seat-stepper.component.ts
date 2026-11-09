@@ -47,6 +47,7 @@ import { SEAT_LIMITS } from '../../models/signal-forms-interop.model';
         [id]="inputId()"
         type="text"
         inputmode="numeric"
+        [attr.maxlength]="maxDigits"
         role="spinbutton"
         autocomplete="off"
         [attr.aria-describedby]="hintId() ?? null"
@@ -92,6 +93,12 @@ export class SeatStepperComponent implements FormValueControl<
   readonly hintId = input<string>();
 
   protected readonly limits = SEAT_LIMITS;
+  /**
+   * Room for one digit more than the maximum needs, so an out-of-range count
+   * such as 12 can be typed and the range error shown, but not a number so
+   * long that `Number()` turns it into `1e+21`.
+   */
+  protected readonly maxDigits = String(SEAT_LIMITS.max).length + 1;
 
   readonly #host = inject<ElementRef<HTMLElement>>(ElementRef);
 
@@ -106,11 +113,18 @@ export class SeatStepperComponent implements FormValueControl<
 
   protected onInput(event: Event): void {
     const element = event.target as HTMLInputElement;
-    const digits = element.value.replaceAll(/\D/g, '');
-    if (digits !== element.value) {
-      element.value = digits;
+    const digits = element.value
+      .replaceAll(/\D/g, '')
+      .slice(0, this.maxDigits);
+    const next = digits === '' ? undefined : Number(digits);
+    // Show what the model holds ("05" becomes "5"). Writing the element
+    // directly matters when the model does not change: `[value]` would not
+    // re-render and the typed text would stay.
+    const text = next === undefined ? '' : String(next);
+    if (element.value !== text) {
+      element.value = text;
     }
-    this.value.set(digits === '' ? undefined : Number(digits));
+    this.value.set(next);
   }
 
   protected onKeydown(event: KeyboardEvent): void {

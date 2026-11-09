@@ -191,6 +191,41 @@ describe('Signal Forms controls with ngModel in ngxVestForm', () => {
     });
   });
 
+  describe('typed seat counts', () => {
+    const type = async (text: string): Promise<void> => {
+      const input = seatsInput();
+      input.value = text;
+      input.dispatchEvent(new Event('input'));
+      await settle();
+    };
+
+    it('limits the input to two digits', async () => {
+      expect(seatsInput().maxLength).toBe(2);
+
+      // A paste can bypass maxlength in some paths; the handler trims too.
+      await type('1234567890123456789012');
+
+      expect(seatsInput().value).toBe('12');
+      expect(host.formValue().seats).toBe(12);
+    });
+
+    it('shows the model value, not the typed text, after a leading zero', async () => {
+      await type('5');
+      await type('05');
+
+      expect(host.formValue().seats).toBe(5);
+      expect(seatsInput().value).toBe('5');
+      expect(seatsInput().getAttribute('aria-valuenow')).toBe('5');
+    });
+
+    it('drops non-digits', async () => {
+      await type('3a');
+
+      expect(seatsInput().value).toBe('3');
+      expect(host.formValue().seats).toBe(3);
+    });
+  });
+
   it('submits valid once both controls have valid values', async () => {
     const input = seatsInput();
     input.value = '2';
