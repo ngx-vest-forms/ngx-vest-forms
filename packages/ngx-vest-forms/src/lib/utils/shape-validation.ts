@@ -100,6 +100,14 @@ function validateFormValueAgainstShape(
         continue;
       }
 
+      // Extra property: the key is not in the shape at all. Report that, not
+      // a type mismatch, and do not recurse: every child would be reported
+      // as an extra property too.
+      if (!isNumericKey && !hasShapeKey) {
+        logWarning(NGX_VEST_FORMS_ERRORS.EXTRA_PROPERTY, fieldPath);
+        continue;
+      }
+
       // Type mismatch: formValue has object, but shape expects primitive
       if (!isNumericKey && !isTraversableValue(shapeValue)) {
         logWarning(

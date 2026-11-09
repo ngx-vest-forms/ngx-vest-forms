@@ -66,6 +66,27 @@ describe('validateShape function', () => {
       ).toBe(true);
     });
 
+    it('should report an unknown object key as an extra property, not a type mismatch', () => {
+      const formValue = {
+        name: 'John',
+        addresss: { city: 'New York' },
+      };
+      const shape = {
+        name: '',
+        address: { city: '' },
+      };
+
+      validateShape(formValue, shape);
+
+      const calls = consoleWarnSpy.mock.calls.map((call: unknown[]) =>
+        String(call[0])
+      );
+      expect(calls).toHaveLength(1);
+      expect(calls[0]).toContain('NGX-001');
+      expect(calls[0]).toContain("'addresss'");
+      expect(calls.some((msg: string) => msg.includes('NGX-002'))).toBe(false);
+    });
+
     it('should warn when nested property has typo', () => {
       const formValue = {
         address: {
