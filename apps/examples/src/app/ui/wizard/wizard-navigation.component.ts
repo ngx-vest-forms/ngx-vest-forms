@@ -77,7 +77,7 @@ import { Component, input, output } from '@angular/core';
           >
             @if (isSubmitting()) {
               <svg
-                class="h-4 w-4 animate-spin"
+                class="h-4 w-4 motion-safe:animate-spin"
                 fill="none"
                 viewBox="0 0 24 24"
                 aria-hidden="true"

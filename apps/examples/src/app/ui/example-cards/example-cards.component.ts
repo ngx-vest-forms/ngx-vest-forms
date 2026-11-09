@@ -18,18 +18,18 @@ import { Card } from '../card/card.component';
   template: `
     <div class="grid gap-6 md:grid-cols-2">
       <ngx-card>
-        <div class="flex items-start gap-3">
+        <div class="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-3">
           <span
             class="bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300 flex size-10 shrink-0 items-center justify-center rounded-lg text-xl"
             aria-hidden="true"
             >{{ content().demonstrates.icon }}</span
           >
-          <div class="min-w-0">
+          <div class="contents">
             <h2 class="text-base font-semibold text-gray-900 dark:text-white">
               {{ content().demonstrates.title }}
             </h2>
             <ul
-              class="mt-4 ml-[-3.25rem] space-y-1.5 text-sm text-gray-600 dark:text-gray-300"
+              class="col-span-2 mt-4 min-w-0 space-y-1.5 text-sm text-gray-600 dark:text-gray-300"
             >
               @for (point of content().demonstrates.points; track point) {
                 <li class="flex min-w-0 gap-2">
@@ -47,17 +47,17 @@ import { Card } from '../card/card.component';
       </ngx-card>
 
       <ngx-card>
-        <div class="flex items-start gap-3">
+        <div class="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-3">
           <span
             class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-xl text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
             aria-hidden="true"
             >🎓</span
           >
-          <div class="min-w-0">
+          <div class="contents">
             <h2 class="text-base font-semibold text-gray-900 dark:text-white">
               {{ content().learn.title }}
             </h2>
-            <div class="mt-3 space-y-4">
+            <div class="col-span-2 mt-3 min-w-0 space-y-4">
               @for (section of content().learn.sections; track section.title) {
                 <div>
                   <h3
@@ -66,7 +66,7 @@ import { Card } from '../card/card.component';
                     {{ section.title }}
                   </h3>
                   <ul
-                    class="mt-2.5 ml-[-3.25rem] space-y-1.5 text-sm text-gray-600 dark:text-gray-300"
+                    class="mt-2.5 space-y-1.5 text-sm text-gray-600 dark:text-gray-300"
                   >
                     @for (point of section.points; track point) {
                       <li class="flex min-w-0 gap-2">
@@ -85,7 +85,7 @@ import { Card } from '../card/card.component';
             @if (content().learn.nextStep; as nextStep) {
               <a
                 [routerLink]="['/', nextStep.route]"
-                class="text-primary-700 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 mt-4 inline-flex items-center gap-1 text-sm font-medium"
+                class="text-primary-700 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 col-start-2 mt-4 inline-flex items-center gap-1 justify-self-start text-sm font-medium"
               >
                 {{ nextStep.label }}
                 <span aria-hidden="true">→</span>

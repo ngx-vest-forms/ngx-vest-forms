@@ -13,10 +13,11 @@ import {
 } from 'ngx-vest-forms';
 import type { DisplayModesDemoModel } from '../../models/display-modes-demo.model';
 import { Card } from '../../ui/card/card.component';
+import { FormSectionComponent } from '../../ui/form-section/form-section.component';
 
 @Component({
   selector: 'ngx-display-modes-demo-form-body',
-  imports: [NgxVestForms, Card],
+  imports: [NgxVestForms, Card, FormSectionComponent],
   templateUrl: './display-modes-demo.form.html',
 })
 export class DisplayModesDemoFormBody {

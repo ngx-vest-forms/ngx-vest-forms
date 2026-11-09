@@ -25,13 +25,13 @@ test.describe('Validation Config Demo Page', () => {
     await expect(
       page.getByRole('heading', {
         name: /bidirectional validation/i,
-        level: 2,
+        level: 3,
       })
     ).toBeVisible();
     await expect(
       page.getByRole('heading', {
         name: /date range validation/i,
-        level: 2,
+        level: 3,
       })
     ).toBeVisible();
   });

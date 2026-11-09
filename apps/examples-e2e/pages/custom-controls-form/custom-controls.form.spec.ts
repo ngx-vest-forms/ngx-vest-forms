@@ -143,4 +143,26 @@ test.describe('Custom Controls Form', () => {
       page.getByRole('button', { name: /remove tag angular/i })
     ).toHaveCount(0);
   });
+
+  test('should keep focus in the tag editor after removing a tag', async ({
+    page,
+  }) => {
+    const tagInput = page.getByLabel(/add a tag/i);
+    for (const tag of ['angular', 'vest']) {
+      await tagInput.fill(tag);
+      await tagInput.press('Enter');
+    }
+
+    // The next tag's remove button takes the removed one's place.
+    await page.getByRole('button', { name: 'Remove tag angular' }).click();
+    await expect(
+      page.getByRole('button', { name: 'Remove tag vest' })
+    ).toBeFocused();
+    await expect(page.getByText('Tag angular removed')).toBeAttached();
+
+    // With no tags left, focus returns to the input.
+    await page.getByRole('button', { name: 'Remove tag vest' }).click();
+    await expect(tagInput).toBeFocused();
+    await expect(page.getByText('Tag vest removed')).toBeAttached();
+  });
 });

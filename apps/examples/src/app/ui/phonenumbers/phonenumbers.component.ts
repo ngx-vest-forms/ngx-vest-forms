@@ -1,5 +1,12 @@
 import { KeyValuePipe } from '@angular/common';
-import { Component, input, output, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  input,
+  output,
+  signal,
+  viewChild,
+} from '@angular/core';
 import {
   arrayToObject,
   NgxVestForms,
@@ -7,6 +14,7 @@ import {
 } from 'ngx-vest-forms';
 import type { PhoneNumberMap } from '../../models/phonenumber.model';
 import { byNumericKey } from '../../shared/by-numeric-key';
+import { RemovalFeedback } from '../../shared/removal-feedback';
 
 /**
  * Phone numbers component that integrates with ngx-vest-forms parent form.
@@ -43,6 +51,14 @@ export class PhoneNumbersComponent {
   /** Local UI state for the "add new" input field - not part of form model */
   readonly newPhoneNumber = signal('');
 
+  private readonly addPhoneInput =
+    viewChild<ElementRef<HTMLInputElement>>('addPhoneInput');
+
+  /** Announces a removal and keeps focus on a Remove button or the add input. */
+  protected readonly removal = new RemovalFeedback(
+    () => this.addPhoneInput()?.nativeElement
+  );
+
   /** Adds the new phone number and emits structural change to parent */
   addPhoneNumber(): void {
     const newValue = this.newPhoneNumber().trim();
@@ -61,6 +77,10 @@ export class PhoneNumbersComponent {
     );
     const newValues = arrayToObject(phonenumbers);
     this.valuesChange.emit(newValues);
+    this.removal.removed(
+      Number(key),
+      `Phone number ${Number(key) + 1} removed`
+    );
   }
 
   /** Updates the local new phone number input (local UI state only) */

@@ -119,6 +119,8 @@ export class ProfileFormComponent {
 
 Field-scoped runs happen at the call site, `suite.only('email').run(model)`, and only when code outside the form needs them; the directive already runs each field this way.
 
+For compile-time field names, pass a schema as `create()`'s second argument, `create((model) => { ... }, enforce.shape({ email: enforce.optional(enforce.isString()) }))`, and check the suite with `satisfies NgxVestSuite<Model>` instead of annotating it: the annotation widens the field names to `string`. `only()`, `focus()` and result lookups then accept only the schema's top-level keys; nested paths such as `'address.city'` stay untyped. Keep every schema key `enforce.optional(...)`, because the Form Model is partial while the user fills it in. Details: [`TYPE-COMPATIBILITY.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/TYPE-COMPATIBILITY.md#schema-typed-suites).
+
 ## Form state, submit and reset
 
 Get the directive with `#vestForm="ngxVestForm"` plus `viewChild.required('vestForm', { read: FormDirective })`, or `viewChild(FormDirective<Model>)`.

@@ -11,81 +11,106 @@
     (ngSubmit)="onSubmit()"
     class="space-y-8"
   >
-    <ngx-card
+    <ngx-form-section
       title="Token default: errorDisplayMode='on-submit'"
-      subtitle="This wrapper does not set errorDisplayMode itself — the page-level NGX_ERROR_DISPLAY_MODE_TOKEN provides the default."
+      description="This wrapper does not set errorDisplayMode itself — the page-level NGX_ERROR_DISPLAY_MODE_TOKEN provides the default."
     >
       <ngx-control-wrapper>
         <label for="tokenDefaultError" class="label-text"
           >Username (Token Default Error)</label
         >
+        <p
+          id="tokenDefaultError-hint"
+          class="mb-2 text-sm text-gray-600 dark:text-gray-300"
+        >
+          Leave it empty, then use the programmatic submit button below the
+          form.
+        </p>
         <input
           id="tokenDefaultError"
           name="tokenDefaultError"
           [ngModel]="formValue().tokenDefaultError"
+          aria-describedby="tokenDefaultError-hint"
           class="input-field"
-          placeholder="Leave empty, then use the external submit button..."
         />
       </ngx-control-wrapper>
-    </ngx-card>
+    </ngx-form-section>
 
-    <ngx-card
+    <ngx-form-section
       title="Token default: warningDisplayMode='on-touch'"
-      subtitle="This wrapper relies on the page-level NGX_WARNING_DISPLAY_MODE_TOKEN, then the explicit examples below override it per field."
+      description="This wrapper relies on the page-level NGX_WARNING_DISPLAY_MODE_TOKEN, then the explicit examples below override it per field."
     >
       <ngx-control-wrapper>
         <label for="tokenDefaultWarning" class="label-text"
           >Username (Token Default Warning)</label
         >
+        <p
+          id="tokenDefaultWarning-hint"
+          class="mb-2 text-sm text-gray-600 dark:text-gray-300"
+        >
+          Type fewer than 5 characters, then leave the field.
+        </p>
         <input
           id="tokenDefaultWarning"
           name="tokenDefaultWarning"
           [ngModel]="formValue().tokenDefaultWarning"
+          aria-describedby="tokenDefaultWarning-hint"
           class="input-field"
-          placeholder="Type a short username, then blur..."
         />
       </ngx-control-wrapper>
-    </ngx-card>
+    </ngx-form-section>
 
-    <ngx-card
+    <ngx-form-section
       title="Error Display Mode: 'always'"
-      subtitle="Errors appear immediately, even on pristine fields."
+      description="Errors appear immediately, even on pristine fields."
     >
       <ngx-control-wrapper errorDisplayMode="always">
         <label for="alwaysError" class="label-text"
           >Username (Always Mode)</label
         >
+        <p
+          id="alwaysError-hint"
+          class="mb-2 text-sm text-gray-600 dark:text-gray-300"
+        >
+          The error shows before you type; type anything to clear it.
+        </p>
         <input
           id="alwaysError"
           name="alwaysError"
           [ngModel]="formValue().alwaysError"
+          aria-describedby="alwaysError-hint"
           class="input-field"
-          placeholder="Start typing..."
         />
       </ngx-control-wrapper>
-    </ngx-card>
+    </ngx-form-section>
 
-    <ngx-card
+    <ngx-form-section
       title="Error Display Mode: 'on-dirty'"
-      subtitle="Errors appear as soon as you type."
+      description="Errors appear as soon as you type."
     >
       <ngx-control-wrapper errorDisplayMode="on-dirty">
         <label for="dirtyError" class="label-text"
           >Username (On-Dirty Mode)</label
         >
+        <p
+          id="dirtyError-hint"
+          class="mb-2 text-sm text-gray-600 dark:text-gray-300"
+        >
+          Type a character, then delete it.
+        </p>
         <input
           id="dirtyError"
           name="dirtyError"
           [ngModel]="formValue().dirtyError"
+          aria-describedby="dirtyError-hint"
           class="input-field"
-          placeholder="Start typing..."
         />
       </ngx-control-wrapper>
-    </ngx-card>
+    </ngx-form-section>
 
-    <ngx-card
+    <ngx-form-section
       title="Error Display Mode: 'on-submit'"
-      subtitle="This field stays quiet until the parent container submits the form programmatically."
+      description="This field stays quiet until the parent container submits the form programmatically."
     >
       <ngx-control-wrapper errorDisplayMode="on-submit">
         <label for="submitError" class="label-text"
@@ -97,7 +122,6 @@
           [ngModel]="formValue().submitError"
           aria-describedby="submit-error-help"
           class="input-field"
-          placeholder="Leave empty, then use the external submit button..."
         />
       </ngx-control-wrapper>
       <p
@@ -108,61 +132,79 @@
         <code>NgForm.onSubmit()</code>, then marking controls as touched and
         retriggering validation.
       </p>
-    </ngx-card>
+    </ngx-form-section>
 
-    <ngx-card
+    <ngx-form-section
       title="Warning Display Mode: 'always'"
-      subtitle="Warnings appear immediately on pristine fields."
+      description="Warnings appear immediately on pristine fields."
     >
       <ngx-control-wrapper warningDisplayMode="always">
         <label for="alwaysWarning" class="label-text"
           >Username (Always Warning)</label
         >
+        <p
+          id="alwaysWarning-hint"
+          class="mb-2 text-sm text-gray-600 dark:text-gray-300"
+        >
+          The warning shows before you type; 5 or more characters clear it.
+        </p>
         <input
           id="alwaysWarning"
           name="alwaysWarning"
           [ngModel]="formValue().alwaysWarning"
+          aria-describedby="alwaysWarning-hint"
           class="input-field"
-          placeholder="Type a short username..."
         />
       </ngx-control-wrapper>
-    </ngx-card>
+    </ngx-form-section>
 
-    <ngx-card
+    <ngx-form-section
       title="Warning Display Mode: 'on-dirty'"
-      subtitle="Warnings appear as soon as you type."
+      description="Warnings appear as soon as you type."
     >
       <ngx-control-wrapper warningDisplayMode="on-dirty">
         <label for="dirtyWarning" class="label-text"
           >Username (On-Dirty Warning)</label
         >
+        <p
+          id="dirtyWarning-hint"
+          class="mb-2 text-sm text-gray-600 dark:text-gray-300"
+        >
+          Type fewer than 5 characters; the warning shows while you type.
+        </p>
         <input
           id="dirtyWarning"
           name="dirtyWarning"
           [ngModel]="formValue().dirtyWarning"
+          aria-describedby="dirtyWarning-hint"
           class="input-field"
-          placeholder="Type a short username..."
         />
       </ngx-control-wrapper>
-    </ngx-card>
+    </ngx-form-section>
 
-    <ngx-card
+    <ngx-form-section
       title="Warning Display Mode: 'on-touch'"
-      subtitle="Warnings appear after blur (traditional behavior)."
+      description="Warnings appear after blur (traditional behavior)."
     >
       <ngx-control-wrapper warningDisplayMode="on-touch">
         <label for="touchWarning" class="label-text"
           >Username (On-Touch Warning)</label
         >
+        <p
+          id="touchWarning-hint"
+          class="mb-2 text-sm text-gray-600 dark:text-gray-300"
+        >
+          Type fewer than 5 characters, then leave the field.
+        </p>
         <input
           id="touchWarning"
           name="touchWarning"
           [ngModel]="formValue().touchWarning"
+          aria-describedby="touchWarning-hint"
           class="input-field"
-          placeholder="Type a short username and blur..."
         />
       </ngx-control-wrapper>
-    </ngx-card>
+    </ngx-form-section>
 
     <button type="submit" class="btn btn-primary">Submit</button>
   </form>

@@ -454,6 +454,17 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
           timeout: 3000,
         }); // Wait for API simulation
       });
+
+      await test.step('Start a new registration', async () => {
+        await page
+          .getByRole('button', { name: /start new registration/i })
+          .click();
+
+        // The pressed button is gone; focus lands on the step 1 heading.
+        await expect(
+          page.getByRole('heading', { name: STEP_HEADINGS[1], level: 2 })
+        ).toBeFocused();
+      });
     });
 
     test('CRITICAL: markAllAsTouched shows errors on all untouched fields', async ({
@@ -528,15 +539,15 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
 
         // After navigating to step 2, step 1 should show completed state
         // The wizard-steps component shows a checkmark SVG for completed steps
-        // and applies blue background color (bg-blue-600) to completed steps
+        // and applies primary (teal) background color (bg-primary-600) to completed steps
         const step1Circle = page
           .locator('ngx-wizard-steps li')
           .first()
           .locator('span')
           .first();
 
-        // Completed steps have bg-blue-600 class and show checkmark
-        await expect(step1Circle).toHaveClass(/bg-blue-600/);
+        // Completed steps have bg-primary-600 class and show checkmark
+        await expect(step1Circle).toHaveClass(/bg-primary-600/);
         await expect(step1Circle.locator('svg')).toBeVisible();
       });
 
@@ -550,6 +561,25 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
   });
 
   test.describe('Accessibility & ARIA', () => {
+    test('should move focus to the step heading when the step changes', async ({
+      page,
+    }) => {
+      await test.step('Continue from a valid step 1', async () => {
+        await fillValidStep1(page);
+        await goToProfileStep(page);
+        await expect(
+          page.getByRole('heading', { name: STEP_HEADINGS[2], level: 2 })
+        ).toBeFocused();
+      });
+
+      await test.step('Go back with Previous', async () => {
+        await clickPrevious(page);
+        await expect(
+          page.getByRole('heading', { name: STEP_HEADINGS[1], level: 2 })
+        ).toBeFocused();
+      });
+    });
+
     test('should have proper ARIA attributes on form controls', async ({
       page,
     }) => {

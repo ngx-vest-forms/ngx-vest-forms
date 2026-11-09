@@ -23,9 +23,9 @@ type MessageInput = readonly string[] | Record<string, string[]>;
     <ngx-card>
       <div class="mb-4 border-b border-gray-200 pb-4 dark:border-gray-700">
         <div class="flex items-center justify-between gap-3">
-          <h3 class="text-xl font-bold text-gray-900 dark:text-white">
+          <h2 class="text-xl font-bold text-gray-900 dark:text-white">
             {{ title() }}
-          </h3>
+          </h2>
           <ngx-status-badge
             [valid]="effectiveIsValid()"
             [pending]="isPending()"

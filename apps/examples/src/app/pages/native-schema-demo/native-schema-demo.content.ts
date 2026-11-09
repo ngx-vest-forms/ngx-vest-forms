@@ -23,6 +23,7 @@ export const nativeSchemaContent = defineExampleContent({
           'Define a structural contract with enforce.shape(...) and nest enforce.shape for sub-objects like address',
           'Pass the schema as the second create() argument so Vest enforces shape and types alongside your tests',
           'Use enforce.optional() so partial models from focused field runs do not fail schema validation prematurely',
+          'Leave the suite type inferred (check it with satisfies NgxVestSuite<T>) so only(), focus() and result lookups accept only schema field names',
         ],
       },
       {

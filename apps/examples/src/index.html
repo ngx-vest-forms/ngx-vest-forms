@@ -2,21 +2,32 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Examples</title>
+    <title>ngx-vest-forms Examples</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Runnable examples of ngx-vest-forms: Angular template-driven forms validated with Vest suites."
+    />
+    <!-- Set by the script below and by ThemeService to match the app theme. -->
+    <meta name="theme-color" content="#ffffff" />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
     <script>
-      // Initialize theme before page loads to prevent FOUC
-      if (
-        localStorage.getItem('theme') === 'dark' ||
-        (!('theme' in localStorage) &&
-          window.matchMedia('(prefers-color-scheme: dark)').matches)
-      ) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
+      // Initialize theme before page loads to prevent FOUC. Keep the colours
+      // in step with THEME_COLORS in src/app/services/theme.service.ts.
+      var dark = false;
+      try {
+        dark =
+          localStorage.getItem('theme') === 'dark' ||
+          (!('theme' in localStorage) &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches);
+      } catch (e) {
+        dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       }
+      document.documentElement.classList.toggle('dark', dark);
+      document
+        .querySelector('meta[name="theme-color"]')
+        .setAttribute('content', dark ? '#101828' : '#ffffff');
     </script>
   </head>
   <body class="bg-white dark:bg-gray-900">

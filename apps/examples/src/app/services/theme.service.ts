@@ -10,6 +10,15 @@ import {
 type Theme = 'light' | 'dark';
 
 const STORAGE_KEY = 'theme';
+
+/**
+ * `theme-color` per theme: the page background (white, gray-900), so the
+ * browser UI matches the app. `index.html` uses the same values before boot.
+ */
+export const THEME_COLORS: Readonly<Record<Theme, string>> = {
+  light: '#ffffff',
+  dark: '#101828',
+};
 const DARK_QUERY = '(prefers-color-scheme: dark)';
 
 /**
@@ -18,7 +27,8 @@ const DARK_QUERY = '(prefers-color-scheme: dark)';
  * One root instance, so every theme switcher shows the same state. The app
  * follows the OS setting until the user picks a theme; picking the theme the
  * OS already uses clears the stored choice, so the app follows the OS again.
- * `index.html` applies the same rule before Angular boots to avoid a flash.
+ * `index.html` applies the same rule before Angular boots to avoid a flash,
+ * and both keep the `theme-color` meta in step with the theme.
  */
 @Service()
 export class ThemeService {
@@ -48,6 +58,11 @@ export class ThemeService {
       const isDark = this.isDark();
       document.documentElement.classList.toggle('dark', isDark);
       document.body?.classList.toggle('dark', isDark);
+      // Follow the app theme, not prefers-color-scheme: a stored choice can
+      // differ from the OS setting.
+      document
+        .querySelector('meta[name="theme-color"]')
+        ?.setAttribute('content', THEME_COLORS[isDark ? 'dark' : 'light']);
     });
   }
 

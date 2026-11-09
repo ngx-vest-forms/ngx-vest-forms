@@ -1,0 +1,81 @@
+<form
+  ngxVestForm
+  #vestForm="ngxVestForm"
+  [suite]="suite()"
+  [formValue]="formValue()"
+  (formValueChange)="formValueChange.emit($event)"
+  (submitSettled)="submitted.emit($event)"
+  class="space-y-6"
+>
+  <!--
+    A Signal Forms FormValueControl bound with plain [ngModel]. There is no
+    ControlValueAccessor: NgModel binds the control's value model and touch
+    output itself. [disabled] goes to NgModel, which disables the control and
+    writes the disabled state into the component's disabled input.
+
+    ngxSignalControlValidators is a workaround for an Angular 22.2 gap: on
+    this custom-control path NgModel does not attach the element's
+    validators, so without it Vest never runs for this field. See
+    signal-control-validators.directive.ts.
+  -->
+  <ngx-control-wrapper class="form-field">
+    <label for="seats" class="label-text">Seats</label>
+    <p id="seats-hint" class="mb-2 text-sm text-gray-600 dark:text-gray-300">
+      Between 1 and 8. Use the buttons, type a number, or press Arrow Up and
+      Arrow Down.
+    </p>
+    <ngx-seat-stepper
+      name="seats"
+      inputId="seats"
+      hintId="seats-hint"
+      ngxSignalControlValidators
+      [ngModel]="formValue().seats"
+      [disabled]="formValue().lockSeats === true"
+    />
+  </ngx-control-wrapper>
+
+  <div class="flex items-center gap-2">
+    <input
+      id="lockSeats"
+      name="lockSeats"
+      type="checkbox"
+      class="text-primary-600 focus:ring-primary-500 h-4 w-4 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700"
+      [ngModel]="formValue().lockSeats"
+    />
+    <label
+      for="lockSeats"
+      class="text-sm font-medium text-gray-700 dark:text-gray-300"
+    >
+      Lock the seat count (disables the stepper)
+    </label>
+  </div>
+
+  <!-- A Signal Forms FormCheckboxControl: NgModel binds its checked model. -->
+  <ngx-control-wrapper class="form-field">
+    <div class="flex items-center gap-3">
+      <ngx-consent-switch
+        name="acceptTerms"
+        switchId="acceptTerms"
+        ngxSignalControlValidators
+        [ngModel]="formValue().acceptTerms"
+      />
+      <label
+        for="acceptTerms"
+        class="text-sm font-medium text-gray-700 dark:text-gray-300"
+      >
+        I accept the booking terms
+      </label>
+    </div>
+  </ngx-control-wrapper>
+
+  <div class="flex justify-end gap-3 pt-2">
+    <button
+      type="button"
+      class="btn btn-secondary"
+      (click)="resetRequested.emit()"
+    >
+      Reset
+    </button>
+    <button type="submit" class="btn btn-primary">Book seats</button>
+  </div>
+</form>

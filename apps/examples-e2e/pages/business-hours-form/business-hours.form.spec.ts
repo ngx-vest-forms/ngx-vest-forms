@@ -354,6 +354,11 @@ test.describe('Business Hours Form', () => {
 
         await expect(valuesGroup.locator('input[name="from"]')).toHaveCount(1);
         await expect(getRootFormError(page)).not.toBeVisible();
+        // The last slot went, so focus moves to the previous slot's Remove.
+        await expect(removeButtons.first()).toBeFocused();
+        await expect(
+          page.getByText('Business hour slot 2 removed')
+        ).toBeAttached();
       });
     });
 

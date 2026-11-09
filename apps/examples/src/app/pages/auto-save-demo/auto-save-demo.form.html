@@ -24,7 +24,7 @@
               name="projectName"
               class="input-field"
               [ngModel]="formValue().projectName"
-              placeholder='Try "Website refresh" or type "fail" to simulate an error'
+              placeholder="Website refresh"
               aria-describedby="projectName-help"
             />
           </label>
@@ -32,7 +32,8 @@
             id="projectName-help"
             class="mt-2 text-sm text-gray-600 dark:text-gray-300"
           >
-            Blur this field to queue a draft save.
+            Blur this field to queue a draft save. Enter
+            <code>fail</code> to simulate a save error.
           </p>
         </ngx-control-wrapper>
 
@@ -46,7 +47,7 @@
               [ngModel]="formValue().preferredContactMethod"
             >
               <option value="email">Email me</option>
-              <option value="phone">Keep it in-app only</option>
+              <option value="in-app">Keep it in-app only</option>
             </select>
           </label>
         </ngx-control-wrapper>
@@ -61,6 +62,7 @@
                 id="email"
                 name="email"
                 type="email"
+                autocomplete="email"
                 class="input-field"
                 [ngModel]="formValue().email"
                 placeholder="team@example.com"
