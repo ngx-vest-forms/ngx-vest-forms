@@ -24,7 +24,7 @@ Run this from the project root and keep the output; every hit is a site some lat
 ```bash
 grep -rnE --include='*.ts' --include='*.html' --include='*.css' --include='*.scss' --exclude-dir=node_modules --exclude-dir=dist \
   -e '\bsc-(control|form-group)-wrapper\b|\bsc(VestForm|ControlWrapper|FormGroupWrapper)\b|\sngx-control-wrapper[\s=>]' \
-  -e '\bvalidateRootForm(Mode)?\b|\bform(ControlState|ErrorDisplay|ErrorControl)\b' \
+  -e '\bvalidateRootForm(Mode)?\b|\bform(ControlState|ErrorDisplay|ErrorControl)\b|\bngxModel(Group)?\b' \
   -e '\b(vestForms|ROOT_FORM_CONSTANT|DeepPartial|DeepRequired|NgxTypedVestSuite|(Ngx)?FormCompatibleDeepRequired|cloneDeep|validateShape|SC_ERROR_DISPLAY_MODE_TOKEN|ScErrorDisplayMode)\b' \
   -e '\b(fastDeepEqual|shallowEqual|parseFieldPath|getFormControlField|getFormGroupField|mergeValuesAndRawValues)\b' \
   -e '\bformShape\b|\bstaticSuite\b|\bpromisify\b|\btest\.memo\b|\bonly\(' \
@@ -46,6 +46,8 @@ Run the codemod in [`SELECTOR-PREFIX-MIGRATION.md`](https://github.com/ngx-vest-
 | `<sc-form-group-wrapper>`, `[scFormGroupWrapper]`                                                     | `<ngx-form-group-wrapper>`, `ngxFormGroupWrapper`       |
 
 Update CSS that targets removed `sc-` host classes.
+
+Delete any `ngxModel` or `ngxModelGroup` attribute. They were aliases of the directives behind `ngModel` and `ngModelGroup` and are gone in v3; the `ngModel` / `ngModelGroup` next to them carries the validation unchanged.
 
 ## 4. Rename removed exports
 
