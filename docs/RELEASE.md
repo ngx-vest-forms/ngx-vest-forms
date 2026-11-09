@@ -78,6 +78,12 @@ hold:
 
 - At least **2 weeks** on `@beta` since the last beta that changed behavior
   (a `feat` or `fix` commit; docs-only betas don't reset the clock).
+  `fix(deps)` commits and dependency overrides that touch none of
+  `packages/ngx-vest-forms/src`, the library's runtime peer ranges, or its
+  runtime `dependencies` (`tslib` in `packages/ngx-vest-forms/package.json`)
+  don't reset it either (dev and build tooling, transitive security
+  overrides), even though semantic-release counts them as `fix` and bumps the
+  beta number.
 - **No open bugs** labelled `v3` that block users (crash, wrong validation
   result, data loss, or a broken documented API).
 - The unit and e2e suites pass on the **latest Angular 22.x patch** and the
@@ -91,7 +97,9 @@ hold:
 
 **Release candidate to 3.0.0.** Publish `3.0.0` from `master` after at least
 **1 week** on `@rc` with no `feat` or `fix` commits. A fix during that week
-publishes a new `rc.N` and restarts the week.
+publishes a new `rc.N` and restarts the week. The same exemption applies:
+`fix(deps)` commits that don't touch the library source, peer ranges or runtime
+`dependencies` don't restart it.
 
 Track progress on these in issue #236.
 
