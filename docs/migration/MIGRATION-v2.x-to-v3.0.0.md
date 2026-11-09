@@ -362,6 +362,15 @@ v2 wrote `[formValue]` into the form with `patchValue(value, { emitEvent: false 
 
 v2's `objectToArray` also turned an unlisted numeric-keyed object into an array whenever its items were objects, so `objectToArray({ notes: { 0: { tag: 'a' } } }, [])` returned `{ notes: [{ tag: 'a' }] }`. v3 leaves `notes` an object. A numeric-keyed object still becomes an array when its key is listed, when it sits inside a converted branch, or when it contains a converted key. If your save code relied on the old behaviour, add the missing keys to the `keys` argument.
 
+## `NgxVestSuite` no longer exposes `any`
+
+v2 typed `subscribe`, `dump` and `resume` on `NgxVestSuite<T>` as `any`. v3 types them as follows; real `create(...)` suites are assignable as before.
+
+- `subscribe(callback)` and `subscribe(event, callback)` return the unsubscribe function, typed `() => void`. The event name is a `string` and the payload `unknown`.
+- `dump()` returns `unknown`, and `resume(state)` takes `unknown`. The precise type is Vest's internal isolate tree, which ngx-vest-forms does not re-export; pass the value from `dump()` straight to `resume()`.
+
+Code that read properties off `dump()`'s result through `NgxVestSuite` needs a cast or the suite's own inferred type. A hand-written suite fake whose `subscribe` returned nothing must now return a function, for example `subscribe: () => () => {}`.
+
 ## Internal type parameters removed
 
 v3 drops type parameters that were recursion internals or did nothing. Calls and type references that let TypeScript infer them, which is how the docs and examples use them, need no change. Only code that passes these type arguments explicitly gets a compile error ("Expected N type arguments"):

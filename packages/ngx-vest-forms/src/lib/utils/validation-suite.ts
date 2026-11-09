@@ -157,12 +157,20 @@ export type NgxVestSuite<T = unknown> = {
   resetField(field: string): void;
   remove(field: string): void;
   /**
-   * Vest's event subscription. ngx-vest-forms never calls it; it is part of
-   * the shape so a real suite and a hand-written fake describe the same
-   * object. Typed `unknown` with method syntax, so Vest's overloaded
-   * `subscribe` stays assignable through parameter bivariance.
+   * Vest's event subscription; returns the function that unsubscribes.
+   * ngx-vest-forms never calls it. It mirrors Vest 6.3's two overloads
+   * (`subscribe(cb)` for every event, `subscribe(event, cb)` for one) with
+   * the event name and payload widened to `string` / `unknown`, so Vest's
+   * own `subscribe` stays assignable through method bivariance.
+   *
+   * @example
+   * ```typescript
+   * const unsubscribe = suite.subscribe(() => render(suite.get()));
+   * unsubscribe();
+   * ```
    */
-  subscribe(...args: unknown[]): unknown;
+  subscribe(callback: () => void): () => void;
+  subscribe(event: string, callback: (payload: unknown) => void): () => void;
   /** Serialises the suite state (Vest `dump()`). Not called by ngx-vest-forms. */
   dump(): unknown;
   /** Restores a state produced by `dump()` (Vest `resume()`). Not called by ngx-vest-forms. */

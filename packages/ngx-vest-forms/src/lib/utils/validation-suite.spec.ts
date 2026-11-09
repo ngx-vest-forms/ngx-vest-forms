@@ -1,5 +1,5 @@
 import { create, enforce, group, test } from 'vest';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, expectTypeOf, it } from 'vitest';
 import { ROOT_FORM } from '../constants';
 import type { FormFieldName } from './field-path-types';
 import type { NgxFieldKey, NgxVestSuite } from './validation-suite';
@@ -145,5 +145,44 @@ describe('validation-suite types', () => {
 
     expect(plain.get().hasErrors('firstName')).toBe(true);
     expect(typeof unsubscribe).toBe('function');
+  });
+
+  it('should return a callable unsubscribe function from subscribe', () => {
+    const suite: NgxVestSuite<TestModel> = create((model: TestModel) => {
+      test('firstName', 'First name is required', () => {
+        enforce(model.firstName).isNotBlank();
+      });
+    });
+    let calls = 0;
+
+    const off = suite.subscribe(() => {
+      calls++;
+    });
+    suite.run({});
+    const callsWhileSubscribed = calls;
+    off();
+    suite.run({});
+
+    const offEvent = suite.subscribe('SUITE_RUN_STARTED', () => {
+      // No-op: only the event overload's call shape is under test.
+    });
+    offEvent();
+
+    expectTypeOf(off).toEqualTypeOf<() => void>();
+    expect(callsWhileSubscribed).toBeGreaterThan(0);
+    expect(calls).toBe(callsWhileSubscribed);
+  });
+
+  it('should accept a hand-written fake whose subscribe returns an unsubscribe', () => {
+    const noop = () => {
+      // Fake suite: nothing to unsubscribe.
+    };
+    const fake: Pick<NgxVestSuite, 'subscribe' | 'dump' | 'resume'> = {
+      subscribe: () => noop,
+      dump: () => ({}),
+      resume: noop,
+    };
+
+    expect(typeof fake.subscribe(noop)).toBe('function');
   });
 });
