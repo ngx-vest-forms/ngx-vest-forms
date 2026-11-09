@@ -31,14 +31,10 @@
       submit focuses it
     </ngx-intro-item>
     <ngx-intro-item>
-      <strong class="text-gray-900 dark:text-white"
-        >One workaround, for now</strong
-      >
+      <strong class="text-gray-900 dark:text-white">No extra directive</strong>
       — In Angular 22.2, <code>[ngModel]</code> does not attach validators to a
-      Signal Forms control, so without the
-      <code>ngxSignalControlValidators</code> directive Vest never runs for the
-      field. A fix inside ngx-vest-forms is planned; until then, put the
-      directive on each Signal Forms control
+      Signal Forms control. ngx-vest-forms detects that and attaches its Vest
+      validator itself, so the field validates like any other
     </ngx-intro-item>
   </ngx-intro-section>
 
