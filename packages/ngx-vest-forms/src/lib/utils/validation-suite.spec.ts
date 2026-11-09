@@ -4,6 +4,10 @@ import { ROOT_FORM } from '../constants';
 import type { FormFieldName } from './field-path-types';
 import type { NgxFieldKey, NgxVestSuite } from './validation-suite';
 
+const noop = () => {
+  // Fake suite: nothing to unsubscribe.
+};
+
 describe('validation-suite types', () => {
   interface TestModel {
     firstName?: string;
@@ -174,9 +178,6 @@ describe('validation-suite types', () => {
   });
 
   it('should accept a hand-written fake whose subscribe returns an unsubscribe', () => {
-    const noop = () => {
-      // Fake suite: nothing to unsubscribe.
-    };
     const fake: Pick<NgxVestSuite, 'subscribe' | 'dump' | 'resume'> = {
       subscribe: () => noop,
       dump: () => ({}),

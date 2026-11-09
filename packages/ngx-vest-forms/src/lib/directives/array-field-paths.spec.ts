@@ -62,35 +62,46 @@ function createHost(validationConfig: NgxValidationConfig<Model>) {
   return { HostComponent, nameRuns: () => nameRuns };
 }
 
+async function setup(config: NgxValidationConfig<Model>) {
+  const { HostComponent, nameRuns } = createHost(config);
+  const fixture = TestBed.configureTestingModule({
+    imports: [HostComponent],
+  }).createComponent(HostComponent);
+  fixture.detectChanges();
+  await whenStable();
+  return { fixture, nameRuns };
+}
+
+async function typeStreet(
+  fixture: { nativeElement: HTMLElement },
+  value: string
+) {
+  const street = fixture.nativeElement.querySelector<HTMLInputElement>(
+    'input[name="street"]'
+  );
+  if (!street) throw new Error('street input not rendered');
+  street.value = value;
+  street.dispatchEvent(new Event('input'));
+  await whenStable();
+  // Let the validationConfig pipeline's debounce and cooldown settle.
+  await new Promise<void>((resolve) => {
+    setTimeout(resolve, 700);
+  });
+  await whenStable();
+}
+
+/** How often `name` validates after a street edit under `config`. */
+async function nameRunsAfterStreetEdit(config: NgxValidationConfig<Model>) {
+  const { fixture, nameRuns } = await setup(config);
+  const before = nameRuns();
+  await typeStreet(fixture, 'Main St');
+  TestBed.resetTestingModule();
+  return nameRuns() - before;
+}
+
 describe('array field paths at runtime', () => {
   beforeEach(() => TestBed.resetTestingModule());
   afterEach(() => TestBed.resetTestingModule());
-
-  async function setup(config: NgxValidationConfig<Model>) {
-    const { HostComponent, nameRuns } = createHost(config);
-    const fixture = TestBed.configureTestingModule({
-      imports: [HostComponent],
-    }).createComponent(HostComponent);
-    fixture.detectChanges();
-    await whenStable();
-    return { fixture, nameRuns };
-  }
-
-  async function typeStreet(
-    fixture: { nativeElement: HTMLElement },
-    value: string
-  ) {
-    const street = fixture.nativeElement.querySelector<HTMLInputElement>(
-      'input[name="street"]'
-    );
-    if (!street) throw new Error('street input not rendered');
-    street.value = value;
-    street.dispatchEvent(new Event('input'));
-    await whenStable();
-    // Let the validationConfig pipeline's debounce and cooldown settle.
-    await new Promise((resolve) => setTimeout(resolve, 700));
-    await whenStable();
-  }
 
   it('registers array element controls under the indexed path only', async () => {
     const { fixture } = await setup(null);
@@ -99,15 +110,6 @@ describe('array field paths at runtime', () => {
     expect(form.get('addresses.0.street')).not.toBeNull();
     expect(form.get('addresses.street')).toBeNull();
   });
-
-  /** How often `name` validates after a street edit under `config`. */
-  async function nameRunsAfterStreetEdit(config: NgxValidationConfig<Model>) {
-    const { fixture, nameRuns } = await setup(config);
-    const before = nameRuns();
-    await typeStreet(fixture, 'Main St');
-    TestBed.resetTestingModule();
-    return nameRuns() - before;
-  }
 
   it('revalidates dependents of an indexed trigger path, never of a flattened one', async () => {
     // Without a config, `name` still validates once per edit (form-level
