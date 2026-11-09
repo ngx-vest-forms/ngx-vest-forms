@@ -669,3 +669,85 @@ describe('FormModelDirective with Signal Forms controls: name changes', () => {
     });
   });
 });
+
+describe('FormModelDirective with Signal Forms controls: value events on attach', () => {
+  beforeEach(() => {
+    suite.reset();
+  });
+
+  @Component({
+    imports: [NgxVestForms, CountControlComponent],
+    template: `
+      <form
+        ngxVestForm
+        [suite]="suite"
+        [formValue]="model()"
+        (formValueChange)="valueChanges.push($event)"
+      >
+        <ngx-test-count-control name="count" [ngModel]="model().count" />
+      </form>
+    `,
+  })
+  class SignalValueEventsHostComponent {
+    readonly suite = suite;
+    readonly model = signal<Model>({ count: 2 });
+    readonly valueChanges: Model[] = [];
+  }
+
+  @Component({
+    imports: [NgxVestForms],
+    template: `
+      <form
+        ngxVestForm
+        [suite]="suite"
+        [formValue]="model()"
+        (formValueChange)="valueChanges.push($event)"
+      >
+        <input name="note" [ngModel]="model().note" />
+      </form>
+    `,
+  })
+  class NativeValueEventsHostComponent {
+    readonly suite = suite;
+    readonly model = signal<Model>({ note: 'filled' });
+    readonly valueChanges: Model[] = [];
+  }
+
+  it('emits formValueChange once for the initial value, like a native input', async () => {
+    const signalFixture = TestBed.createComponent(
+      SignalValueEventsHostComponent
+    );
+    signalFixture.detectChanges();
+    const signalNgModel = signalFixture.debugElement
+      .query(By.directive(CountControlComponent))
+      .injector.get(NgModel);
+    // Wait until the attach has run and its first Vest result has landed.
+    await eventually(signalFixture, () => {
+      const asyncValidator = signalNgModel.asyncValidator;
+      expect(
+        asyncValidator &&
+          signalNgModel.control.hasAsyncValidator(asyncValidator)
+      ).toBe(true);
+      expect(formDirectiveOf(signalFixture).status()).toBe('VALID');
+    });
+
+    const nativeFixture = TestBed.createComponent(
+      NativeValueEventsHostComponent
+    );
+    nativeFixture.detectChanges();
+    await eventually(nativeFixture, () => {
+      expect(formDirectiveOf(nativeFixture).status()).toBe('VALID');
+    });
+
+    // A native input reports the initial value once (the emitting setValue
+    // NgModel runs after setup). The attach revalidates with events too, so
+    // Angular emits valueChanges with the unchanged value once more; it must
+    // not add a second formValueChange.
+    expect(nativeFixture.componentInstance.valueChanges).toEqual([
+      { note: 'filled' },
+    ]);
+    expect(signalFixture.componentInstance.valueChanges).toEqual([
+      { count: 2 },
+    ]);
+  });
+});
