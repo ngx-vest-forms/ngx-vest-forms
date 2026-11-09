@@ -108,22 +108,25 @@ function validateFormValueAgainstShape(
         continue;
       }
 
-      // Type mismatch: formValue has object, but shape expects primitive
-      if (!isNumericKey && !isTraversableValue(shapeValue)) {
-        logWarning(
-          NGX_VEST_FORMS_ERRORS.TYPE_MISMATCH,
-          fieldPath,
-          'primitive',
-          'object'
-        );
+      // No shape to compare the children with: never descend. Recursing
+      // against `{}` would report every child as an extra property.
+      if (!isTraversableValue(shapeValue)) {
+        // Type mismatch: formValue has object, but shape expects primitive
+        if (!isNumericKey) {
+          logWarning(
+            NGX_VEST_FORMS_ERRORS.TYPE_MISMATCH,
+            fieldPath,
+            'primitive',
+            'object'
+          );
+        }
+        continue;
       }
 
       // Recurse into nested object
       validateFormValueAgainstShape(
         value as Record<string, unknown>,
-        isTraversableValue(shapeValue)
-          ? (shapeValue as Record<string, unknown>)
-          : {},
+        shapeValue as Record<string, unknown>,
         fieldPath
       );
       continue;

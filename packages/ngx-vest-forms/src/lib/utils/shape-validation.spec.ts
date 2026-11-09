@@ -169,6 +169,17 @@ describe('validateShape function', () => {
       expect(consoleWarnSpy).toHaveBeenCalled();
     });
 
+    it('should report one type mismatch for an object where the shape has a primitive, not its children', () => {
+      validateShape({ name: { first: 'John', last: 'Doe' } }, { name: '' });
+
+      const calls = consoleWarnSpy.mock.calls.map((call: unknown[]) =>
+        String(call[0])
+      );
+      expect(calls).toHaveLength(1);
+      expect(calls[0]).toContain('NGX-002');
+      expect(calls[0]).toContain("'name'");
+    });
+
     it('should warn when formValue has opaque leaf (Date) but shape expects primitive', () => {
       const formValue = {
         birthDate: new Date(),
