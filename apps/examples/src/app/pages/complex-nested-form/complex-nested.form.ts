@@ -1,5 +1,16 @@
 import { KeyValuePipe } from '@angular/common';
-import { Component, computed, input, output, viewChild } from '@angular/core';
+import {
+  afterNextRender,
+  Component,
+  computed,
+  ElementRef,
+  inject,
+  Injector,
+  input,
+  output,
+  signal,
+  viewChild,
+} from '@angular/core';
 import {
   createFormFeedbackSignals,
   FormDirective,
@@ -45,6 +56,13 @@ export class ComplexNestedFormBody {
   private readonly vestForm =
     viewChild<FormDirective<ComplexNestedModel>>('vestForm');
   readonly feedback = createFormFeedbackSignals(this.vestForm);
+
+  /** Polite confirmation after a member row is removed. */
+  protected readonly removalMessage = signal('');
+
+  readonly #injector = inject(Injector);
+  private readonly addMemberButton =
+    viewChild<ElementRef<HTMLButtonElement>>('addMemberButton');
 
   /**
    * Ordered list of `[key, member]` pairs for the @for loop. Each key is a
@@ -94,7 +112,7 @@ export class ComplexNestedFormBody {
    * row; the suite reads the current keys on every run, so the removed row's
    * tests disappear with it.
    */
-  protected removeMember(key: string): void {
+  protected removeMember(key: string, position: number): void {
     const current = this.formValue();
     // Record the highest id in use before it can disappear, so a later add
     // never reuses the removed id (the initial rows never went through add).
@@ -105,6 +123,13 @@ export class ComplexNestedFormBody {
     this.formValueChange.emit({
       ...current,
       teamMembers: Object.fromEntries(remaining),
+    });
+
+    // The focused Remove button leaves with its row: move focus to the stable
+    // "Add member" button instead of letting it fall to <body>.
+    this.removalMessage.set(`Member ${position} removed`);
+    afterNextRender(() => this.addMemberButton()?.nativeElement.focus(), {
+      injector: this.#injector,
     });
   }
 

@@ -1,4 +1,13 @@
-import { Component, forwardRef, signal } from '@angular/core';
+import {
+  afterNextRender,
+  Component,
+  ElementRef,
+  forwardRef,
+  inject,
+  Injector,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 let nextId = 0;
@@ -48,6 +57,8 @@ let nextId = 0;
         placeholder="Type a tag and press Enter"
         (keydown.enter)="add($event, tagBox)"
       />
+      <!-- Confirms a removal, since the removed tag took focus with it. -->
+      <p class="sr-only" role="status">{{ removalMessage() }}</p>
     </div>
   `,
   providers: [
@@ -63,6 +74,10 @@ export class TagInputComponent implements ControlValueAccessor {
   protected readonly inputId = `ngx-tag-input-${nextId++}`;
   protected readonly tags = signal<string[]>([]);
   protected readonly disabled = signal(false);
+  protected readonly removalMessage = signal('');
+
+  readonly #injector = inject(Injector);
+  private readonly tagBox = viewChild<ElementRef<HTMLInputElement>>('tagBox');
 
   private onChange: (value: string[]) => void = () => undefined;
   private onTouched: () => void = () => undefined;
@@ -83,8 +98,16 @@ export class TagInputComponent implements ControlValueAccessor {
 
   protected remove(index: number): void {
     if (this.disabled()) return;
+    const removed = this.tags()[index];
     this.tags.update((tags) => tags.filter((_, i) => i !== index));
     this.onChange(this.tags());
+
+    // The focused remove button is gone after the next render: move focus to
+    // the tag input instead of letting it fall to <body>.
+    this.removalMessage.set(`Tag ${removed} removed`);
+    afterNextRender(() => this.tagBox()?.nativeElement.focus(), {
+      injector: this.#injector,
+    });
   }
 
   protected onFocusOut(event: FocusEvent): void {

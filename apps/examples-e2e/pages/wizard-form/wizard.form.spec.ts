@@ -550,6 +550,25 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
   });
 
   test.describe('Accessibility & ARIA', () => {
+    test('should move focus to the step heading when the step changes', async ({
+      page,
+    }) => {
+      await test.step('Continue from a valid step 1', async () => {
+        await fillValidStep1(page);
+        await goToProfileStep(page);
+        await expect(
+          page.getByRole('heading', { name: STEP_HEADINGS[2], level: 2 })
+        ).toBeFocused();
+      });
+
+      await test.step('Go back with Previous', async () => {
+        await clickPrevious(page);
+        await expect(
+          page.getByRole('heading', { name: STEP_HEADINGS[1], level: 2 })
+        ).toBeFocused();
+      });
+    });
+
     test('should have proper ARIA attributes on form controls', async ({
       page,
     }) => {

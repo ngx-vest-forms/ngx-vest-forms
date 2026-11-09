@@ -30,6 +30,7 @@
   <ngx-control-wrapper>
     <div class="relative flex items-center gap-2">
       <input
+        #addPhoneInput
         type="tel"
         [ngModel]="newPhoneNumber()"
         [ngModelOptions]="{ standalone: true }"
@@ -50,4 +51,7 @@
       </button>
     </div>
   </ngx-control-wrapper>
+
+  <!-- Confirms a removal, since the removed row took focus with it. -->
+  <p class="sr-only" role="status">{{ removalMessage() }}</p>
 </div>

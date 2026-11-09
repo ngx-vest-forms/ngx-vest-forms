@@ -100,7 +100,15 @@
         }
 
         <ngx-card>
-          <h2 class="mb-6 text-xl font-semibold text-gray-900 dark:text-white">
+          <!--
+            Focus moves here when the user changes step, so screen readers
+            announce the new step and keyboard users start at its top.
+          -->
+          <h2
+            #stepHeading
+            tabindex="-1"
+            class="mb-6 text-xl font-semibold text-gray-900 focus:outline-none dark:text-white"
+          >
             {{ currentStepTitle() }}
           </h2>
 

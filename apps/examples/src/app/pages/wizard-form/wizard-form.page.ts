@@ -2,6 +2,7 @@ import {
   afterNextRender,
   Component,
   computed,
+  ElementRef,
   inject,
   Injector,
   signal,
@@ -93,6 +94,8 @@ export class WizardFormPageComponent {
   });
 
   private readonly formBody = viewChild(WizardFormBodyComponent);
+  private readonly stepHeading =
+    viewChild<ElementRef<HTMLElement>>('stepHeading');
 
   protected readonly step1Valid = signal(false);
   protected readonly step2Valid = signal(false);
@@ -180,16 +183,30 @@ export class WizardFormPageComponent {
     return step !== this.currentStep() && this.getStepValid(step);
   }
 
-  protected goToStep(step: WizardStep): void {
+  /**
+   * Shows `step` after a user navigation and moves focus to its heading, so
+   * the step change is announced and keyboard focus is not left on a button
+   * of the previous step. A failed final submit changes step without this,
+   * because it focuses the first invalid field instead.
+   */
+  private showStep(step: WizardStep): void {
+    if (step === this.currentStep()) return;
     this.currentStep.set(step);
+    afterNextRender(() => this.stepHeading()?.nativeElement.focus(), {
+      injector: this.injector,
+    });
+  }
+
+  protected goToStep(step: WizardStep): void {
+    this.showStep(step);
   }
 
   protected previousStep(): void {
-    this.currentStep.update((step) => (step === 3 ? 2 : 1));
+    this.showStep(this.currentStep() === 3 ? 2 : 1);
   }
 
   protected nextStep(): void {
-    this.currentStep.update((step) => (step === 1 ? 2 : 3));
+    this.showStep(this.currentStep() === 1 ? 2 : 3);
   }
 
   protected onStep1Submit(valid: boolean): void {
@@ -260,11 +277,11 @@ export class WizardFormPageComponent {
       );
 
       if (!step1IsValid) {
-        this.goToStep(1);
+        this.currentStep.set(1);
       } else if (!step2IsValid) {
-        this.goToStep(2);
+        this.currentStep.set(2);
       } else if (!step3IsValid) {
-        this.goToStep(3);
+        this.currentStep.set(3);
       }
 
       afterNextRender(
