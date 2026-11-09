@@ -1,4 +1,5 @@
-import { vi } from 'vitest';
+import { expectTypeOf, vi } from 'vitest';
+import type { NgxDeepPartial } from './deep-partial';
 import { NgxDeepRequired } from './deep-required';
 
 describe('NgxDeepRequired', () => {
@@ -156,5 +157,37 @@ describe('NgxDeepRequired', () => {
     expect(value.numbers.length).toBe(3);
     expect(value.strings.length).toBe(3);
     expect(value.booleans.length).toBe(2);
+  });
+
+  it('should strip the explicit undefined that NgxDeepPartial adds', () => {
+    // Under `exactOptionalPropertyTypes`, `-?` alone keeps a spelled-out
+    // `?: X | undefined`; NgxDeepRequired must still yield the plain type.
+    type Model = { name: string; address: { street: string } };
+
+    expectTypeOf<
+      NgxDeepRequired<NgxDeepPartial<Model>>
+    >().toEqualTypeOf<Model>();
+
+    const contract: NgxDeepRequired<NgxDeepPartial<Model>> = {
+      name: '',
+      address: { street: '' },
+    };
+    const bad: NgxDeepRequired<NgxDeepPartial<Model>> = {
+      // @ts-expect-error a contract field cannot be undefined
+      name: undefined,
+      address: { street: '' },
+    };
+
+    expect([contract, bad]).toHaveLength(2);
+  });
+
+  it('should keep undefined on a required property that declares it', () => {
+    type Model = { maybe: number | undefined };
+
+    expectTypeOf<NgxDeepRequired<Model>['maybe']>().toEqualTypeOf<
+      number | undefined
+    >();
+    const value: NgxDeepRequired<Model> = { maybe: undefined };
+    expect(value.maybe).toBeUndefined();
   });
 });

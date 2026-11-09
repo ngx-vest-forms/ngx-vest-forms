@@ -54,11 +54,12 @@ export const purchaseFormContract: NgxDeepRequired<PurchaseFormModel> = {
   justification: '',
 };
 
-// birthDate, age, gender and quantity start unset, so they are left out.
 export const initialPurchaseFormValue: PurchaseFormModel = {
   userId: '',
   firstName: '',
   lastName: '',
+  birthDate: undefined,
+  age: undefined,
   emergencyContact: '',
   passwords: {
     password: '',
@@ -68,8 +69,10 @@ export const initialPurchaseFormValue: PurchaseFormModel = {
     addValue: '',
     values: {},
   },
+  gender: undefined,
   genderOther: '',
   productId: '',
+  quantity: undefined,
   justification: '',
   addresses: {
     shippingAddress: {

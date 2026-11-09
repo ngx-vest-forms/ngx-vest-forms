@@ -362,6 +362,12 @@ v2 wrote `[formValue]` into the form with `patchValue(value, { emitEvent: false 
 
 v2's `objectToArray` also turned an unlisted numeric-keyed object into an array whenever its items were objects, so `objectToArray({ notes: { 0: { tag: 'a' } } }, [])` returned `{ notes: [{ tag: 'a' }] }`. v3 leaves `notes` an object. A numeric-keyed object still becomes an array when its key is listed, when it sits inside a converted branch, or when it contains a converted key. If your save code relied on the old behaviour, add the missing keys to the `keys` argument.
 
+## `NgxDeepPartial` allows an explicit `undefined`
+
+`NgxDeepPartial<T>` now emits `prop?: X | undefined` for object properties instead of `prop?: X`. Without `exactOptionalPropertyTypes` the two are identical. With it, you can now write an empty field as `{ birthDate: undefined }` in a form model, which the form itself does when a control is cleared. `NgxDeepRequired<T>` strips that `undefined` again from optional properties, so contracts built from a partial model stay fully required.
+
+If you compile with `exactOptionalPropertyTypes` and pass part of an `NgxDeepPartial` model to a parameter typed with the built-in `Partial<X>`, the call no longer type-checks, because `Partial<X>` rejects the explicit `undefined`. Type that parameter as `NgxDeepPartial<X>` instead.
+
 ## `NgxVestSuite` no longer exposes `any`
 
 v2 typed `subscribe`, `dump` and `resume` on `NgxVestSuite<T>` as `any`. v3 types them as follows; real `create(...)` suites are assignable as before.
