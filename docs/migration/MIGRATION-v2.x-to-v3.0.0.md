@@ -380,6 +380,7 @@ v3.0.0 removes the legacy `sc-` selectors, duplicate directive aliases, duplicat
 - `[ngx-control-wrapper]`
 - `sc-form-group-wrapper`, `[scFormGroupWrapper]`
 - `SC_ERROR_DISPLAY_MODE_TOKEN`
+- `[ngxModel]` and `[ngxModelGroup]`: alias selectors of the directives that hook into `ngModel` and `ngModelGroup`. Nothing in the docs or examples used them, and on their own they validated nothing, because only `ngModel` and `ngModelGroup` create the control that runs the validator. If you added `ngxModel` or `ngxModelGroup` next to `ngModel` or `ngModelGroup`, delete the attribute; validation is unchanged.
 
 ### Renamed symbols
 
