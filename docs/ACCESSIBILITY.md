@@ -22,7 +22,7 @@ The wrapper also:
 
 - merges its own `aria-describedby` tokens with any consumer-provided tokens (so existing hint text associations are preserved)
 - toggles `aria-invalid` only when errors are meant to be shown (based on the configured error display mode)
-- keeps the last settled errors and warnings, `aria-invalid` and `aria-describedby` while an async re-check is pending, next to the pending message. They change only when the new result settles, so a polite live region does not re-announce an unchanged message on every check. The first validation has nothing to keep, and a reset clears them at once.
+- keeps the last settled errors and warnings, `aria-invalid` and `aria-describedby` while an async re-check is pending, next to the pending message. They change only when the new result settles, so a polite live region does not re-announce an unchanged message on every check. A control's first validation has nothing to keep, messages the display mode was still hiding stay hidden, and `reset()`, `resetForm()` or `resetField()` clears them at once.
 
 It sets these attributes on native `input`, `select` and `textarea` elements
 and on elements with an ARIA form-widget role: `checkbox`, `combobox`,
