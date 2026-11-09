@@ -78,6 +78,10 @@ hold:
 
 - At least **2 weeks** on `@beta` since the last beta that changed behavior
   (a `feat` or `fix` commit; docs-only betas don't reset the clock).
+  `fix(deps)` commits and dependency overrides that touch neither
+  `packages/ngx-vest-forms/src` nor the library's runtime peer ranges (dev and
+  build tooling, transitive security overrides) don't reset it either, even
+  though semantic-release counts them as `fix` and bumps the beta number.
 - **No open bugs** labelled `v3` that block users (crash, wrong validation
   result, data loss, or a broken documented API).
 - The unit and e2e suites pass on the **latest Angular 22.x patch** and the
