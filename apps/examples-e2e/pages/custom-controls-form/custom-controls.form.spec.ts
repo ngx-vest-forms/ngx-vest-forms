@@ -148,12 +148,21 @@ test.describe('Custom Controls Form', () => {
     page,
   }) => {
     const tagInput = page.getByLabel(/add a tag/i);
-    await tagInput.fill('angular');
-    await tagInput.press('Enter');
+    for (const tag of ['angular', 'vest']) {
+      await tagInput.fill(tag);
+      await tagInput.press('Enter');
+    }
 
-    await page.getByRole('button', { name: /remove tag angular/i }).click();
-
-    await expect(tagInput).toBeFocused();
+    // The next tag's remove button takes the removed one's place.
+    await page.getByRole('button', { name: 'Remove tag angular' }).click();
+    await expect(
+      page.getByRole('button', { name: 'Remove tag vest' })
+    ).toBeFocused();
     await expect(page.getByText('Tag angular removed')).toBeAttached();
+
+    // With no tags left, focus returns to the input.
+    await page.getByRole('button', { name: 'Remove tag vest' }).click();
+    await expect(tagInput).toBeFocused();
+    await expect(page.getByText('Tag vest removed')).toBeAttached();
   });
 });

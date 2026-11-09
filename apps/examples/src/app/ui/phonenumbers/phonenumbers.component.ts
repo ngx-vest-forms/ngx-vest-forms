@@ -1,10 +1,7 @@
 import { KeyValuePipe } from '@angular/common';
 import {
-  afterNextRender,
   Component,
   ElementRef,
-  inject,
-  Injector,
   input,
   output,
   signal,
@@ -17,6 +14,7 @@ import {
 } from 'ngx-vest-forms';
 import type { PhoneNumberMap } from '../../models/phonenumber.model';
 import { byNumericKey } from '../../shared/by-numeric-key';
+import { RemovalFeedback } from '../../shared/removal-feedback';
 
 /**
  * Phone numbers component that integrates with ngx-vest-forms parent form.
@@ -53,12 +51,13 @@ export class PhoneNumbersComponent {
   /** Local UI state for the "add new" input field - not part of form model */
   readonly newPhoneNumber = signal('');
 
-  /** Polite confirmation after a removal; the removed row took focus with it. */
-  protected readonly removalMessage = signal('');
-
-  readonly #injector = inject(Injector);
   private readonly addPhoneInput =
     viewChild<ElementRef<HTMLInputElement>>('addPhoneInput');
+
+  /** Announces a removal and keeps focus on a Remove button or the add input. */
+  protected readonly removal = new RemovalFeedback(
+    () => this.addPhoneInput()?.nativeElement
+  );
 
   /** Adds the new phone number and emits structural change to parent */
   addPhoneNumber(): void {
@@ -78,13 +77,10 @@ export class PhoneNumbersComponent {
     );
     const newValues = arrayToObject(phonenumbers);
     this.valuesChange.emit(newValues);
-
-    // The focused Remove button is gone after the next render: move focus to
-    // the stable "add" input instead of letting it fall to <body>.
-    this.removalMessage.set(`Phone number ${Number(key) + 1} removed`);
-    afterNextRender(() => this.addPhoneInput()?.nativeElement.focus(), {
-      injector: this.#injector,
-    });
+    this.removal.removed(
+      Number(key),
+      `Phone number ${Number(key) + 1} removed`
+    );
   }
 
   /** Updates the local new phone number input (local UI state only) */

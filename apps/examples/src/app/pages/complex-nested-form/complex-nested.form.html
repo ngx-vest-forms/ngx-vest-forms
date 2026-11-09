@@ -61,7 +61,8 @@
                 <button
                   type="button"
                   class="btn btn-danger px-3 py-1.5 text-xs"
-                  (click)="removeMember(entry[0], $index + 1)"
+                  data-row-remove
+                  (click)="removeMember(entry[0], $index)"
                   [attr.aria-label]="'Remove member ' + ($index + 1)"
                 >
                   Remove
@@ -88,8 +89,8 @@
           >
             Add member
           </button>
-          <!-- Confirms a removal, since the removed row took focus with it. -->
-          <p class="sr-only" role="status">{{ removalMessage() }}</p>
+          <!-- Confirms a removal; see RemovalFeedback. -->
+          <p class="sr-only" role="status">{{ removal.message() }}</p>
         </div>
       </div>
     </ngx-form-section>

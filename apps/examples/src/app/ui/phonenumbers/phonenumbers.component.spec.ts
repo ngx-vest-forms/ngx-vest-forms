@@ -27,6 +27,22 @@ class TestWrapperComponent {
   }
 }
 
+/** Holds the list itself, so removals are applied without a form model. */
+@Component({
+  imports: [PhoneNumbersComponent, NgxVestForms],
+  template: `
+    <form ngxVestForm>
+      <ngx-phonenumbers
+        [values]="phones()"
+        (valuesChange)="phones.set($event)"
+      />
+    </form>
+  `,
+})
+class RemovalHostComponent {
+  readonly phones = signal<Record<string, string>>({});
+}
+
 describe('PhoneNumbersComponent', () => {
   let fixture: ComponentFixture<TestWrapperComponent>;
   let component: TestWrapperComponent;
@@ -263,5 +279,82 @@ describe('PhoneNumbersComponent', () => {
 
     // Should emit empty object
     expect(valueSpy).toHaveBeenCalledWith({});
+  });
+
+  describe('after a removal', () => {
+    let removalFixture: ComponentFixture<RemovalHostComponent>;
+    let host: HTMLElement;
+
+    const removeButton = (position: number) =>
+      host.querySelector<HTMLButtonElement>(
+        `button[aria-label="Remove phone number ${position}"]`
+      );
+    const status = () =>
+      host.querySelector('p.sr-only[role="status"]')?.textContent?.trim();
+    const setPhones = (phones: Record<string, string>) => {
+      removalFixture.componentInstance.phones.set(phones);
+      removalFixture.detectChanges();
+    };
+
+    beforeEach(() => {
+      removalFixture = TestBed.createComponent(RemovalHostComponent);
+      host = removalFixture.nativeElement;
+      // Focus only moves between elements that are in the document.
+      document.body.append(host);
+      setPhones({ '0': 'First', '1': 'Second', '2': 'Third' });
+    });
+
+    afterEach(() => host.remove());
+
+    it('keeps focus on the Remove button at the same position', async () => {
+      removeButton(1)?.focus();
+      removeButton(1)?.click();
+      await removalFixture.whenStable();
+
+      expect(host.querySelectorAll('[data-row-remove]')).toHaveLength(2);
+      expect(document.activeElement).toBe(removeButton(1));
+    });
+
+    it('moves focus to the previous Remove button after removing the last row', async () => {
+      removeButton(3)?.click();
+      await removalFixture.whenStable();
+
+      expect(document.activeElement).toBe(removeButton(2));
+    });
+
+    it('moves focus to the add input when no rows are left', async () => {
+      setPhones({ '0': 'Only' });
+
+      removeButton(1)?.click();
+      await removalFixture.whenStable();
+
+      expect(document.activeElement).toBe(
+        host.querySelector('input[aria-label="Add new phone number"]')
+      );
+    });
+
+    it('announces a second removal at the same position, then clears', async () => {
+      vi.useFakeTimers();
+      try {
+        removeButton(1)?.click();
+        await vi.advanceTimersByTimeAsync(100);
+        removalFixture.detectChanges();
+        expect(status()).toBe('Phone number 1 removed');
+
+        removeButton(1)?.click();
+        removalFixture.detectChanges();
+        // The region is emptied first, so the repeated text is a new change.
+        expect(status()).toBe('');
+        await vi.advanceTimersByTimeAsync(100);
+        removalFixture.detectChanges();
+        expect(status()).toBe('Phone number 1 removed');
+
+        await vi.advanceTimersByTimeAsync(5000);
+        removalFixture.detectChanges();
+        expect(status()).toBe('');
+      } finally {
+        vi.useRealTimers();
+      }
+    });
   });
 });

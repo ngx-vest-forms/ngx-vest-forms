@@ -1,14 +1,12 @@
 import {
-  afterNextRender,
   Component,
   ElementRef,
   forwardRef,
-  inject,
-  Injector,
   signal,
   viewChild,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { RemovalFeedback } from '../../shared/removal-feedback';
 
 let nextId = 0;
 
@@ -36,6 +34,7 @@ let nextId = 0;
               <button
                 type="button"
                 [attr.aria-label]="'Remove tag ' + tag"
+                data-row-remove
                 [disabled]="disabled()"
                 (click)="remove(i)"
                 class="text-primary-600 hover:text-primary-900 focus-visible:ring-primary-500 dark:text-primary-300 rounded-full leading-none focus:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -57,8 +56,8 @@ let nextId = 0;
         placeholder="Type a tag and press Enter"
         (keydown.enter)="add($event, tagBox)"
       />
-      <!-- Confirms a removal, since the removed tag took focus with it. -->
-      <p class="sr-only" role="status">{{ removalMessage() }}</p>
+      <!-- Confirms a removal; see RemovalFeedback. -->
+      <p class="sr-only" role="status">{{ removal.message() }}</p>
     </div>
   `,
   providers: [
@@ -74,10 +73,12 @@ export class TagInputComponent implements ControlValueAccessor {
   protected readonly inputId = `ngx-tag-input-${nextId++}`;
   protected readonly tags = signal<string[]>([]);
   protected readonly disabled = signal(false);
-  protected readonly removalMessage = signal('');
-
-  readonly #injector = inject(Injector);
   private readonly tagBox = viewChild<ElementRef<HTMLInputElement>>('tagBox');
+
+  /** Announces a removal and keeps focus on a remove button or the input. */
+  protected readonly removal = new RemovalFeedback(
+    () => this.tagBox()?.nativeElement
+  );
 
   private onChange: (value: string[]) => void = () => undefined;
   private onTouched: () => void = () => undefined;
@@ -101,13 +102,7 @@ export class TagInputComponent implements ControlValueAccessor {
     const removed = this.tags()[index];
     this.tags.update((tags) => tags.filter((_, i) => i !== index));
     this.onChange(this.tags());
-
-    // The focused remove button is gone after the next render: move focus to
-    // the tag input instead of letting it fall to <body>.
-    this.removalMessage.set(`Tag ${removed} removed`);
-    afterNextRender(() => this.tagBox()?.nativeElement.focus(), {
-      injector: this.#injector,
-    });
+    this.removal.removed(index, `Tag ${removed} removed`);
   }
 
   protected onFocusOut(event: FocusEvent): void {

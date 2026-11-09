@@ -1,14 +1,5 @@
 import { KeyValuePipe } from '@angular/common';
-import {
-  afterNextRender,
-  Component,
-  ElementRef,
-  inject,
-  Injector,
-  input,
-  output,
-  signal,
-} from '@angular/core';
+import { Component, ElementRef, inject, input, output } from '@angular/core';
 import { NgModelGroup } from '@angular/forms';
 import {
   arrayToObject,
@@ -17,6 +8,7 @@ import {
 } from 'ngx-vest-forms';
 import { BusinessHourFormModel } from '../../../../models/business-hours-form.model';
 import { byNumericKey } from '../../../../shared/by-numeric-key';
+import { RemovalFeedback } from '../../../../shared/removal-feedback';
 import { BusinessHourComponent } from '../business-hour/business-hour.component';
 
 export type BusinessHoursMap = Record<string, BusinessHourFormModel>;
@@ -57,11 +49,22 @@ export class BusinessHoursComponent {
 
   protected readonly byNumericKey = byNumericKey;
 
-  /** Polite confirmation after a slot is removed. */
-  protected readonly removalMessage = signal('');
-
-  readonly #injector = inject(Injector);
   readonly #host = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  /**
+   * Announces a removal and keeps focus on a Remove button. With no slots
+   * left it falls back to the Add button, or to the add row's first input
+   * while Add is disabled.
+   */
+  protected readonly removal = new RemovalFeedback(
+    () =>
+      this.#host.nativeElement.querySelector<HTMLButtonElement>(
+        '.business-hours-add-btn:not(:disabled)'
+      ) ??
+      this.#host.nativeElement.querySelector<HTMLInputElement>(
+        '.business-hours-add-card input'
+      )
+  );
 
   /** Adds the new business hour and emits structural change to parent */
   addBusinessHour(
@@ -133,27 +136,9 @@ export class BusinessHoursComponent {
     // Note: Validation refresh after structural changes is handled by the parent
     // component via triggerFormValidation() in onBusinessHoursChange().
 
-    // The focused Remove button leaves with its slot. Move focus to the Remove
-    // button now in its place (or the last one), not to <body>. With no slots
-    // left, fall back to the add row.
-    this.removalMessage.set(`Business hour slot ${Number(key) + 1} removed`);
-    afterNextRender(
-      () => {
-        const host = this.#host.nativeElement;
-        const removeButtons = host.querySelectorAll<HTMLButtonElement>(
-          '.business-hours-remove-btn'
-        );
-        const target =
-          removeButtons[Math.min(Number(key), removeButtons.length - 1)] ??
-          host.querySelector<HTMLButtonElement>(
-            '.business-hours-add-btn:not(:disabled)'
-          ) ??
-          host.querySelector<HTMLInputElement>(
-            '.business-hours-add-card input'
-          );
-        target?.focus();
-      },
-      { injector: this.#injector }
+    this.removal.removed(
+      Number(key),
+      `Business hour slot ${Number(key) + 1} removed`
     );
   }
 }

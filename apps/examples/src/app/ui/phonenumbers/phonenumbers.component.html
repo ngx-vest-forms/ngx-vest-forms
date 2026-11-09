@@ -16,6 +16,7 @@
           />
           <button
             type="button"
+            data-row-remove
             (click)="removePhoneNumber(item.key)"
             class="btn-input-action btn-input-action-danger"
             [attr.aria-label]="'Remove phone number ' + (+item.key + 1)"
@@ -52,6 +53,6 @@
     </div>
   </ngx-control-wrapper>
 
-  <!-- Confirms a removal, since the removed row took focus with it. -->
-  <p class="sr-only" role="status">{{ removalMessage() }}</p>
+  <!-- Confirms a removal; see RemovalFeedback. -->
+  <p class="sr-only" role="status">{{ removal.message() }}</p>
 </div>

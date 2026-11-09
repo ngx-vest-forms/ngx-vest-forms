@@ -1,14 +1,10 @@
 import { KeyValuePipe } from '@angular/common';
 import {
-  afterNextRender,
   Component,
   computed,
   ElementRef,
-  inject,
-  Injector,
   input,
   output,
-  signal,
   viewChild,
 } from '@angular/core';
 import {
@@ -24,6 +20,7 @@ import {
   ComplexNestedModel,
   TeamMemberModel,
 } from '../../models/complex-nested.model';
+import { RemovalFeedback } from '../../shared/removal-feedback';
 import { AddressComponent } from '../../ui/address/address.component';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { FormSectionComponent } from '../../ui/form-section/form-section.component';
@@ -57,12 +54,13 @@ export class ComplexNestedFormBody {
     viewChild<FormDirective<ComplexNestedModel>>('vestForm');
   readonly feedback = createFormFeedbackSignals(this.vestForm);
 
-  /** Polite confirmation after a member row is removed. */
-  protected readonly removalMessage = signal('');
-
-  readonly #injector = inject(Injector);
   private readonly addMemberButton =
     viewChild<ElementRef<HTMLButtonElement>>('addMemberButton');
+
+  /** Announces a removal and keeps focus on a Remove button or Add member. */
+  protected readonly removal = new RemovalFeedback(
+    () => this.addMemberButton()?.nativeElement
+  );
 
   /**
    * Ordered list of `[key, member]` pairs for the @for loop. Each key is a
@@ -112,7 +110,7 @@ export class ComplexNestedFormBody {
    * row; the suite reads the current keys on every run, so the removed row's
    * tests disappear with it.
    */
-  protected removeMember(key: string, position: number): void {
+  protected removeMember(key: string, index: number): void {
     const current = this.formValue();
     // Record the highest id in use before it can disappear, so a later add
     // never reuses the removed id (the initial rows never went through add).
@@ -124,13 +122,7 @@ export class ComplexNestedFormBody {
       ...current,
       teamMembers: Object.fromEntries(remaining),
     });
-
-    // The focused Remove button leaves with its row: move focus to the stable
-    // "Add member" button instead of letting it fall to <body>.
-    this.removalMessage.set(`Member ${position} removed`);
-    afterNextRender(() => this.addMemberButton()?.nativeElement.focus(), {
-      injector: this.#injector,
-    });
+    this.removal.removed(index, `Member ${index + 1} removed`);
   }
 
   /** The first id not yet handed out and not used by any current row. */
