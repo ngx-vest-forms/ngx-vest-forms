@@ -8,7 +8,12 @@ import {
   signal,
 } from '@angular/core';
 import { injectPendingLabel } from '../tokens/pending-label.token';
-import { AriaAssociationMode } from '../utils/aria-association.utils';
+import {
+  AriaAssociationMode,
+  buildMessageDescribedBy,
+  MessageRegionIds,
+  messageRegionIdList,
+} from '../utils/aria-association.utils';
 import { NgxIdGenerator } from '../utils/id-generator';
 import { createDebouncedPendingState } from '../utils/pending-state.utils';
 import { createAriaAssociationController } from './aria-association-controller';
@@ -59,6 +64,11 @@ export class FormErrorControlDirective implements AfterContentInit {
   readonly errorId = `${this.uniqueId}-error`;
   readonly warningId = `${this.uniqueId}-warning`;
   readonly pendingId = `${this.uniqueId}-pending`;
+  readonly #regionIds: MessageRegionIds = {
+    errorId: this.errorId,
+    warningId: this.warningId,
+    pendingId: this.pendingId,
+  };
 
   readonly #contentInitialized = signal(false);
 
@@ -78,29 +88,15 @@ export class FormErrorControlDirective implements AfterContentInit {
   /**
    * aria-describedby value representing the *currently relevant* message regions.
    */
-  readonly ariaDescribedBy = computed(() => {
-    const ids: string[] = [];
+  readonly ariaDescribedBy = computed(() =>
+    buildMessageDescribedBy(this.#regionIds, {
+      errors: this.errorDisplay.shouldShowErrors(),
+      warnings: this.errorDisplay.shouldShowWarnings(),
+      pending: this.showPendingMessage(),
+    })
+  );
 
-    if (this.errorDisplay.shouldShowErrors()) {
-      ids.push(this.errorId);
-    }
-
-    if (this.errorDisplay.shouldShowWarnings()) {
-      ids.push(this.warningId);
-    }
-
-    if (this.showPendingMessage()) {
-      ids.push(this.pendingId);
-    }
-
-    return ids.length > 0 ? ids.join(' ') : null;
-  });
-
-  readonly #ownedDescribedByIds: string[] = [
-    this.errorId,
-    this.warningId,
-    this.pendingId,
-  ];
+  readonly #ownedDescribedByIds = messageRegionIdList(this.#regionIds);
 
   /**
    * Shared MutationObserver + ARIA-association controller. DOM reads/writes

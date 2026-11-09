@@ -70,7 +70,8 @@ function validateFormValueAgainstShape(
     // Array shapes provide one example item at index 0, so every numeric key maps to '0'.
     const shapeKey = isNumericKey && key !== '0' ? '0' : key;
     const shapeValue = shape?.[shapeKey];
-    const hasShapeKey = shape != null && shapeKey in shape;
+    // Own keys only: `toString` or `constructor` are not declared by the shape.
+    const hasShapeKey = shape != null && Object.hasOwn(shape, shapeKey);
 
     // Skip Date fields receiving empty strings (common in date picker libraries)
     if (shapeValue instanceof Date && value === '') {
@@ -100,22 +101,33 @@ function validateFormValueAgainstShape(
         continue;
       }
 
-      // Type mismatch: formValue has object, but shape expects primitive
-      if (!isNumericKey && !isTraversableValue(shapeValue)) {
-        logWarning(
-          NGX_VEST_FORMS_ERRORS.TYPE_MISMATCH,
-          fieldPath,
-          'primitive',
-          'object'
-        );
+      // Extra property: the key is not in the shape at all. Report that, not
+      // a type mismatch, and do not recurse: every child would be reported
+      // as an extra property too.
+      if (!isNumericKey && !hasShapeKey) {
+        logWarning(NGX_VEST_FORMS_ERRORS.EXTRA_PROPERTY, fieldPath);
+        continue;
+      }
+
+      // No shape to compare the children with: never descend. Recursing
+      // against `{}` would report every child as an extra property.
+      if (!isTraversableValue(shapeValue)) {
+        // Type mismatch: formValue has object, but shape expects primitive
+        if (!isNumericKey) {
+          logWarning(
+            NGX_VEST_FORMS_ERRORS.TYPE_MISMATCH,
+            fieldPath,
+            'primitive',
+            'object'
+          );
+        }
+        continue;
       }
 
       // Recurse into nested object
       validateFormValueAgainstShape(
         value as Record<string, unknown>,
-        isTraversableValue(shapeValue)
-          ? (shapeValue as Record<string, unknown>)
-          : {},
+        shapeValue as Record<string, unknown>,
         fieldPath
       );
       continue;

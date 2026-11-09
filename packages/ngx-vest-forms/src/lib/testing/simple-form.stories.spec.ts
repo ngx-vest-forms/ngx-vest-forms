@@ -51,15 +51,19 @@ describe('simple-form stories', () => {
     await userEvent.type(screen.getByTestId(selectors.inputLastName), 'last');
     await userEvent.type(screen.getByTestId(selectors.inputPassword), 'pass');
 
-    expect(
-      screen.getByTestId(selectors.ngxControlWrapperFirstName)
-    ).not.toHaveTextContent('First name is required');
-    expect(
-      screen.getByTestId(selectors.ngxControlWrapperLastName)
-    ).not.toHaveTextContent('Last name is required');
-    expect(
-      screen.getByTestId(selectors.ngxControlWrapperPassword)
-    ).not.toHaveTextContent('Password is required');
+    // The last settled message stays visible while the re-check is pending
+    // and clears once the valid result settles.
+    await waitFor(() => {
+      expect(
+        screen.getByTestId(selectors.ngxControlWrapperFirstName)
+      ).not.toHaveTextContent('First name is required');
+      expect(
+        screen.getByTestId(selectors.ngxControlWrapperLastName)
+      ).not.toHaveTextContent('Last name is required');
+      expect(
+        screen.getByTestId(selectors.ngxControlWrapperPassword)
+      ).not.toHaveTextContent('Password is required');
+    });
   });
 
   it('shows errors on blur', async () => {

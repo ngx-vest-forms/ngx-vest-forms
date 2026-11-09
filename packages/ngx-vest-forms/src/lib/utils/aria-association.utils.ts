@@ -40,6 +40,54 @@ export function mergeAriaDescribedBy(
 }
 
 /**
+ * The IDs of the error, warning and pending regions that one element renders.
+ *
+ * The element that renders the messages owns these IDs (a wrapper, or
+ * `FormErrorControlDirective` when a custom template renders them).
+ */
+export type MessageRegionIds = {
+  readonly errorId: string;
+  readonly warningId: string;
+  readonly pendingId: string;
+};
+
+/** Which message regions are currently rendered. */
+export type VisibleMessageRegions = {
+  readonly errors: boolean;
+  readonly warnings: boolean;
+  readonly pending: boolean;
+};
+
+/**
+ * Builds the `aria-describedby` value for the message regions that are
+ * currently rendered, in error, warning, pending order, or `null` when none is.
+ */
+export function buildMessageDescribedBy(
+  ids: MessageRegionIds,
+  visible: VisibleMessageRegions
+): string | null {
+  const active: string[] = [];
+  if (visible.errors) {
+    active.push(ids.errorId);
+  }
+  if (visible.warnings) {
+    active.push(ids.warningId);
+  }
+  if (visible.pending) {
+    active.push(ids.pendingId);
+  }
+  return active.length > 0 ? active.join(' ') : null;
+}
+
+/**
+ * All message region IDs, for {@link mergeAriaDescribedBy}'s `ownedIds`:
+ * the tokens the owner may remove from a control's `aria-describedby`.
+ */
+export function messageRegionIdList(ids: MessageRegionIds): string[] {
+  return [ids.errorId, ids.warningId, ids.pendingId];
+}
+
+/**
  * Resolves control targets based on ARIA association mode.
  */
 export function resolveAssociationTargets(

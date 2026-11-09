@@ -143,109 +143,71 @@ function collectNgModelGroupAttributes(
   return groups;
 }
 
+/**
+ * Last-resort lookup for a blurred element that no registry or static path
+ * resolves: finds every leaf control named `leafName` and keeps the ones
+ * whose path agrees with the element's `ngModelGroup` ancestors.
+ *
+ * "Agrees" means the ancestors' names appear in the path's group segments
+ * in the same order (levels without an `ngModelGroup` element may be
+ * skipped). Matching on the whole chain, not one key at a time, keeps an
+ * index of a nested FormArray (`ngModelGroup="0"` on a line) from being
+ * read as the index of an outer one. If more than one path agrees, the
+ * element is ambiguous and the result is null: the wrong control would be
+ * worse than none.
+ */
 function resolveControlPathByDomAncestors(
   root: FormGroup,
   fieldElement: HTMLElement,
   formEl: HTMLFormElement,
   leafName: string
 ): ResolvedFieldPath | null {
-  type Frame = { control: AbstractControl; path: Array<string | number> };
-
-  const subtreeHasLeafName = (control: AbstractControl): boolean => {
-    if (control instanceof FormGroup) {
-      for (const [key, child] of Object.entries(control.controls)) {
-        if (key === leafName && isLeafControl(child)) {
-          return true;
+  const leaves: Array<{ segments: string[]; control: AbstractControl }> = [];
+  const collect = (control: AbstractControl, segments: string[]): void => {
+    const children: Array<[string, AbstractControl]> =
+      control instanceof FormGroup
+        ? Object.entries(control.controls)
+        : control instanceof FormArray
+          ? control.controls.map((child, index) => [String(index), child])
+          : [];
+    for (const [key, child] of children) {
+      if (isLeafControl(child)) {
+        if (key === leafName && control instanceof FormGroup) {
+          leaves.push({ segments: [...segments, key], control: child });
         }
-        if (!isLeafControl(child) && subtreeHasLeafName(child)) {
-          return true;
-        }
+      } else {
+        collect(child, [...segments, key]);
       }
-      return false;
     }
-
-    if (control instanceof FormArray) {
-      for (const child of control.controls) {
-        if (!isLeafControl(child) && subtreeHasLeafName(child)) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    return false;
   };
+  collect(root, []);
 
-  const selectNextCandidates = (candidates: Frame[]): Frame[] => {
-    const domCandidates = candidates.filter((candidate) =>
-      subtreeContainsElement(fieldElement, formEl, candidate.path.at(-1) ?? '')
-    );
+  const domGroups = collectNgModelGroupAttributes(fieldElement, formEl);
+  const agreeing = leaves.filter((leaf) =>
+    isOrderedSubsequence(domGroups, leaf.segments.slice(0, -1))
+  );
 
-    return domCandidates.length > 0 ? domCandidates : candidates;
-  };
-
-  const descend = (frame: Frame): Frame | null => {
-    if (frame.control instanceof FormGroup) {
-      for (const [key, child] of Object.entries(frame.control.controls)) {
-        if (key === leafName && isLeafControl(child)) {
-          return { control: child, path: [...frame.path, key] };
-        }
-      }
-
-      const candidates: Frame[] = [];
-      for (const [key, child] of Object.entries(frame.control.controls)) {
-        if (isLeafControl(child)) {
-          continue;
-        }
-        const branch = { control: child, path: [...frame.path, key] };
-        if (subtreeHasLeafName(branch.control)) {
-          candidates.push(branch);
-        }
-      }
-
-      const next = selectNextCandidates(candidates);
-      if (next.length === 1 && next[0]) {
-        return descend(next[0]);
-      }
-      return null;
-    }
-
-    if (frame.control instanceof FormArray) {
-      const candidates: Frame[] = [];
-      frame.control.controls.forEach((child, index) => {
-        if (isLeafControl(child)) {
-          return;
-        }
-        const branch = { control: child, path: [...frame.path, index] };
-        if (subtreeHasLeafName(branch.control)) {
-          candidates.push(branch);
-        }
-      });
-
-      const next = selectNextCandidates(candidates);
-      if (next.length === 1 && next[0]) {
-        return descend(next[0]);
-      }
-    }
-
-    return null;
-  };
-
-  const result = descend({ control: root, path: [] });
-  if (!result) return null;
-  return { path: result.path.join('.'), control: result.control };
+  const match =
+    agreeing.length === 1
+      ? agreeing[0]
+      : agreeing.length === 0 && leaves.length === 1
+        ? leaves[0]
+        : undefined;
+  return match
+    ? { path: match.segments.join('.'), control: match.control }
+    : null;
 }
 
-function subtreeContainsElement(
-  fieldElement: HTMLElement,
-  formEl: HTMLFormElement,
-  key: string | number
+/** Whether every item of `needle` occurs in `haystack`, in order. */
+function isOrderedSubsequence(
+  needle: readonly string[],
+  haystack: readonly string[]
 ): boolean {
-  if (typeof key !== 'string') return false;
-  const selector = `[ngModelGroup="${CSS.escape(key)}"]`;
-  const candidates = formEl.querySelectorAll(selector);
-  for (const candidate of candidates) {
-    if (candidate.contains(fieldElement)) return true;
+  let position = 0;
+  for (const item of haystack) {
+    if (position < needle.length && item === needle[position]) {
+      position++;
+    }
   }
-  return false;
+  return position === needle.length;
 }
