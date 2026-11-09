@@ -24,7 +24,7 @@ import type { NgxValidationFocus } from './form-directive.types';
 import type { ValidationOptions } from './validation-options';
 
 /** Field warnings keyed by field path, as `FormDirective.fieldWarnings`. */
-export type FieldWarningsMap = Map<string, readonly string[]>;
+type FieldWarningsMap = Map<string, readonly string[]>;
 
 /**
  * @internal
@@ -55,10 +55,12 @@ export function setFieldWarnings(
   fieldWarnings.set(new Map(current).set(field, warnings));
 }
 
-/** What {@link createFieldValidator} needs from `FormDirective`. */
-export type FieldValidatorContext<T> = {
+/**
+ * What {@link createFieldValidator} needs from `FormDirective`: the same for
+ * every validator, so the directive builds it once.
+ */
+type FieldValidatorContext = {
   form: FormGroup;
-  suite: NgxVestSuite<T>;
   /** Read on every run, so a changed `validationFocus` input applies. */
   validationFocus: () => NgxValidationFocus | null;
   fieldWarnings: WritableSignal<FieldWarningsMap>;
@@ -74,11 +76,12 @@ export type FieldValidatorContext<T> = {
  * candidate value, stores the field's warnings and returns its errors.
  */
 export function createFieldValidator<T>(
-  context: FieldValidatorContext<T>,
+  context: FieldValidatorContext,
+  suite: NgxVestSuite<T>,
   field: string,
   validationOptions: ValidationOptions
 ): AsyncValidatorFn {
-  const { form, suite, cdr, destroyRef, errorHandler } = context;
+  const { form, cdr, destroyRef, errorHandler } = context;
   return (control: AbstractControl) => {
     // A copy of its own, not the directive's shared form snapshot: the
     // validator runs inside the control's `updateValueAndValidity`, before

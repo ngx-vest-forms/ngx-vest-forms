@@ -42,7 +42,7 @@ const PIPELINE_OPTIONS = {
  * (`onlySelf: true` avoids redundant ancestor recalculation per child; the
  * container's own update afterwards aggregates the fresh child statuses).
  */
-export function revalidateControlTree(control: AbstractControl): void {
+function revalidateControlTree(control: AbstractControl): void {
   if (control instanceof FormGroup) {
     for (const child of Object.values(control.controls)) {
       revalidateControlTree(child);
@@ -101,7 +101,7 @@ export function revalidateOnSuiteChange<S>(
 }
 
 /** What {@link connectValidationConfig} needs from `FormDirective`. */
-export type ValidationConfigContext = {
+type ValidationConfigContext = {
   configDebounceTime: number;
   cdr: ChangeDetectorRef;
   destroyRef: DestroyRef;
