@@ -50,26 +50,14 @@ import { collectTouchedPaths } from '../utils/collect-touched-paths';
 import type { NgxDeepRequired } from '../utils/deep-required';
 import { scheduleMicrotask } from '../utils/destroy-scheduler';
 import {
-  DEFAULT_FOCUS_SELECTOR,
-  DEFAULT_INVALID_SELECTOR,
+  focusFirstInvalidElement,
   type NgxFirstInvalidOptions,
-  openCollapsedDetailsAncestors,
-  resolveFirstInvalidElement,
-  resolveFirstInvalidFocusTarget,
-  resolveFirstInvalidScrollBehavior,
 } from '../utils/first-invalid.utils';
 import { validateFormContract } from '../utils/form-contract';
 import { NgxFormState } from '../utils/form-state.utils';
-import {
-  getAllFormErrors,
-  mergeValuesAndRawValues,
-  setValueAtPath,
-} from '../utils/form-utils';
+import { getAllFormErrors } from '../utils/form-utils';
 import type { NgxVestSuite } from '../utils/validation-suite';
-import {
-  readElementValueForBlur,
-  resolveFieldFromBlur,
-} from './field-path-resolver';
+import { fieldBlurEvent } from './field-blur-event';
 import { createFieldValidator, setFieldWarnings } from './field-validator';
 import type {
   NgxFieldBlurEvent,
@@ -765,44 +753,7 @@ export class FormDirective<T extends Record<string, unknown>> {
   focusFirstInvalidControl(
     options: NgxFirstInvalidOptions = {}
   ): HTMLElement | null {
-    const {
-      block = 'center',
-      inline = 'nearest',
-      focus = true,
-      preventScrollOnFocus = true,
-      openCollapsedParents = true,
-      invalidSelector = DEFAULT_INVALID_SELECTOR,
-      focusSelector = DEFAULT_FOCUS_SELECTOR,
-    } = options;
-    const behavior = resolveFirstInvalidScrollBehavior(options.behavior);
-
-    const root: HTMLFormElement = this.#elementRef.nativeElement;
-    const firstInvalid = resolveFirstInvalidElement(
-      root,
-      invalidSelector,
-      openCollapsedParents
-    );
-    if (!firstInvalid) {
-      return null;
-    }
-
-    if (openCollapsedParents) {
-      openCollapsedDetailsAncestors(root, firstInvalid);
-    }
-
-    const focusTarget = resolveFirstInvalidFocusTarget(
-      firstInvalid,
-      focusSelector
-    );
-
-    const scrollTarget = focusTarget ?? firstInvalid;
-    scrollTarget.scrollIntoView({ behavior, block, inline });
-
-    if (focus && focusTarget) {
-      focusTarget.focus({ preventScroll: preventScrollOnFocus });
-    }
-
-    return focusTarget ?? firstInvalid;
+    return focusFirstInvalidElement(this.#elementRef.nativeElement, options);
   }
 
   /**
@@ -836,33 +787,10 @@ export class FormDirective<T extends Record<string, unknown>> {
   }
 
   #emitFieldBlurEvent(event: FocusEvent): void {
-    const resolved = resolveFieldFromBlur(this.ngForm, event.target);
-    if (!resolved) {
-      return;
+    const blurEvent = fieldBlurEvent<T>(this.ngForm, event.target);
+    if (blurEvent) {
+      this.fieldBlur.emit(blurEvent);
     }
-    const { field, control, element } = resolved;
-
-    // Read the latest value directly from the DOM element when it can be
-    // trusted. For radio groups Angular keeps the bound `control.value` in
-    // sync with the *selected* option, while a focused-but-unchecked radio
-    // would expose its own option value via the DOM — so radios must always
-    // fall back to `control.value`. For text/textarea/select we prefer the
-    // element value to avoid `ngModelOptions.updateOn: 'submit'` staleness.
-    const domValue = readElementValueForBlur(element);
-    const value = domValue !== undefined ? domValue : control.value;
-
-    const formValue = mergeValuesAndRawValues<T>(this.ngForm.form);
-    setValueAtPath(formValue as object, field, value);
-
-    this.fieldBlur.emit({
-      field,
-      value,
-      formValue,
-      dirty: control.dirty,
-      touched: control.touched,
-      valid: control.valid,
-      pending: control.pending,
-    });
   }
 
   /**
