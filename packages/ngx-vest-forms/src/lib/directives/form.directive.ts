@@ -32,7 +32,6 @@ import {
   NgForm,
   PristineChangeEvent,
   StatusChangeEvent,
-  ValueChangeEvent,
 } from '@angular/forms';
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 import {
@@ -50,7 +49,6 @@ import {
   startWith,
   switchMap,
   take,
-  tap,
 } from 'rxjs';
 import { logWarning, NGX_VEST_FORMS_ERRORS } from '../errors/error-catalog';
 import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from '../tokens/debounce.token';
@@ -107,6 +105,7 @@ import {
   runSubmitValidation,
   setAngularFormSubmittedState,
 } from './form-submitted-state';
+import { formValueChanges } from './form-value-changes';
 import { FormValueSnapshot } from './form-value-snapshot';
 import { ModelFormSync } from './model-form-sync';
 import { ValidationOptions } from './validation-options';
@@ -446,32 +445,7 @@ export class FormDirective<T extends Record<string, unknown>> {
    * `outputFromObservable` unsubscribes when the directive is destroyed.
    */
   readonly formValueChange = outputFromObservable(
-    this.ngForm.form.events.pipe(
-      filter((v) => v instanceof ValueChangeEvent),
-      // Merge before deduplicating: the event's own value leaves out disabled
-      // controls, so a programmatic setValue() on one would look unchanged.
-      // The merged snapshot is the one `formState` and the sync effect read;
-      // the snapshot tick has already counted this event. `untracked` keeps
-      // a consumer effect that writes the form from tracking the snapshot.
-      map(() => ({
-        value:
-          untracked(() => this.#snapshot.value()) ??
-          mergeValuesAndRawValues<T>(this.ngForm.form),
-        fromModel: this.#modelSync.applyingModelValue,
-      })),
-      // Model writes pass through deduplication so they move its baseline:
-      // after a write of B, the user picking the earlier A again is a change.
-      distinctUntilChanged((prev, curr) =>
-        this.#snapshot.isEqual(prev.value, curr.value)
-      ),
-      // A model write applied by the sync effect is not echoed back: the
-      // consumer already holds that value.
-      filter(({ fromModel }) => !fromModel),
-      map(({ value }) => value),
-      tap((value) => {
-        this.#modelSync.lastEmittedFormValue = value;
-      })
-    )
+    formValueChanges(this.ngForm.form, this.#snapshot, this.#modelSync)
   );
 
   /**
