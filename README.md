@@ -50,6 +50,14 @@ npm install ngx-vest-forms@beta
 
 v3 is in prerelease on the npm `beta` tag; a plain `npm install ngx-vest-forms` still installs v2 until 3.0.0 is released. See the [releases](https://github.com/ngx-vest-forms/ngx-vest-forms/releases) for what changed.
 
+`@standard-schema/spec` is an optional peer dependency, so your package manager does not install it for you. ngx-vest-forms uses it only for types, but its published `.d.ts` imports it. If you bind `[formContract]` or use `NgxFormContract`, `StandardSchemaV1` or `toFormContract()`, install it as a dev dependency:
+
+```bash
+npm install -D @standard-schema/spec
+```
+
+Without it, a project with `skipLibCheck: true` (the Angular CLI default) still compiles, but those types fall back to `any` and lose their checks. With `skipLibCheck: false` the compiler reports `Cannot find module '@standard-schema/spec'`.
+
 > **v3 NOTE:**
 >
 > Keep Vest suite callbacks model-only (`create((model) => { ... })`).
@@ -632,7 +640,7 @@ The `[formShape]` input on `<form ngxVestForm>` is replaced by `[formContract]`,
 <form ngxVestForm [suite]="suite" [formContract]="zodSchema"></form>
 ```
 
-`@standard-schema/spec` is now declared as a `peerDependency` (`>=1.0.0`). Most consumers don't need to install it directly — bring it in only if you author your own `StandardSchemaV1<T>` literals. The internal `validateShape()` helper has been removed; use `toFormContract()` if you need explicit shape→schema conversion.
+`@standard-schema/spec` (`>=1.0.0`) is an optional peer dependency that provides the `StandardSchemaV1` types. Install it as a dev dependency if you use `[formContract]` or its types; see [Installation](#installation). The internal `validateShape()` helper has been removed; use `toFormContract()` if you need explicit shape→schema conversion.
 
 Browser support follows Angular 22+ targets (no `structuredClone` polyfill required).
 

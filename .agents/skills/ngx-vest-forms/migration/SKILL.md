@@ -15,7 +15,7 @@ v3 requires Angular `>=22 <23` (core and forms), Vest `>=6.3.4 <7`, TypeScript `
 npm install ngx-vest-forms@beta vest@^6.3.4   # use ngx-vest-forms@^3 once 3.0.0 is stable
 ```
 
-`@standard-schema/spec` is a peer only for apps that hand-write `StandardSchemaV1` objects. `@angular/common` is no longer a peer.
+`@standard-schema/spec` is an optional peer that only provides types, but the published `.d.ts` imports it. Install it (`npm install -D @standard-schema/spec`) when the app binds `[formContract]` or uses `NgxFormContract`, `StandardSchemaV1` or `toFormContract()`; without it those types silently become `any` under `skipLibCheck: true`. `@angular/common` is no longer a peer.
 
 ## 2. Take the inventory
 
