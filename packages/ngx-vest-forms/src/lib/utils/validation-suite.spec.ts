@@ -100,4 +100,50 @@ describe('validation-suite types', () => {
       suite.focus?.({ onlyGroup: 'contact' }).run({}).isTested('firstName')
     ).toBe(false);
   });
+
+  it('should not leak any through subscribe, dump and resume', () => {
+    type IsAny<T> = 0 extends 1 & T ? true : false;
+    type Suite = NgxVestSuite<TestModel>;
+    const subscribeArgsAreAny: IsAny<Parameters<Suite['subscribe']>[number]> =
+      false;
+    const subscribeReturnIsAny: IsAny<ReturnType<Suite['subscribe']>> = false;
+    const dumpIsAny: IsAny<ReturnType<Suite['dump']>> = false;
+    const resumeArgIsAny: IsAny<Parameters<Suite['resume']>[0]> = false;
+
+    expect([
+      subscribeArgsAreAny,
+      subscribeReturnIsAny,
+      dumpIsAny,
+      resumeArgIsAny,
+    ]).toEqual([false, false, false, false]);
+  });
+
+  it('should keep subscribe, dump and resume of real Vest 6 suites assignable', () => {
+    // Required model parameter (no default) and a schema with a required
+    // field: both must still fit NgxVestSuite<T> with the `unknown` methods.
+    const plain: NgxVestSuite<TestModel> = create((model: TestModel) => {
+      test('firstName', 'First name is required', () => {
+        enforce(model.firstName).isNotBlank();
+      });
+    });
+    const schemaTyped: NgxVestSuite<{ firstName: string }> = create(
+      (model) => {
+        test('firstName', 'First name is required', () => {
+          enforce(model.firstName).isNotBlank();
+        });
+      },
+      enforce.shape({ firstName: enforce.isString() })
+    );
+
+    plain.run({});
+    const state = plain.dump();
+    plain.reset();
+    plain.resume(state);
+    const unsubscribe = schemaTyped.subscribe(() => {
+      // No-op listener: only the call shape is under test.
+    });
+
+    expect(plain.get().hasErrors('firstName')).toBe(true);
+    expect(typeof unsubscribe).toBe('function');
+  });
 });

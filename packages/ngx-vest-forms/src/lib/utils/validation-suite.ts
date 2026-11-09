@@ -144,10 +144,10 @@ export type NgxVestSuite<T = unknown> = {
    * @see {@link https://vestjs.dev/docs/writing_your_suite/including_and_excluding/skip_and_only}
    */
   focus?(config: {
-    only?: string | string[] | null;
-    skip?: string | string[] | null;
-    onlyGroup?: string | readonly string[];
-    skipGroup?: string | readonly string[];
+    only?: string | string[] | null | undefined;
+    skip?: string | string[] | null | undefined;
+    onlyGroup?: string | readonly string[] | undefined;
+    skipGroup?: string | readonly string[] | undefined;
   }): {
     run(model: T): NgxSuiteRunResult;
   };
@@ -156,10 +156,15 @@ export type NgxVestSuite<T = unknown> = {
   reset(): void;
   resetField(field: string): void;
   remove(field: string): void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  subscribe: (...args: any[]) => any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  dump(): any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  resume(state: any): void;
+  /**
+   * Vest's event subscription. ngx-vest-forms never calls it; it is part of
+   * the shape so a real suite and a hand-written fake describe the same
+   * object. Typed `unknown` with method syntax, so Vest's overloaded
+   * `subscribe` stays assignable through parameter bivariance.
+   */
+  subscribe(...args: unknown[]): unknown;
+  /** Serialises the suite state (Vest `dump()`). Not called by ngx-vest-forms. */
+  dump(): unknown;
+  /** Restores a state produced by `dump()` (Vest `resume()`). Not called by ngx-vest-forms. */
+  resume(state: unknown): void;
 };
