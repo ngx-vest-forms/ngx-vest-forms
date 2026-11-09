@@ -7,6 +7,7 @@ import {
   contentChild,
   effect,
   inject,
+  Signal,
   signal,
   untracked,
 } from '@angular/core';
@@ -64,6 +65,34 @@ const INITIAL_FORM_CONTROL_STATE = {
   isPristine: true,
   errors: null,
 } as const satisfies FormControlState;
+
+/**
+ * @internal
+ * The control a {@link FormControlStateDirective} is subscribed to, with the
+ * `NgModel`/`NgModelGroup` path used to look up its field warnings.
+ */
+export type AttachedControl = {
+  readonly control: AbstractControl;
+  readonly path: readonly string[] | undefined;
+};
+
+const attachedControls = new WeakMap<
+  FormControlStateDirective,
+  Signal<AttachedControl | null>
+>();
+const NO_ATTACHED_CONTROL: Signal<AttachedControl | null> = signal(null);
+
+/**
+ * @internal
+ * The control `directive` is currently subscribed to, or null before it
+ * attaches. Lets `FormErrorDisplayDirective` follow the same control without
+ * widening the directive's public surface.
+ */
+export function getAttachedControl(
+  directive: FormControlStateDirective
+): Signal<AttachedControl | null> {
+  return attachedControls.get(directive) ?? NO_ATTACHED_CONTROL;
+}
 
 @Directive({
   selector: '[ngxControlState]',
@@ -148,8 +177,11 @@ export class FormControlStateDirective {
    */
   #subscribedControl: AbstractControl | null = null;
   readonly #attachTick = signal(0);
+  readonly #attached = signal<AttachedControl | null>(null);
 
   constructor() {
+    attachedControls.set(this, this.#attached.asReadonly());
+
     // Subscribe to the active control's status. This effect re-runs only when
     // the active control (or its late-attach retry) changes; it used to track
     // the interaction state too, which re-subscribed on every blur (#216).
@@ -201,6 +233,10 @@ export class FormControlStateDirective {
       // Listen to control changes
       const attached = control.control;
       this.#subscribedControl = attached;
+      this.#attached.set({
+        control: attached,
+        path: (control as { path?: string[] }).path,
+      });
       const sub = attached.statusChanges.subscribe(() => {
         const {
           status,
@@ -269,6 +305,7 @@ export class FormControlStateDirective {
       onCleanup(() => {
         sub.unsubscribe();
         this.#subscribedControl = null;
+        this.#attached.set(null);
       });
     });
 
@@ -402,56 +439,11 @@ export class FormControlStateDirective {
   readonly controlState = this.#controlStateSignal.asReadonly();
 
   /**
-   * Recursively flattens Angular error objects into an array of error messages.
-   * Handles string values, objects with a message property, and nested structures.
-   */
-  #flattenAngularErrors(errors: Record<string, unknown>): string[] {
-    const result: string[] = [];
-
-    for (const key of Object.keys(errors)) {
-      const value: unknown = errors[key];
-
-      if (typeof value === 'string') {
-        // String values: push the value itself, not the key
-        result.push(value);
-      } else if (isErrorWithMessage(value)) {
-        // Objects with a 'message' property: extract the message
-        result.push(value.message);
-      } else if (typeof value === 'object' && value !== null) {
-        // Nested objects/arrays: recursively flatten
-        result.push(
-          ...this.#flattenAngularErrors(value as Record<string, unknown>)
-        );
-      } else {
-        // Fallback: push the key for primitive types (backward compatibility)
-        result.push(key);
-      }
-    }
-
-    return result;
-  }
-
-  /**
    * Extracts error messages from Angular/Vest errors (recursively flattens)
    */
-  readonly errorMessages = computed((): string[] => {
-    const { errors } = this.controlState();
-    if (!errors) return [];
-
-    // Vest errors are stored in the 'errors' property as an array
-    const vestErrors = errors.errors;
-    if (vestErrors) {
-      return (vestErrors as readonly unknown[])
-        .map((error) => normalizeErrorMessage(error))
-        .filter((error): error is string => Boolean(error));
-    }
-
-    // Fallback to flattened Angular error keys, excluding 'warnings' key
-    // to prevent warnings from appearing in the error list
-    const errorsWithoutWarnings = { ...errors };
-    delete errorsWithoutWarnings['warnings'];
-    return this.#flattenAngularErrors(errorsWithoutWarnings);
-  });
+  readonly errorMessages = computed((): string[] =>
+    extractErrorMessages(this.controlState().errors)
+  );
 
   /**
    * ADVANCED: updateOn strategy (change/blur/submit) if available
@@ -482,36 +474,14 @@ export class FormControlStateDirective {
    * This dual-source approach allows warnings to be displayed without affecting field validity.
    */
   readonly warningMessages = computed((): string[] => {
-    // Source 1: warnings from control.errors (when field has errors)
-    const { errors } = this.controlState();
-
-    // Always read fieldWarnings signal to ensure reactive tracking
-    // This must be read unconditionally for proper signal dependency tracking
+    // Read fieldWarnings unconditionally so the dependency is always tracked.
     const fieldWarnings = this.#formDirective?.fieldWarnings();
     const activeControl = this.#activeControl();
-
-    // If we have warnings in control.errors, use those (errors+warnings case)
-    if (errors?.warnings) {
-      return [...errors.warnings];
-    }
-
-    // Source 2: warnings from FormDirective (for warnings-only scenarios)
-    // When a field only has warnings (no errors), they're stored in fieldWarnings
-    // to keep the field valid while still allowing warnings to be displayed.
-    if (fieldWarnings && activeControl) {
-      // Get the field path from the control's path property
-      // NgModel.path returns an array like ['passwords', 'password'] which needs to be joined
-      const path = (activeControl as { path?: string[] }).path;
-      if (path?.length) {
-        const fieldPath = path.join('.');
-        const warnings = fieldWarnings.get(fieldPath);
-        if (warnings) {
-          return [...warnings];
-        }
-      }
-    }
-
-    return [];
+    return extractWarningMessages(
+      this.controlState().errors,
+      fieldWarnings,
+      (activeControl as { path?: string[] } | null)?.path
+    );
   });
 
   /**
@@ -576,4 +546,82 @@ function normalizeErrorMessage(value: unknown): string | null {
   }
 
   return String(value);
+}
+
+/**
+ * @internal
+ * Error messages from a control's errors: Vest's `errors` array when present,
+ * otherwise the flattened Angular errors without the `warnings` key.
+ */
+export function extractErrorMessages(
+  errors: VestValidationErrors | null
+): string[] {
+  if (!errors) return [];
+
+  // Vest errors are stored in the 'errors' property as an array
+  const vestErrors = errors.errors;
+  if (vestErrors) {
+    return (vestErrors as readonly unknown[])
+      .map((error) => normalizeErrorMessage(error))
+      .filter((error): error is string => Boolean(error));
+  }
+
+  // Fallback to flattened Angular error keys, excluding 'warnings' key
+  // to prevent warnings from appearing in the error list
+  const errorsWithoutWarnings = { ...errors };
+  delete errorsWithoutWarnings['warnings'];
+  return flattenAngularErrors(errorsWithoutWarnings);
+}
+
+/**
+ * @internal
+ * Warning messages for a control. Checks two sources:
+ * 1. `errors.warnings` (when the field has errors alongside warnings)
+ * 2. `FormDirective.fieldWarnings` at the control's path (warnings-only
+ *    fields, which stay valid). This map keeps a field's last warnings until
+ *    the next result, so it can still list them while the field is pending.
+ */
+export function extractWarningMessages(
+  errors: VestValidationErrors | null,
+  fieldWarnings: ReadonlyMap<string, readonly string[]> | undefined,
+  path: readonly string[] | undefined
+): string[] {
+  if (errors?.warnings) {
+    return [...errors.warnings];
+  }
+  if (fieldWarnings && path?.length) {
+    const warnings = fieldWarnings.get(path.join('.'));
+    if (warnings) {
+      return [...warnings];
+    }
+  }
+  return [];
+}
+
+/**
+ * Recursively flattens Angular error objects into an array of error messages.
+ * Handles string values, objects with a message property, and nested structures.
+ */
+function flattenAngularErrors(errors: Record<string, unknown>): string[] {
+  const result: string[] = [];
+
+  for (const key of Object.keys(errors)) {
+    const value: unknown = errors[key];
+
+    if (typeof value === 'string') {
+      // String values: push the value itself, not the key
+      result.push(value);
+    } else if (isErrorWithMessage(value)) {
+      // Objects with a 'message' property: extract the message
+      result.push(value.message);
+    } else if (typeof value === 'object' && value !== null) {
+      // Nested objects/arrays: recursively flatten
+      result.push(...flattenAngularErrors(value as Record<string, unknown>));
+    } else {
+      // Fallback: push the key for primitive types (backward compatibility)
+      result.push(key);
+    }
+  }
+
+  return result;
 }

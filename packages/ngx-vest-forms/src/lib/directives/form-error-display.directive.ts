@@ -5,24 +5,36 @@ import {
   inject,
   input,
   isDevMode,
-  linkedSignal,
   signal,
   Signal,
+  untracked,
 } from '@angular/core';
-import { NgForm } from '@angular/forms';
+import {
+  AbstractControl,
+  FormResetEvent,
+  NgForm,
+  StatusChangeEvent,
+} from '@angular/forms';
 import {
   logDiagnostic,
   NGX_VEST_FORMS_DIAGNOSTICS,
 } from '../errors/error-catalog';
+import { fastDeepEqual } from '../utils/equality';
 import {
   NGX_ERROR_DISPLAY_MODE_TOKEN,
   NGX_WARNING_DISPLAY_MODE_TOKEN,
 } from './error-display-mode.token';
-import { FormControlStateDirective } from './form-control-state.directive';
 import {
-  getFormResetCount,
-  getFormSubmittedSignal,
-} from './form-submitted-state';
+  AttachedControl,
+  extractErrorMessages,
+  extractWarningMessages,
+  FormControlStateDirective,
+  getAttachedControl,
+  VestValidationErrors,
+} from './form-control-state.directive';
+import { getFormSubmittedSignal } from './form-submitted-state';
+import { FormDirective } from './form.directive';
+import { onValidationReset } from './validation-reset';
 
 /**
  * Error display modes for form controls.
@@ -64,6 +76,9 @@ export const NGX_WARNING_DISPLAY_MODE_DEFAULT: NgxWarningDisplayMode =
 })
 export class FormErrorDisplayDirective {
   readonly #controlStateDirective = inject(FormControlStateDirective);
+  readonly #attached = getAttachedControl(this.#controlStateDirective);
+  readonly #fieldWarnings = inject(FormDirective, { optional: true })
+    ?.fieldWarnings;
   // Optionally inject NgForm for form submission tracking
   readonly #ngForm = inject(NgForm, { optional: true });
   readonly #formSubmittedState = this.#ngForm
@@ -133,14 +148,186 @@ export class FormErrorDisplayDirective {
         }
       });
     }
+
+    // Track the attached control's own events to keep the hold (see
+    // `#hold`). The effect only (re)subscribes when the control changes;
+    // the hold itself is written synchronously from the events, so a result
+    // that settles and re-pends before change detection is still seen.
+    effect((onCleanup) => {
+      const attached = this.#attached();
+      if (!attached) return;
+      const unsubscribe = untracked(() => this.#trackHold(attached));
+      onCleanup(unsubscribe);
+    });
   }
 
   /**
-   * Whether the control's *current* state calls for showing errors, given
-   * the display mode and touched/submitted/dirty state. While the control is
-   * pending this is usually `false` (Angular clears the errors and the
-   * invalid flag until the async result lands); {@link shouldShowErrors}
-   * holds the last settled value instead.
+   * The messages kept on screen while the attached control re-validates,
+   * keyed to that control.
+   *
+   * Without a hold, Angular's PENDING status (errors cleared, `invalid`
+   * false) blanked the messages on every async re-check, so a message
+   * vanished and came back and a polite live region announced it again.
+   *
+   * Written only from the control's events, synchronously:
+   * - on every settled status, the result is stored (not yet shown);
+   * - when a check starts (status turns PENDING), the latest stored result,
+   *   filtered by what the display mode showed at that moment, becomes the
+   *   hold. Messages the mode was hiding stay hidden until the new result
+   *   settles, even if the field is blurred or submitted mid-check;
+   * - the control's own `FormResetEvent` (its `reset()`, also when a parent
+   *   resets) and `FormDirective.resetField()` drop both.
+   * A control's first-ever validation has no stored result, so nothing is
+   * held.
+   */
+  readonly #hold = signal<Hold | null>(null, { equal: isSameHold });
+
+  /**
+   * Subscribes to `attached.control`'s events and maintains `#hold` for it.
+   * Returns the teardown.
+   */
+  #trackHold(attached: AttachedControl): () => void {
+    const { control } = attached;
+    let settled: SettledResult | null = control.pending
+      ? null
+      : this.#readSettled(attached);
+    let wasPending = control.pending;
+    this.#hold.set(null);
+
+    const drop = (): void => {
+      settled = null;
+      this.#hold.set(null);
+    };
+
+    const subscription = control.events.subscribe((event) => {
+      if (event instanceof FormResetEvent) {
+        drop();
+        return;
+      }
+      if (!(event instanceof StatusChangeEvent)) return;
+      if (!control.pending) {
+        settled = this.#readSettled(attached);
+        wasPending = false;
+        return;
+      }
+      if (!wasPending) {
+        wasPending = true;
+        this.#hold.set(settled ? { control, view: this.#gate(settled) } : null);
+      }
+    });
+    subscription.add(onValidationReset(control).subscribe(drop));
+
+    return () => {
+      subscription.unsubscribe();
+      this.#hold.set(null);
+    };
+  }
+
+  /** The control's result as it settled, read straight from the control. */
+  #readSettled({ control, path }: AttachedControl): SettledResult {
+    const errors = control.errors as VestValidationErrors | null;
+    const errorMessages = extractErrorMessages(errors);
+    return {
+      errors: errorMessages,
+      hasErrorState: errorMessages.length > 0 || control.invalid,
+      warnings: extractWarningMessages(
+        errors,
+        this.#fieldWarnings ? untracked(this.#fieldWarnings) : undefined,
+        path
+      ),
+    };
+  }
+
+  /** What the display mode shows of `settled` right now. */
+  #gate(settled: SettledResult): MessageView {
+    return untracked(() => {
+      const showErrors = errorGateOpen({
+        mode: this.errorDisplayMode(),
+        updateOn: this.updateOn(),
+        isTouched: this.isTouched(),
+        isDirty: this.isDirty(),
+        formSubmitted: this.formSubmitted(),
+        hasErrorState: settled.hasErrorState,
+      });
+      const showWarnings = warningGateOpen({
+        mode: this.warningDisplayMode(),
+        isTouched: this.isTouched(),
+        isDirty: this.isDirty(),
+        hasBeenValidated: this.hasBeenValidated(),
+        formSubmitted: this.formSubmitted(),
+        hasWarnings: settled.warnings.length > 0,
+      });
+      return {
+        showErrors,
+        errors: showErrors ? settled.errors : [],
+        showWarnings,
+        warnings: showWarnings ? settled.warnings : [],
+      };
+    });
+  }
+
+  /**
+   * Whether the control's *current* state calls for showing errors. While
+   * the control is pending this is usually `false` (Angular clears the
+   * errors and the invalid flag until the async result lands); the hold
+   * covers that window.
+   */
+  readonly #liveShowErrors = computed(() =>
+    errorGateOpen({
+      mode: this.errorDisplayMode(),
+      updateOn: this.updateOn(),
+      isTouched: this.isTouched(),
+      isDirty: this.isDirty(),
+      formSubmitted: this.formSubmitted(),
+      hasErrorState: this.errorMessages().length > 0 || this.isInvalid(),
+    })
+  );
+
+  /** Whether the control's *current* state calls for showing warnings. */
+  readonly #liveShowWarnings = computed(() =>
+    warningGateOpen({
+      mode: this.warningDisplayMode(),
+      isTouched: this.isTouched(),
+      isDirty: this.isDirty(),
+      hasBeenValidated: this.hasBeenValidated(),
+      formSubmitted: this.formSubmitted(),
+      hasWarnings: this.warningMessages().length > 0,
+    })
+  );
+
+  /**
+   * What the regions render: the live state while the control is settled;
+   * while it is pending, the hold for this control, or nothing.
+   */
+  readonly #view = computed<MessageView>(
+    () => {
+      const live: MessageView = {
+        showErrors: this.#liveShowErrors(),
+        errors: this.errorMessages(),
+        showWarnings: this.#liveShowWarnings(),
+        warnings: this.warningMessages(),
+      };
+      if (!this.hasPendingValidation()) {
+        return live;
+      }
+      const hold = this.#hold();
+      if (hold && hold.control === this.#attached()?.control) {
+        return hold.view;
+      }
+      return {
+        showErrors: live.showErrors,
+        errors: [],
+        showWarnings: false,
+        warnings: [],
+      };
+    },
+    { equal: fastDeepEqual }
+  );
+
+  /**
+   * Whether the error region should render, based on the display mode and
+   * the control's state (touched/submitted/dirty). Also drives `aria-invalid`
+   * in the wrappers and `FormErrorControlDirective`.
    *
    * We check both hasErrors (extracted error messages) AND isInvalid (Angular's validation state)
    * because in some cases (like conditional validations via validationConfig), the control is marked
@@ -150,184 +337,26 @@ export class FormErrorDisplayDirective {
    * For validationConfig-triggered validations, a field may become invalid before it has been
    * touched. Error visibility still respects the field's own `errorDisplayMode`, so untouched
    * dependent fields can remain visually quiet until blur or submit.
-   */
-  readonly #liveShowErrors = computed(() => {
-    const mode = this.errorDisplayMode();
-    const isTouched = this.isTouched();
-    const isDirty = this.isDirty();
-    const isInvalid = this.isInvalid();
-    const hasErrors = this.errorMessages().length > 0;
-    const updateOn = this.updateOn();
-    const formSubmitted = this.formSubmitted();
-
-    // Consider errors present if either we have error messages OR the control is invalid
-    // This handles the race condition where Angular marks control invalid before Vest errors propagate
-    const hasErrorState = hasErrors || isInvalid;
-
-    // Always only show errors after submit if updateOn is 'submit'
-    if (updateOn === 'submit') {
-      return !!(formSubmitted && hasErrorState);
-    }
-
-    // Handle the new display modes
-    switch (mode) {
-      case 'always':
-        // Always show errors immediately, even on pristine fields
-        return hasErrorState;
-
-      case 'on-dirty':
-        // Show when value has changed, OR when touched/submitted (for backwards compat)
-        return !!(isDirty || isTouched || formSubmitted) && hasErrorState;
-
-      case 'on-blur':
-        // Show after touch (blur) or form submission (traditional behavior, not dirty-based)
-        return !!(isTouched || formSubmitted) && hasErrorState;
-
-      case 'on-submit':
-        // Show only after form submission
-        return !!(formSubmitted && hasErrorState);
-
-      case 'on-blur-or-submit':
-      default:
-        // Show after blur (touch) OR submit (default behavior)
-        return !!((isTouched || formSubmitted) && hasErrorState);
-    }
-  });
-
-  /**
-   * Whether the control's *current* state calls for showing warnings.
    *
-   * NOTE: Unlike errors, warnings can exist on VALID fields (warnings-only scenario).
-   * We don't require isInvalid() because Vest warn() tests don't affect field validity.
-   *
-   * UX Note: We include `hasBeenValidated` for `on-validated-or-touch` mode to support
-   * cross-field validation. If Field A triggers validation on Field B (via validationConfig),
-   * Field B should show warnings if it has them, even if the user hasn't touched Field B yet.
-   * Unlike errors (which block submission), warnings are informational and safe to show.
-   */
-  readonly #liveShowWarnings = computed(() => {
-    const mode = this.warningDisplayMode();
-    const isTouched = this.isTouched();
-    const isDirty = this.isDirty();
-    const hasBeenValidated = this.hasBeenValidated();
-    const hasWarnings = this.warningMessages().length > 0;
-    const formSubmitted = this.formSubmitted();
-
-    if (!hasWarnings) {
-      return false;
-    }
-
-    // Handle the warning display modes
-    switch (mode) {
-      case 'always':
-        // Always show warnings immediately, even on pristine fields
-        return true;
-
-      case 'on-dirty':
-        // Show when value has changed, OR when touched/submitted (for backwards compat)
-        return isDirty || isTouched || formSubmitted;
-
-      case 'on-touch':
-        // Show after touch (blur) or form submission (traditional behavior, not dirty-based)
-        return isTouched || formSubmitted;
-
-      case 'on-validated-or-touch':
-      default:
-        // Show after validation runs or after touch/submit (default behavior)
-        return hasBeenValidated || isTouched || formSubmitted;
-    }
-  });
-
-  /**
-   * Counter of root-form resets; a change drops the held messages.
-   * Outside an `NgForm` there is no form reset to observe.
-   */
-  readonly #formResetCount = this.#ngForm
-    ? getFormResetCount(this.#ngForm)
-    : signal(0);
-
-  /**
-   * What the regions render: the live view while the control is settled,
-   * and the last settled view while it re-validates.
-   *
-   * Without the hold, Angular's PENDING status (errors cleared, `invalid`
-   * false) blanked the messages on every async re-check, so the message
-   * vanished and came back and a polite live region announced it again.
-   *
-   * Nothing is held, and the regions blank as before, when:
-   * - the last settled view rendered no message (first-ever validation, or
-   *   messages the display mode still hid): nothing to keep;
-   * - the form was reset (`FormResetEvent` on the root form);
-   * - the control went back to untouched and pristine (a `control.reset()`).
-   *
-   * The settled view is captured when it is read, which the rendered message
-   * regions do on every change detection; a consumer that never reads these
-   * signals between a settle and the next re-check gets no hold.
-   *
-   * A held view is a snapshot: a blur or submit during the re-check does not
-   * reveal messages that were hidden when the last result settled; those
-   * show once the new result settles.
-   */
-  readonly #view = linkedSignal<MessageViewSource, MessageView>({
-    source: () => ({
-      pending: this.hasPendingValidation(),
-      resetCount: this.#formResetCount(),
-      interacted: this.isTouched() || this.isDirty(),
-      live: {
-        showErrors: this.#liveShowErrors(),
-        errors: this.errorMessages(),
-        showWarnings: this.#liveShowWarnings(),
-        warnings: this.warningMessages(),
-      },
-    }),
-    computation: (source, previous) => {
-      if (!source.pending) {
-        return source.live;
-      }
-      if (
-        previous !== undefined &&
-        rendersMessages(previous.value) &&
-        source.resetCount === previous.source.resetCount &&
-        !(previous.source.interacted && !source.interacted)
-      ) {
-        return previous.value;
-      }
-      // Nothing rendered to keep (first validation, or the control's
-      // placeholder state before it attached), or a reset: blank as before.
-      return {
-        showErrors: source.live.showErrors,
-        errors: [],
-        showWarnings: false,
-        warnings: [],
-      };
-    },
-    equal: isSameMessageView,
-  });
-
-  /**
-   * Whether the error region should render, based on the display mode and
-   * the control's state (touched/submitted/dirty). Also drives `aria-invalid`
-   * in the wrappers and `FormErrorControlDirective`.
-   *
-   * While the control re-validates (pending), this keeps the value from the
-   * last settled result, so the message and `aria-invalid` stay put until the
-   * new result lands.
+   * While the control re-validates (pending), this keeps what was shown when
+   * the check started, from the latest settled result, until the new result
+   * lands.
    */
   readonly shouldShowErrors: Signal<boolean> = computed(
     () => this.#view().showErrors
   );
 
   /**
-   * Errors to display: the current messages, or the last settled messages
-   * while the control re-validates. Empty while the first validation is
-   * pending and right after a reset.
+   * Errors to display: the current messages, or the shown messages of the
+   * latest settled result while the control re-validates. Empty while a
+   * control's first validation is pending and right after a reset.
    */
   readonly errors: Signal<string[]> = computed(() => this.#view().errors);
 
   /**
-   * Warnings to display: the current messages, or the last settled messages
-   * while the control re-validates. Empty while the first validation is
-   * pending and right after a reset.
+   * Warnings to display: the current messages, or the shown messages of the
+   * latest settled result while the control re-validates. Empty while a
+   * control's first validation is pending and right after a reset.
    */
   readonly warnings: Signal<string[]> = computed(() => this.#view().warnings);
 
@@ -349,8 +378,16 @@ export class FormErrorDisplayDirective {
    * Whether the warning region should render, based on the warning display
    * mode and the control's state (touched/validated/dirty).
    *
-   * While the control re-validates (pending), this keeps the value from the
-   * last settled result, like {@link shouldShowErrors}.
+   * NOTE: Unlike errors, warnings can exist on VALID fields (warnings-only scenario).
+   * We don't require isInvalid() because Vest warn() tests don't affect field validity.
+   *
+   * UX Note: We include `hasBeenValidated` for `on-validated-or-touch` mode to support
+   * cross-field validation. If Field A triggers validation on Field B (via validationConfig),
+   * Field B should show warnings if it has them, even if the user hasn't touched Field B yet.
+   * Unlike errors (which block submission), warnings are informational and safe to show.
+   *
+   * While the control re-validates (pending), this keeps what was shown when
+   * the check started, like {@link shouldShowErrors}.
    */
   readonly shouldShowWarnings: Signal<boolean> = computed(
     () => this.#view().showWarnings
@@ -364,30 +401,92 @@ type MessageView = {
   readonly warnings: string[];
 };
 
-type MessageViewSource = {
-  readonly pending: boolean;
-  readonly resetCount: number;
-  readonly interacted: boolean;
-  readonly live: MessageView;
+/** A settled validation result of the attached control. */
+type SettledResult = {
+  readonly errors: string[];
+  readonly hasErrorState: boolean;
+  readonly warnings: string[];
 };
 
-/** Whether a view puts any message on screen. */
-function rendersMessages(view: MessageView): boolean {
-  return (
-    (view.showErrors && view.errors.length > 0) ||
-    (view.showWarnings && view.warnings.length > 0)
-  );
+type Hold = {
+  readonly control: AbstractControl;
+  readonly view: MessageView;
+};
+
+function isSameHold(a: Hold | null, b: Hold | null): boolean {
+  if (a === b) return true;
+  if (a === null || b === null) return false;
+  return a.control === b.control && fastDeepEqual(a.view, b.view);
 }
 
-function sameMessages(a: readonly string[], b: readonly string[]): boolean {
-  return a.length === b.length && a.every((message, i) => message === b[i]);
+/** Whether the error display mode shows errors for this state. */
+function errorGateOpen(state: {
+  mode: NgxErrorDisplayMode;
+  updateOn: 'change' | 'blur' | 'submit';
+  isTouched: boolean;
+  isDirty: boolean;
+  formSubmitted: boolean;
+  hasErrorState: boolean;
+}): boolean {
+  const { mode, isTouched, isDirty, formSubmitted, hasErrorState } = state;
+
+  // Always only show errors after submit if updateOn is 'submit'
+  if (state.updateOn === 'submit') {
+    return formSubmitted && hasErrorState;
+  }
+
+  switch (mode) {
+    case 'always':
+      // Always show errors immediately, even on pristine fields
+      return hasErrorState;
+
+    case 'on-dirty':
+      // Show when value has changed, OR when touched/submitted (for backwards compat)
+      return (isDirty || isTouched || formSubmitted) && hasErrorState;
+
+    case 'on-blur':
+      // Show after touch (blur) or form submission (traditional behavior, not dirty-based)
+      return (isTouched || formSubmitted) && hasErrorState;
+
+    case 'on-submit':
+      // Show only after form submission
+      return formSubmitted && hasErrorState;
+
+    default:
+      // 'on-blur-or-submit': show after blur (touch) OR submit
+      return (isTouched || formSubmitted) && hasErrorState;
+  }
 }
 
-function isSameMessageView(a: MessageView, b: MessageView): boolean {
-  return (
-    a.showErrors === b.showErrors &&
-    a.showWarnings === b.showWarnings &&
-    sameMessages(a.errors, b.errors) &&
-    sameMessages(a.warnings, b.warnings)
-  );
+/** Whether the warning display mode shows warnings for this state. */
+function warningGateOpen(state: {
+  mode: NgxWarningDisplayMode;
+  isTouched: boolean;
+  isDirty: boolean;
+  hasBeenValidated: boolean;
+  formSubmitted: boolean;
+  hasWarnings: boolean;
+}): boolean {
+  const { mode, isTouched, isDirty, hasBeenValidated, formSubmitted } = state;
+  if (!state.hasWarnings) {
+    return false;
+  }
+
+  switch (mode) {
+    case 'always':
+      // Always show warnings immediately, even on pristine fields
+      return true;
+
+    case 'on-dirty':
+      // Show when value has changed, OR when touched/submitted (for backwards compat)
+      return isDirty || isTouched || formSubmitted;
+
+    case 'on-touch':
+      // Show after touch (blur) or form submission (traditional behavior, not dirty-based)
+      return isTouched || formSubmitted;
+
+    default:
+      // 'on-validated-or-touch': show after validation runs or after touch/submit
+      return hasBeenValidated || isTouched || formSubmitted;
+  }
 }
