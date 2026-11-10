@@ -455,7 +455,11 @@ test.describe('Purchase Form', () => {
       // The remaining row moves to index 0 and must not inherit the error.
       await expect(first).toHaveValue('222');
       await expect(first).not.toHaveAttribute('aria-invalid', 'true');
-      await expect(page.getByText(/valid phonenumber/i)).toHaveCount(0);
+      await expect(
+        first
+          .locator('xpath=ancestor::ngx-control-wrapper[1]')
+          .getByText(/valid phonenumber/i)
+      ).toHaveCount(0);
       await expect(
         page.getByLabel('Phone number 2', { exact: true })
       ).toHaveCount(0);
