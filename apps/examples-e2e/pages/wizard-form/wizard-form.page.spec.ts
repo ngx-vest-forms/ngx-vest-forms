@@ -1,9 +1,12 @@
 import { expect, test } from '@playwright/test';
-import { getMainContentSidebar } from '../../helpers/form-helpers';
+import { fillAndBlur, getMainContentSidebar } from '../../helpers/form-helpers';
 import {
+  clickPrevious,
+  expectWizardStep,
   fillValidStep1,
   goToProfileStep,
   navigateToWizard,
+  STEP_HEADINGS,
 } from '../../helpers/wizard-helpers';
 
 test.describe('Wizard Form Page', () => {
@@ -26,8 +29,8 @@ test.describe('Wizard Form Page', () => {
     ).toBeVisible();
   });
 
-  // The sidebar reads the rendered step's form, so after Next it must drop
-  // step 1's state and show step 2's instead.
+  // The sidebar reads the rendered step's form, so after Next or Previous it
+  // must drop the old step's state and show the new step's instead.
   test('should show the current step errors in the sidebar', async ({
     page,
   }) => {
@@ -50,6 +53,15 @@ test.describe('Wizard Form Page', () => {
       await firstName.focus();
       await firstName.blur();
       await expect(sidebar).toContainText('First name is required');
+    });
+
+    await test.step('Back on step 1: the sidebar follows again', async () => {
+      await clickPrevious(page);
+      await expectWizardStep(page, 1, STEP_HEADINGS[1]);
+      await expect(sidebar).not.toContainText('First name is required');
+
+      await fillAndBlur(page.getByLabel(/email address/i), '');
+      await expect(sidebar).toContainText('Email is required');
     });
   });
 });
