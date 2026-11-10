@@ -2,9 +2,15 @@ import { Service } from '@angular/core';
 import { delay, type Observable, of, throwError } from 'rxjs';
 import type { AutoSaveDemoModel } from '../../models/auto-save-demo.model';
 
+/**
+ * What triggered a save: the blurred control's path, which
+ * `NgxFieldBlurEvent` reports as a plain string, or `'submit'`. It is shown
+ * to the user and never used as a model path, so it stays `string`.
+ */
+export type AutoSaveTrigger = string;
+
 export type AutoSaveDraftResult = {
-  /** What triggered the save: a blurred control's path or `'submit'`. */
-  field: string;
+  field: AutoSaveTrigger;
   savedAt: string;
   version: number;
 };
@@ -41,7 +47,7 @@ export class AutoSaveDemoService {
 
   saveDraft(
     draft: AutoSaveDemoModel,
-    field: string
+    field: AutoSaveTrigger
   ): Observable<AutoSaveDraftResult> {
     const projectName = draft.projectName?.trim().toLowerCase();
     if (projectName === 'fail') {

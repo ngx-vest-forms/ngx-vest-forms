@@ -211,7 +211,7 @@ export const purchaseValidationWarningRulesByField = {
 export const purchaseValidationRulesByField = {
   ...purchaseValidationErrorRulesByField,
   'passwords.password': [
-    ...(purchaseValidationErrorRulesByField['passwords.password'] ?? []),
-    ...(purchaseValidationWarningRulesByField['passwords.password'] ?? []),
+    ...purchaseValidationErrorRulesByField['passwords.password'],
+    ...purchaseValidationWarningRulesByField['passwords.password'],
   ],
 } satisfies RulesByField;

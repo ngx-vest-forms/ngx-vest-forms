@@ -46,6 +46,8 @@ type SubmissionState = 'editing' | 'submitting' | 'server-error' | 'success';
  * Error maps are keyed by plain strings, so this narrows a key to a field of
  * this form before the summary hands it to `focusField`. The summary itself
  * stays string-keyed like the library's error maps, so it lists every error.
+ * The `Object.hasOwn` check only works because this model is flat; a form
+ * with nested paths such as `address.street` needs a path-aware check.
  */
 function isSubmissionPatternsField(
   path: string
