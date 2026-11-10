@@ -66,7 +66,7 @@ test.describe('Zod Schema Demo Form', () => {
     });
 
     test('should show all validation errors on submit', async ({ page }) => {
-      await test.step('Submit empty form to trigger full Zod and Vest validation', async () => {
+      await test.step('Submit empty form to show the Vest errors for every required field', async () => {
         const submitButton = page.getByRole('button', { name: /submit/i });
         await submitButton.click();
         await waitForFormProcessing(page);

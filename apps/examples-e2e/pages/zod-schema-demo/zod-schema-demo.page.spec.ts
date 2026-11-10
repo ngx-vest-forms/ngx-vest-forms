@@ -23,7 +23,7 @@ test.describe('Zod Schema Demo Page', () => {
   test('should explain the contract/rules split and link to the native schema demo', async ({
     page,
   }) => {
-    await expect(page.getByText('Zod describes the shape.')).toBeVisible();
+    await expect(page.getByText('Zod describes the structure.')).toBeVisible();
     await expect(page.getByText('Vest owns the rules.')).toBeVisible();
 
     const link = page.getByRole('link', { name: 'Native Vest Schema demo' });

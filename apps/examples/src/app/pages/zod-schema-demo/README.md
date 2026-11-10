@@ -7,7 +7,7 @@ Route: `zod-schema-demo` · Title: "Zod Schema Demo"
 This page pairs an **external Zod schema** with a Vest suite for the same Form
 Model. The two have separate jobs:
 
-- **Zod describes the shape.** The schema is bound through `[formContract]` and
+- **Zod describes the structure.** The schema is bound through `[formContract]` and
   is the Form Contract. In development, ngx-vest-forms runs it against the form
   value whenever the value changes and logs a warning for each issue. It never
   changes whether a field is valid.
@@ -15,12 +15,12 @@ Model. The two have separate jobs:
   the ZIP code pattern live in `test()` callbacks, because the suite is the
   only thing that produces Errors and Warnings.
 
-The demo does not let Zod rules drive validation because they could not reach
-the user. A rule such as `age: z.number().min(18)` would only add a console
-warning in development, with no message on the field. It would also fail on
-every untouched field, since the Form Model is partial while the user types.
-That is why every field in the schema is `.optional()` and the schema carries no
-rules.
+Two separate choices follow from this. Every field in the schema is
+`.optional()` because the Form Model is partial while the user types. The
+schema carries no rules because a Form Contract issue only reaches the console
+in development and never becomes a field Error. A rule such as
+`age: z.number().min(18).optional()` would pass an empty field and only log
+when the user typed a value below 18, with no message on the field.
 
 Vest 6.3.x also supports schema-aware `create(..., schema)` suites, but only
 with schemas written with Vest's own `n4s/enforce` primitives. To see
@@ -52,7 +52,7 @@ with schemas written with Vest's own `n4s/enforce` primitives. To see
 ## Behavior
 
 The Zod schema (`firstName`, `lastName`, `email`, `age` and a nested `address`)
-is shape-only, and the Vest suite adds the rules and messages. During field
+describes structure only, and the Vest suite adds the rules and messages. During field
 validation ngx-vest-forms runs `suite.only(field).run(model)`, so only the
 matching `test()` callbacks fire per field. The Form Contract runs separately,
 in development only, and only logs.
