@@ -6,7 +6,7 @@ import { EMAIL_PATTERN } from '../../shared/validations/email.validations';
 /**
  * Plain Vest suite for the account-creation form. It has no Angular
  * dependency and is unit-testable in isolation:
- * `submissionPatternsSuite({ email: 'x' })`.
+ * `submissionPatternsSuite.run({ email: 'x' })`.
  *
  * This is concern (a): pure FIELD validation. It is deliberately unaware of
  * the server — submit-time invalid handling, server failure messaging, and
