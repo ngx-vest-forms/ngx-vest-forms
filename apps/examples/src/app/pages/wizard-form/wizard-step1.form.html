@@ -4,15 +4,13 @@
   [focusFirstInvalidOnSubmit]="false".
 -->
 <form
-  #step1Form="ngxVestForm"
   ngxVestForm
   [suite]="suite()"
   [formValue]="data()"
   [validationConfig]="validationConfig()"
   [focusFirstInvalidOnSubmit]="false"
-  (formValueChange)="dataChange.emit($event)"
-  (validChange)="validChange.emit($event)"
-  (errorsChange)="errorsChange.emit($event)"
+  (formValueChange)="data.set($event)"
+  (validChange)="valid.set($event)"
   (submitSettled)="stepSubmit.emit($event.valid)"
 >
   <div class="space-y-6">

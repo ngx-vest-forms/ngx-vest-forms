@@ -1,5 +1,9 @@
 import { expect, test } from '@playwright/test';
-import { expectFieldHasError, fillAndBlur } from '../../helpers/form-helpers';
+import {
+  expectFieldHasError,
+  fillAndBlur,
+  getMainContentSidebar,
+} from '../../helpers/form-helpers';
 import {
   clickNext,
   clickPrevious,
@@ -453,6 +457,12 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
         await expect(page.getByText(/registration complete/i)).toBeVisible({
           timeout: 3000,
         }); // Wait for API simulation
+
+        // Every step was validated and submitted, so the sidebar must not
+        // fall back to "Pristine" once the step forms are gone.
+        await expect(
+          getMainContentSidebar(page).locator('ngx-status-badge span').first()
+        ).toHaveAttribute('aria-label', 'Valid');
       });
 
       await test.step('Start a new registration', async () => {

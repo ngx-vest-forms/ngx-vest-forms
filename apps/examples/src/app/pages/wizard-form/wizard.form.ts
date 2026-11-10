@@ -1,8 +1,15 @@
-import { Component, input, output, viewChild } from '@angular/core';
-import type {
-  NgxFirstInvalidOptions,
-  NgxValidationConfig,
-  NgxVestSuite,
+import {
+  Component,
+  computed,
+  input,
+  model,
+  output,
+  viewChild,
+} from '@angular/core';
+import {
+  createFormFeedbackSignals,
+  type NgxValidationConfig,
+  type NgxVestSuite,
 } from 'ngx-vest-forms';
 import type {
   WizardStep,
@@ -28,9 +35,13 @@ export class WizardFormBodyComponent {
 
   readonly isSubmitting = input(false);
 
-  readonly step1Data = input.required<WizardStep1Model>();
-  readonly step2Data = input.required<WizardStep2Model>();
-  readonly step3Data = input.required<WizardStep3Model>();
+  readonly step1Data = model.required<WizardStep1Model>();
+  readonly step2Data = model.required<WizardStep2Model>();
+  readonly step3Data = model.required<WizardStep3Model>();
+
+  readonly step1Valid = model(false);
+  readonly step2Valid = model(false);
+  readonly step3Valid = model(false);
 
   readonly step1Suite = input.required<NgxVestSuite<WizardStep1Model>>();
   readonly step2Suite = input.required<NgxVestSuite<WizardStep2Model>>();
@@ -40,22 +51,6 @@ export class WizardFormBodyComponent {
     input.required<NgxValidationConfig<WizardStep1Model>>();
   readonly step2ValidationConfig =
     input.required<NgxValidationConfig<WizardStep2Model>>();
-
-  readonly step1Valid = input(false);
-  readonly step2Valid = input(false);
-  readonly step3Valid = input(false);
-
-  readonly step1DataChange = output<WizardStep1Model>();
-  readonly step2DataChange = output<WizardStep2Model>();
-  readonly step3DataChange = output<WizardStep3Model>();
-
-  readonly step1ValidChange = output<boolean>();
-  readonly step2ValidChange = output<boolean>();
-  readonly step3ValidChange = output<boolean>();
-
-  readonly step1ErrorsChange = output<Record<string, string[]>>();
-  readonly step2ErrorsChange = output<Record<string, string[]>>();
-  readonly step3ErrorsChange = output<Record<string, string[]>>();
 
   readonly goToStep = output<WizardStep>();
   readonly previousStep = output();
@@ -68,87 +63,17 @@ export class WizardFormBodyComponent {
   private readonly step2Form = viewChild(WizardStep2FormComponent);
   private readonly step3Form = viewChild(WizardStep3FormComponent);
 
-  protected emitGoToStep(step: WizardStep): void {
-    this.goToStep.emit(step);
-  }
+  /**
+   * The rendered step's `FormDirective`. Only one step is rendered at a
+   * time, so at most one of the queries resolves.
+   */
+  readonly currentForm = computed(
+    () =>
+      this.step1Form()?.vestForm() ??
+      this.step2Form()?.vestForm() ??
+      this.step3Form()?.vestForm()
+  );
 
-  protected emitPreviousStep(): void {
-    this.previousStep.emit();
-  }
-
-  protected emitStep1Submit(valid: boolean): void {
-    this.step1Submit.emit(valid);
-  }
-
-  protected emitStep2Submit(valid: boolean): void {
-    this.step2Submit.emit(valid);
-  }
-
-  protected emitStep3Submit(valid: boolean): void {
-    this.step3Submit.emit(valid);
-  }
-
-  protected emitSubmitAll(): void {
-    this.submitAll.emit();
-  }
-
-  markAllAsTouched(): void {
-    switch (this.currentStep()) {
-      case 1:
-        this.step1Form()?.markAllAsTouched();
-        break;
-      case 2:
-        this.step2Form()?.markAllAsTouched();
-        break;
-      default:
-        this.step3Form()?.markAllAsTouched();
-        break;
-    }
-  }
-
-  currentStepValidatedFields(): readonly string[] {
-    switch (this.currentStep()) {
-      case 1:
-        return this.step1Form()?.validatedFields() ?? [];
-      case 2:
-        return this.step2Form()?.validatedFields() ?? [];
-      default:
-        return this.step3Form()?.validatedFields() ?? [];
-    }
-  }
-
-  currentStepPending(): boolean {
-    switch (this.currentStep()) {
-      case 1:
-        return this.step1Form()?.pending() ?? false;
-      case 2:
-        return this.step2Form()?.pending() ?? false;
-      default:
-        return this.step3Form()?.pending() ?? false;
-    }
-  }
-
-  currentStepIsValid(): boolean {
-    switch (this.currentStep()) {
-      case 1:
-        return this.step1Form()?.isValid() ?? false;
-      case 2:
-        return this.step2Form()?.isValid() ?? false;
-      default:
-        return this.step3Form()?.isValid() ?? false;
-    }
-  }
-
-  focusCurrentStepFirstInvalidControl(
-    options?: NgxFirstInvalidOptions
-  ): HTMLElement | null {
-    switch (this.currentStep()) {
-      case 1:
-        return this.step1Form()?.focusFirstInvalidControl(options) ?? null;
-      case 2:
-        return this.step2Form()?.focusFirstInvalidControl(options) ?? null;
-      default:
-        return this.step3Form()?.focusFirstInvalidControl(options) ?? null;
-    }
-  }
+  /** Errors, pending state and validated fields of the rendered step. */
+  readonly feedback = createFormFeedbackSignals(this.currentForm);
 }

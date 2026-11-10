@@ -5,7 +5,7 @@ export const starterContent = defineExampleContent({
     icon: '🚀',
     title: 'What this demonstrates',
     points: [
-      'The minimal end-to-end ngx-vest-forms setup: one ngxVestForm, one Vest suite',
+      'The minimal end-to-end setup: one component file plus one Vest suite file',
       'Template-driven fields bound with [ngModel] inside ngx-control-wrapper',
       'A typed NgxDeepPartial model plus a form contract via provideFormContract',
       'On-blur error display with a non-blocking warning that never blocks submit',
@@ -18,7 +18,7 @@ export const starterContent = defineExampleContent({
       {
         title: 'The canonical wiring',
         points: [
-          'Why the form value lives in a signal the page owns',
+          'Why the form value lives in a signal the form component owns',
           'How (formValueChange) keeps the model in sync without reactive forms',
           'Where the Vest suite plugs in via the [suite] input',
         ],
@@ -26,6 +26,7 @@ export const starterContent = defineExampleContent({
       {
         title: 'Copy this baseline',
         points: [
+          'Copy starter.form.ts and starter.validations.ts; the suite needs the vest package, and the CSS classes are cosmetic',
           'Every public symbol used here is part of the supported API surface',
           'Suites are plain Vest specs you can unit-test without rendering',
         ],

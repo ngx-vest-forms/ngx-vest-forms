@@ -56,12 +56,10 @@
       </ngx-card>
 
       <ngx-form-state-card
+        [feedback]="currentStepFeedback()"
         [isValid]="allFormsValid()"
         [formValue]="currentStepData()"
-        [errors]="currentStepErrors()"
         [info]="wizardInfo()"
-        [validatedFields]="currentStepValidatedFields()"
-        [pending]="currentStepPending()"
       />
     </div>
 
@@ -115,26 +113,17 @@
           <ngx-wizard-form-body
             [currentStep]="currentStep()"
             [isSubmitting]="isSubmitting()"
-            [step1Data]="step1Data()"
-            [step2Data]="step2Data()"
-            [step3Data]="step3Data()"
+            [(step1Data)]="step1Data"
+            [(step2Data)]="step2Data"
+            [(step3Data)]="step3Data"
+            [(step1Valid)]="step1Valid"
+            [(step2Valid)]="step2Valid"
+            [(step3Valid)]="step3Valid"
             [step1Suite]="step1Suite"
             [step2Suite]="step2Suite"
             [step3Suite]="step3Suite"
             [step1ValidationConfig]="step1ValidationConfig"
             [step2ValidationConfig]="step2ValidationConfig()"
-            [step1Valid]="step1Valid()"
-            [step2Valid]="step2Valid()"
-            [step3Valid]="step3Valid()"
-            (step1DataChange)="step1Data.set($event)"
-            (step2DataChange)="step2Data.set($event)"
-            (step3DataChange)="step3Data.set($event)"
-            (step1ValidChange)="step1Valid.set($event)"
-            (step2ValidChange)="step2Valid.set($event)"
-            (step3ValidChange)="step3Valid.set($event)"
-            (step1ErrorsChange)="step1Errors.set($event)"
-            (step2ErrorsChange)="step2Errors.set($event)"
-            (step3ErrorsChange)="step3Errors.set($event)"
             (goToStep)="goToStep($event)"
             (previousStep)="previousStep()"
             (step1Submit)="onStep1Submit($event)"
