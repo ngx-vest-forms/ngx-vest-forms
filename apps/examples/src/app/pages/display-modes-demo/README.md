@@ -23,9 +23,9 @@ parent component can drive an on-submit reveal programmatically.
 - The form runs `triggerFormValidation()` on first render, so the contrast
   between modes is visible immediately without any interaction.
 - An external "Programmatically submit demo form" button simulates a
-  parent-controlled submit: it calls `NgForm.onSubmit()`, then
-  `markAllAsTouched()`, then `triggerFormValidation()` to reveal the
-  `on-submit` field.
+  parent-controlled submit: it calls `requestSubmit()` on the form element,
+  which dispatches a real submit event through the form's submit pipeline and
+  reveals the `on-submit` field.
 - Errors are blocking (`enforce`); warnings are non-blocking (Vest `warn()`).
   Both are validated by the same suite but surfaced separately.
 
@@ -34,8 +34,8 @@ parent component can drive an on-submit reveal programmatically.
 - `ngx-control-wrapper` with `[errorDisplayMode]` and `[warningDisplayMode]`
   inputs.
 - `NgxVestForms` directive bundle and the `ngxVestForm` template directive.
-- `FormDirective` methods: `triggerFormValidation()`, `markAllAsTouched()`,
-  and `ngForm.onSubmit()`.
+- `FormDirective.triggerFormValidation()`, plus the native
+  `HTMLFormElement.requestSubmit()` for the programmatic submit.
 - `createFormFeedbackSignals()` exposing `formState`, `warnings`,
   `validatedFields`, and `pending`.
 - Vest `warn()` for non-blocking warnings alongside `enforce()` errors.
