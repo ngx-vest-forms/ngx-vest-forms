@@ -1,7 +1,7 @@
 # Async Username Availability
 
 Validates a username against a mock remote endpoint, layering the async
-validation pattern on top of the canonical starter wiring.
+validation pattern on top of the page/form-body split of the larger demos.
 
 ## Why this demo exists
 
