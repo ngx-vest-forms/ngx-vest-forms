@@ -18,8 +18,10 @@
           automatically — no manual error aggregation needed."
       >
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          <ngx-control-wrapper>
-            <label for="departureDate" class="label-text">Departure Date</label>
+          <ngx-control-wrapper ariaRequired>
+            <label for="departureDate" class="label-text label-required"
+              >Departure Date</label
+            >
             <input
               id="departureDate"
               type="date"
@@ -29,8 +31,10 @@
             />
           </ngx-control-wrapper>
 
-          <ngx-control-wrapper>
-            <label for="returnDate" class="label-text">Return Date</label>
+          <ngx-control-wrapper ariaRequired>
+            <label for="returnDate" class="label-text label-required"
+              >Return Date</label
+            >
             <input
               id="returnDate"
               type="date"

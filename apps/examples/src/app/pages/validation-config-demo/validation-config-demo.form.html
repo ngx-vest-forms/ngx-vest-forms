@@ -15,9 +15,9 @@
       description="Changing either password field revalidates the other automatically."
     >
       <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <ngx-control-wrapper class="form-field">
+        <ngx-control-wrapper class="form-field" ariaRequired>
           <label>
-            <span class="label-text">Password</span>
+            <span class="label-text label-required">Password</span>
             <input
               class="input-field"
               type="password"
@@ -30,9 +30,9 @@
           </label>
         </ngx-control-wrapper>
 
-        <ngx-control-wrapper class="form-field">
+        <ngx-control-wrapper class="form-field" ariaRequired>
           <label>
-            <span class="label-text">Confirm Password</span>
+            <span class="label-text label-required">Confirm Password</span>
             <input
               class="input-field"
               type="password"
@@ -50,7 +50,7 @@
     <ngx-form-section
       tone="teal"
       title="Cross-Field Requirement"
-      description="This pair uses on-blur wrappers so dependent errors wait for the target field's own blur."
+      description="Filling in either field makes the other required. This pair uses on-blur wrappers so dependent errors wait for the target field's own blur."
     >
       <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <ngx-control-wrapper class="form-field" errorDisplayMode="on-blur">
@@ -104,9 +104,15 @@
         </div>
 
         @if (formValue().requiresJustification) {
-          <ngx-control-wrapper class="form-field" animate.enter="reveal-enter">
+          <ngx-control-wrapper
+            class="form-field"
+            animate.enter="reveal-enter"
+            ariaRequired
+          >
             <label>
-              <span class="label-text">Justification (min 20 characters)</span>
+              <span class="label-text label-required"
+                >Justification (min 20 characters)</span
+              >
               <textarea
                 class="input-field"
                 id="justification"
@@ -127,9 +133,9 @@
       description="Changing country triggers state and zip code validation."
     >
       <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
-        <ngx-control-wrapper class="form-field">
+        <ngx-control-wrapper class="form-field" ariaRequired>
           <label>
-            <span class="label-text">Country</span>
+            <span class="label-text label-required">Country</span>
             <select
               class="input-field"
               id="country"
@@ -145,9 +151,9 @@
           </label>
         </ngx-control-wrapper>
 
-        <ngx-control-wrapper class="form-field">
+        <ngx-control-wrapper class="form-field" ariaRequired>
           <label>
-            <span class="label-text">State/Province</span>
+            <span class="label-text label-required">State/Province</span>
             <input
               class="input-field"
               type="text"
@@ -160,9 +166,9 @@
           </label>
         </ngx-control-wrapper>
 
-        <ngx-control-wrapper class="form-field">
+        <ngx-control-wrapper class="form-field" ariaRequired>
           <label>
-            <span class="label-text">Postal Code</span>
+            <span class="label-text label-required">Postal Code</span>
             <input
               class="input-field"
               type="text"
@@ -184,9 +190,9 @@
       description="Start and end dates validate against each other."
     >
       <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <ngx-control-wrapper class="form-field">
+        <ngx-control-wrapper class="form-field" ariaRequired>
           <label>
-            <span class="label-text">Start Date</span>
+            <span class="label-text label-required">Start Date</span>
             <input
               class="input-field"
               type="date"
@@ -197,9 +203,9 @@
           </label>
         </ngx-control-wrapper>
 
-        <ngx-control-wrapper class="form-field">
+        <ngx-control-wrapper class="form-field" ariaRequired>
           <label>
-            <span class="label-text">End Date</span>
+            <span class="label-text label-required">End Date</span>
             <input
               class="input-field"
               type="date"

@@ -1,6 +1,8 @@
 <div class="form-grid">
-  <ngx-control-wrapper class="form-field form-grid-full">
-    <label class="label-text" [attr.for]="fieldIds().fullName">Full name</label>
+  <ngx-control-wrapper class="form-field form-grid-full" ariaRequired>
+    <label class="label-text label-required" [attr.for]="fieldIds().fullName"
+      >Full name</label
+    >
     <input
       [id]="fieldIds().fullName"
       class="input-field"
@@ -12,8 +14,10 @@
     />
   </ngx-control-wrapper>
 
-  <ngx-control-wrapper class="form-field">
-    <label class="label-text" [attr.for]="fieldIds().email">Email</label>
+  <ngx-control-wrapper class="form-field" ariaRequired>
+    <label class="label-text label-required" [attr.for]="fieldIds().email"
+      >Email</label
+    >
     <input
       [id]="fieldIds().email"
       class="input-field"
@@ -27,8 +31,10 @@
     />
   </ngx-control-wrapper>
 
-  <ngx-control-wrapper class="form-field">
-    <label class="label-text" [attr.for]="fieldIds().role">Role</label>
+  <ngx-control-wrapper class="form-field" ariaRequired>
+    <label class="label-text label-required" [attr.for]="fieldIds().role"
+      >Role</label
+    >
     <input
       [id]="fieldIds().role"
       class="input-field"

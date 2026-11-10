@@ -1,6 +1,11 @@
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-  <ngx-control-wrapper class="form-field">
-    <label class="label-text" [attr.for]="idPrefix() + '-from'">From</label>
+  <ngx-control-wrapper class="form-field" [ariaRequired]="required()">
+    <label
+      class="label-text"
+      [class.label-required]="required()"
+      [attr.for]="idPrefix() + '-from'"
+      >From</label
+    >
     <input
       [id]="idPrefix() + '-from'"
       mask="00:00"
@@ -15,8 +20,13 @@
     />
   </ngx-control-wrapper>
 
-  <ngx-control-wrapper class="form-field">
-    <label class="label-text" [attr.for]="idPrefix() + '-to'">To</label>
+  <ngx-control-wrapper class="form-field" [ariaRequired]="required()">
+    <label
+      class="label-text"
+      [class.label-required]="required()"
+      [attr.for]="idPrefix() + '-to'"
+      >To</label
+    >
     <input
       [id]="idPrefix() + '-to'"
       mask="00:00"

@@ -14,8 +14,8 @@
   (submitSettled)="onSubmitSettled($event)"
   class="space-y-6"
 >
-  <ngx-control-wrapper class="form-field">
-    <label for="fullName" class="label-text">Full name</label>
+  <ngx-control-wrapper class="form-field" ariaRequired>
+    <label for="fullName" class="label-text label-required">Full name</label>
     <input
       class="input-field"
       type="text"
@@ -27,8 +27,8 @@
     />
   </ngx-control-wrapper>
 
-  <ngx-control-wrapper class="form-field">
-    <label for="email" class="label-text">Email</label>
+  <ngx-control-wrapper class="form-field" ariaRequired>
+    <label for="email" class="label-text label-required">Email</label>
     <input
       class="input-field"
       type="email"
@@ -41,8 +41,8 @@
     />
   </ngx-control-wrapper>
 
-  <ngx-control-wrapper class="form-field">
-    <label for="password" class="label-text">Password</label>
+  <ngx-control-wrapper class="form-field" ariaRequired>
+    <label for="password" class="label-text label-required">Password</label>
     <input
       class="input-field"
       type="password"
@@ -54,7 +54,7 @@
     />
   </ngx-control-wrapper>
 
-  <ngx-control-wrapper class="form-field">
+  <ngx-control-wrapper class="form-field" ariaRequired>
     <label class="flex items-center gap-2">
       <input
         type="checkbox"
@@ -62,7 +62,9 @@
         name="acceptTerms"
         [ngModel]="formValue().acceptTerms"
       />
-      <span class="label-text">I accept the terms of service</span>
+      <span class="label-text label-required"
+        >I accept the terms of service</span
+      >
     </label>
   </ngx-control-wrapper>
 

@@ -20,8 +20,8 @@
   <ngx-control-wrapper class="form-field">
     <label for="seats" class="label-text">Seats</label>
     <p id="seats-hint" class="mb-2 text-sm text-gray-600 dark:text-gray-300">
-      Between 1 and 8. Use the buttons, type a number, or press Arrow Up and
-      Arrow Down.
+      Between 1 and 8. Required unless the seat count is locked. Use the
+      buttons, type a number, or press Arrow Up and Arrow Down.
     </p>
     <ngx-seat-stepper
       name="seats"
@@ -53,7 +53,7 @@
     "Must be checked" is a Vest test: Angular's required attribute does not
     mean that on a custom checkbox control.
   -->
-  <ngx-control-wrapper class="form-field">
+  <ngx-control-wrapper class="form-field" ariaRequired>
     <div class="flex items-center gap-3">
       <ngx-consent-switch
         name="acceptTerms"
@@ -62,7 +62,7 @@
       />
       <label
         for="acceptTerms"
-        class="text-sm font-medium text-gray-700 dark:text-gray-300"
+        class="label-required text-sm font-medium text-gray-700 dark:text-gray-300"
       >
         I accept the booking terms
       </label>

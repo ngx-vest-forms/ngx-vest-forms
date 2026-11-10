@@ -18,9 +18,9 @@
     >
       <div class="space-y-6">
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          <ngx-control-wrapper class="form-field">
+          <ngx-control-wrapper class="form-field" ariaRequired>
             <label>
-              <span class="label-text">Account type</span>
+              <span class="label-text label-required">Account type</span>
               <select
                 class="input-field"
                 id="accountType"
@@ -34,9 +34,9 @@
             </label>
           </ngx-control-wrapper>
 
-          <ngx-control-wrapper class="form-field">
+          <ngx-control-wrapper class="form-field" ariaRequired>
             <label>
-              <span class="label-text">Legal name</span>
+              <span class="label-text label-required">Legal name</span>
               <input
                 class="input-field"
                 type="text"
@@ -51,9 +51,9 @@
         </div>
 
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          <ngx-control-wrapper class="form-field">
+          <ngx-control-wrapper class="form-field" ariaRequired>
             <label>
-              <span class="label-text">Country</span>
+              <span class="label-text label-required">Country</span>
               <select
                 class="input-field"
                 id="country"
@@ -77,9 +77,10 @@
             <ngx-control-wrapper
               class="form-field"
               animate.enter="reveal-enter"
+              ariaRequired
             >
               <label>
-                <span class="label-text">VAT ID</span>
+                <span class="label-text label-required">VAT ID</span>
                 <input
                   class="input-field"
                   type="text"
@@ -119,9 +120,11 @@
           </label>
         </ngx-control-wrapper>
 
-        <ngx-control-wrapper class="form-field">
+        <ngx-control-wrapper class="form-field" ariaRequired>
           <label>
-            <span class="label-text">Requested credit limit</span>
+            <span class="label-text label-required"
+              >Requested credit limit</span
+            >
             <input
               class="input-field"
               type="number"
@@ -135,9 +138,9 @@
           </label>
         </ngx-control-wrapper>
 
-        <ngx-control-wrapper class="form-field">
+        <ngx-control-wrapper class="form-field" ariaRequired>
           <label>
-            <span class="label-text">Payment terms (days)</span>
+            <span class="label-text label-required">Payment terms (days)</span>
             <select
               class="input-field"
               id="paymentTermsDays"
