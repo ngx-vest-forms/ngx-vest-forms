@@ -106,7 +106,9 @@ describe('Conditional Structure Validations', () => {
       .only('shippingAddress')
       .run({ deliveryMode: 'shipment' });
 
-    expect(result.hasErrors('shippingAddress')).toBe(true);
+    expect(result.getErrors('shippingAddress')).toContain(
+      'Shipping address is required'
+    );
     expect(result.isTested('contactName')).toBe(false);
   });
 });

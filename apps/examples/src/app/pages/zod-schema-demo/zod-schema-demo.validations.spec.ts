@@ -42,10 +42,9 @@ describe('Zod Schema Demo Validations', () => {
     it('must be well formed', () => {
       const result = zodSchemaDemoSuite.run({ ...validModel, email: 'ada@' });
 
-      expect(result.getErrors('email')).toContain(
-        'Must be a valid email address'
-      );
-      expect(result.getErrors('email')).not.toContain('Email is required');
+      expect(result.getErrors('email')).toEqual([
+        'Must be a valid email address',
+      ]);
     });
   });
 
@@ -95,7 +94,7 @@ describe('Zod Schema Demo Validations', () => {
       });
 
       expect(result.hasErrors('address.street')).toBe(true);
-      expect(result.hasErrors('address.city')).toBe(true);
+      expect(result.getErrors('address.city')).toContain('City is required');
     });
 
     it.each(['123', '1234567', 'abcde'])(
@@ -125,7 +124,7 @@ describe('Zod Schema Demo Validations', () => {
   it('leaves other fields untested in a focused run', () => {
     const result = zodSchemaDemoSuite.only('address.city').run({});
 
-    expect(result.hasErrors('address.city')).toBe(true);
+    expect(result.getErrors('address.city')).toContain('City is required');
     expect(result.isTested('firstName')).toBe(false);
     expect(result.isTested('address.street')).toBe(false);
   });

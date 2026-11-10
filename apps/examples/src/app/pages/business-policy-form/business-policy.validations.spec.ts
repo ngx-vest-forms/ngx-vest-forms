@@ -1,7 +1,11 @@
 import { ROOT_FORM } from 'ngx-vest-forms';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { BusinessPolicyModel } from '../../models/business-policy.model';
-import { businessPolicySuite } from './business-policy.validations';
+import {
+  businessPolicyErrorRulesByField,
+  businessPolicySuite,
+  businessPolicyWarningRulesByField,
+} from './business-policy.validations';
 
 const personal: BusinessPolicyModel = {
   accountType: 'personal',
@@ -191,10 +195,40 @@ describe('Business Policy Validations', () => {
         requestedCreditLimit: 50000,
       });
 
-      expect(result.getWarnings('requestedCreditLimit')).not.toContain(
-        'Requested credit limit is high relative to revenue — expect manual review'
-      );
+      expect(result.hasWarnings('requestedCreditLimit')).toBe(false);
     });
+
+    it('warns as soon as the credit limit passes half the revenue', () => {
+      const result = businessPolicySuite.run({
+        ...business,
+        annualRevenue: 100000,
+        requestedCreditLimit: 50001,
+      });
+
+      expect(result.hasWarnings('requestedCreditLimit')).toBe(true);
+    });
+
+    it('does not compare against revenue when no revenue is entered', () => {
+      const result = businessPolicySuite.run({
+        ...business,
+        annualRevenue: undefined,
+        requestedCreditLimit: 60000,
+      });
+
+      expect(result.hasWarnings('requestedCreditLimit')).toBe(false);
+    });
+
+    it.each([0, 14, 30, 59])(
+      'does not warn about payment terms of %i days',
+      (days) => {
+        const result = businessPolicySuite.run({
+          ...personal,
+          paymentTermsDays: days,
+        });
+
+        expect(result.hasWarnings('paymentTermsDays')).toBe(false);
+      }
+    );
 
     it('warns about long payment terms but keeps the field valid', () => {
       const result = businessPolicySuite.run({
@@ -227,17 +261,77 @@ describe('Business Policy Validations', () => {
         requestedCreditLimit: 6000,
       });
 
-      expect(result.getWarnings('requestedCreditLimit')).not.toContain(
-        'Personal accounts above 5000 usually need a business upgrade'
-      );
+      expect(result.hasWarnings('requestedCreditLimit')).toBe(false);
+    });
+
+    it('does not warn a personal account at exactly 5000', () => {
+      const result = businessPolicySuite.run({
+        ...personal,
+        requestedCreditLimit: 5000,
+      });
+
+      expect(result.hasWarnings('requestedCreditLimit')).toBe(false);
+    });
+
+    it('warns a personal account just above 5000', () => {
+      const result = businessPolicySuite.run({
+        ...personal,
+        requestedCreditLimit: 5001,
+      });
+
+      expect(result.hasWarnings('requestedCreditLimit')).toBe(true);
     });
   });
 
   it('leaves other fields untested in a focused run', () => {
     const result = businessPolicySuite.only('legalName').run({});
 
-    expect(result.hasErrors('legalName')).toBe(true);
+    expect(result.getErrors('legalName')).toContain('Legal name is required');
     expect(result.isTested('country')).toBe(false);
     expect(result.hasErrors(ROOT_FORM)).toBe(false);
+  });
+
+  it('keeps the exported rule-message maps in step with the suite', () => {
+    // The form-state card lists these messages as the policy; they must be the
+    // ones the suite really produces.
+    const models: BusinessPolicyModel[] = [
+      {},
+      { accountType: 'business', country: 'DE' },
+      { accountType: 'personal', requestedCreditLimit: 6000 },
+      { requestedCreditLimit: 1, paymentTermsDays: 45 },
+      {
+        accountType: 'business',
+        annualRevenue: 1000,
+        requestedCreditLimit: 20000,
+        paymentTermsDays: 60,
+      },
+    ];
+    const results = models.map((model) => {
+      businessPolicySuite.reset();
+      return businessPolicySuite.run(model);
+    });
+
+    const merge = (runs: Record<string, string[]>[]) => {
+      const merged: Record<string, string[]> = {};
+      for (const run of runs) {
+        for (const [field, messages] of Object.entries(run)) {
+          merged[field] = [...new Set([...(merged[field] ?? []), ...messages])];
+        }
+      }
+      return Object.fromEntries(
+        Object.entries(merged).map(([field, m]) => [field, m.sort()])
+      );
+    };
+    const sortedCopy = (map: Record<string, string[]>) =>
+      Object.fromEntries(
+        Object.entries(map).map(([field, m]) => [field, [...m].sort()])
+      );
+
+    expect(merge(results.map((r) => r.getErrors()))).toEqual(
+      sortedCopy(businessPolicyErrorRulesByField)
+    );
+    expect(merge(results.map((r) => r.getWarnings()))).toEqual(
+      sortedCopy(businessPolicyWarningRulesByField)
+    );
   });
 });

@@ -1,6 +1,6 @@
-import type { NgxSuiteRunResult } from 'ngx-vest-forms';
 import { Observable, Subject } from 'rxjs';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { waitForSuiteResult } from '../../shared/testing/wait-for-suite-result';
 import { createAsyncUsernameSuite } from './async-username.validations';
 
 /**
@@ -45,19 +45,6 @@ function createFakeService() {
       return requests.filter((r) => r.name === name).length;
     },
   };
-}
-
-/**
- * `NgxSuiteRunResult` is thenable at runtime but typed without a callable
- * `then` that `await` accepts, so settle it through `then` explicitly.
- */
-function settled(
-  run: NgxSuiteRunResult
-): Promise<{ result: NgxSuiteRunResult }> {
-  if (typeof run.then !== 'function') return Promise.resolve({ result: run });
-  return new Promise((resolve, reject) => {
-    run.then?.((result) => resolve({ result }), reject);
-  });
 }
 
 describe('Async Username Validations', () => {
@@ -108,7 +95,7 @@ describe('Async Username Validations', () => {
     it.each(['', 'ab', 'Alice', 'al-ice'])(
       'does not contact the service while the username %j fails the sync rules',
       async (username) => {
-        await settled(suite.only('username').run({ username }));
+        await waitForSuiteResult(suite.only('username').run({ username }));
 
         expect(service.requests).toHaveLength(0);
       }
@@ -122,7 +109,7 @@ describe('Async Username Validations', () => {
       expect(service.callsFor('alice')).toBe(1);
 
       service.respond('alice', false);
-      const { result } = await settled(run);
+      const { result } = await waitForSuiteResult(run);
 
       expect(result.isPending('username')).toBe(false);
       expect(result.hasErrors('username')).toBe(false);
@@ -132,7 +119,7 @@ describe('Async Username Validations', () => {
     it('reports a taken username as an error', async () => {
       const run = suite.only('username').run({ username: 'admin' });
       service.respond('admin', true);
-      const { result } = await settled(run);
+      const { result } = await waitForSuiteResult(run);
 
       expect(result.hasErrors('username')).toBe(true);
       expect(result.getErrors('username')).toContain(
@@ -144,9 +131,9 @@ describe('Async Username Validations', () => {
     it('does not call the service again for a repeated username (memo)', async () => {
       const first = suite.only('username').run({ username: 'alice' });
       service.respond('alice', false);
-      await settled(first);
+      await waitForSuiteResult(first);
 
-      const { result: second } = await settled(
+      const { result: second } = await waitForSuiteResult(
         suite.only('username').run({ username: 'alice', displayName: 'Alice' })
       );
 
@@ -157,9 +144,9 @@ describe('Async Username Validations', () => {
     it('keeps reporting a taken username on a repeated run without a new request', async () => {
       const first = suite.only('username').run({ username: 'admin' });
       service.respond('admin', true);
-      await settled(first);
+      await waitForSuiteResult(first);
 
-      const { result: second } = await settled(
+      const { result: second } = await waitForSuiteResult(
         suite.only('username').run({ username: 'admin' })
       );
 
@@ -172,11 +159,11 @@ describe('Async Username Validations', () => {
     it('checks the service again when the username changes', async () => {
       const first = suite.only('username').run({ username: 'alice' });
       service.respond('alice', false);
-      await settled(first);
+      await waitForSuiteResult(first);
 
       const second = suite.only('username').run({ username: 'alicia' });
       service.respond('alicia', true);
-      const { result } = await settled(second);
+      const { result } = await waitForSuiteResult(second);
 
       expect(service.callsFor('alicia')).toBe(1);
       expect(result.getErrors('username')).toContain(
@@ -185,7 +172,8 @@ describe('Async Username Validations', () => {
     });
 
     it('aborts the previous request when the username changes', async () => {
-      const first = suite.only('username').run({ username: 'alice' });
+      // The superseded run is not awaited: nothing here needs it to settle.
+      suite.only('username').run({ username: 'alice' });
       const aliceRequest = service.requests[0];
       if (!aliceRequest) throw new Error('alice was not requested');
       expect(aliceRequest.unsubscribed).toBe(false);
@@ -195,8 +183,7 @@ describe('Async Username Validations', () => {
       expect(aliceRequest.unsubscribed).toBe(true);
 
       service.respond('alicia', false);
-      const { result } = await settled(second);
-      await settled(first).catch(() => undefined);
+      const { result } = await waitForSuiteResult(second);
 
       // The stale request must not leak into the current result.
       expect(result.hasErrors('username')).toBe(false);

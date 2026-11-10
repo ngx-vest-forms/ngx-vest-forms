@@ -79,7 +79,7 @@ describe('Starter Validations', () => {
   it('leaves other fields untested in a focused run', () => {
     const result = starterFormSuite.only('email').run({});
 
-    expect(result.hasErrors('email')).toBe(true);
+    expect(result.getErrors('email')).toEqual(['Email is required']);
     expect(result.isTested('name')).toBe(false);
     expect(result.hasErrors('name')).toBe(false);
   });

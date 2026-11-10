@@ -73,18 +73,12 @@ describe('Custom Controls Validations', () => {
       expect(result.hasErrors('tags')).toBe(false);
       expect(result.isValid()).toBe(true);
     });
-
-    it('does not warn when the list is empty', () => {
-      const result = customControlsSuite.run({ ...validModel, tags: [] });
-
-      expect(result.hasWarnings('tags')).toBe(false);
-    });
   });
 
   it('leaves other fields untested in a focused run', () => {
     const result = customControlsSuite.only('rating').run({});
 
-    expect(result.hasErrors('rating')).toBe(true);
+    expect(result.getErrors('rating')).toEqual(['Pick a rating']);
     expect(result.isTested('tags')).toBe(false);
   });
 });

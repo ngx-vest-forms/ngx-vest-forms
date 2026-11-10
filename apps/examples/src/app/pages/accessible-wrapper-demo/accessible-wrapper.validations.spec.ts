@@ -45,7 +45,9 @@ describe('Accessible Wrapper Validations', () => {
   it('leaves other fields untested in a focused run', () => {
     const result = accessibleWrapperSuite.only('searchQuery').run({});
 
-    expect(result.hasErrors('searchQuery')).toBe(true);
+    expect(result.getErrors('searchQuery')).toContain(
+      'Search query is required'
+    );
     expect(result.isTested('preferredName')).toBe(false);
   });
 });

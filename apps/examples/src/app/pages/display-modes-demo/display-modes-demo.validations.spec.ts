@@ -68,6 +68,8 @@ describe('Display Modes Demo Validations', () => {
   it('leaves other fields untested in a focused run', () => {
     const result = displayModesDemoSuite.only('alwaysError').run({});
 
+    expect(result.getErrors('alwaysError')).toEqual(['This field is required']);
     expect(result.isTested('dirtyError')).toBe(false);
+    expect(result.hasErrors('dirtyError')).toBe(false);
   });
 });

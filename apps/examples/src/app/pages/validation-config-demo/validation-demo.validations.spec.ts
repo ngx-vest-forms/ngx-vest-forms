@@ -167,10 +167,8 @@ describe('Validation Demo Validations', () => {
       const result = validationDemoSuite.run({});
 
       expect(result.getErrors('startDate')).toContain('Start date is required');
-      expect(result.getErrors('endDate')).toContain('End date is required');
-      expect(result.getErrors('endDate')).not.toContain(
-        'End date must be after start date'
-      );
+      // Only the "required" error: no ordering error without both dates.
+      expect(result.getErrors('endDate')).toEqual(['End date is required']);
     });
 
     it('rejects an end date on or before the start date', () => {
@@ -206,6 +204,7 @@ describe('Validation Demo Validations', () => {
   it('leaves other fields untested in a focused run', () => {
     const result = validationDemoSuite.only('country').run({});
 
+    expect(result.getErrors('country')).toContain('Country is required');
     expect(result.isTested('startDate')).toBe(false);
     expect(result.hasErrors('startDate')).toBe(false);
   });

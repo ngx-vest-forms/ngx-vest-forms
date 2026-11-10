@@ -90,14 +90,18 @@ describe('Signal Forms Interop Validations', () => {
         seats: 2,
       });
 
-      expect(result.hasErrors('acceptTerms')).toBe(true);
+      expect(result.getErrors('acceptTerms')).toContain(
+        'Accept the booking terms to continue'
+      );
     });
   });
 
   it('leaves other fields untested in a focused run', () => {
     const result = signalFormsInteropSuite.only('acceptTerms').run({});
 
-    expect(result.hasErrors('acceptTerms')).toBe(true);
+    expect(result.getErrors('acceptTerms')).toContain(
+      'Accept the booking terms to continue'
+    );
     expect(result.isTested('seats')).toBe(false);
   });
 });

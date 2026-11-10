@@ -101,7 +101,7 @@ describe('Submission Patterns Validations', () => {
   it('leaves other fields untested in a focused run', () => {
     const result = submissionPatternsSuite.only('email').run({});
 
-    expect(result.hasErrors('email')).toBe(true);
+    expect(result.getErrors('email')).toEqual(['Email is required']);
     expect(result.isTested('password')).toBe(false);
   });
 });
