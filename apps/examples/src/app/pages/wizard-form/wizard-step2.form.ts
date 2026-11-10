@@ -1,7 +1,6 @@
-import { Component, input, output, viewChild } from '@angular/core';
+import { Component, input, model, output, viewChild } from '@angular/core';
 import {
-  type FormDirective,
-  type NgxFirstInvalidOptions,
+  FormDirective,
   type NgxValidationConfig,
   NgxVestForms,
   type NgxVestSuite,
@@ -20,39 +19,15 @@ import { WizardNavigationComponent } from '../../ui/wizard';
   providers: [provideFormContract(wizardStep2Contract)],
 })
 export class WizardStep2FormComponent {
-  readonly data = input.required<WizardStep2Model>();
+  readonly data = model.required<WizardStep2Model>();
+  readonly valid = model(false);
   readonly suite = input.required<NgxVestSuite<WizardStep2Model>>();
   readonly validationConfig =
     input.required<NgxValidationConfig<WizardStep2Model>>();
 
-  readonly dataChange = output<WizardStep2Model>();
-  readonly validChange = output<boolean>();
-  readonly errorsChange = output<Record<string, string[]>>();
   readonly previous = output();
   readonly stepSubmit = output<boolean>();
 
-  private readonly form =
-    viewChild<FormDirective<WizardStep2Model>>('step2Form');
-
-  markAllAsTouched(): void {
-    this.form()?.markAllAsTouched();
-  }
-
-  validatedFields(): readonly string[] {
-    return this.form()?.validatedFields() ?? [];
-  }
-
-  pending(): boolean {
-    return this.form()?.pending() ?? false;
-  }
-
-  isValid(): boolean {
-    return this.form()?.valid() ?? false;
-  }
-
-  focusFirstInvalidControl(
-    options?: NgxFirstInvalidOptions
-  ): HTMLElement | null {
-    return this.form()?.focusFirstInvalidControl(options) ?? null;
-  }
+  /** The step's form, so the wizard can use the directive's own API. */
+  readonly vestForm = viewChild.required(FormDirective<WizardStep2Model>);
 }

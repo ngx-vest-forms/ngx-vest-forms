@@ -101,10 +101,6 @@ export class WizardFormPageComponent {
   protected readonly step2Valid = signal(false);
   protected readonly step3Valid = signal(false);
 
-  protected readonly step1Errors = signal<Record<string, string[]>>({});
-  protected readonly step2Errors = signal<Record<string, string[]>>({});
-  protected readonly step3Errors = signal<Record<string, string[]>>({});
-
   protected readonly allFormsValid = computed(
     () => this.step1Valid() && this.step2Valid() && this.step3Valid()
   );
@@ -124,23 +120,8 @@ export class WizardFormPageComponent {
     }
   });
 
-  protected readonly currentStepErrors = computed(() => {
-    switch (this.currentStep()) {
-      case 1:
-        return this.step1Errors();
-      case 2:
-        return this.step2Errors();
-      default:
-        return this.step3Errors();
-    }
-  });
-
-  protected readonly currentStepValidatedFields = computed(
-    () => this.formBody()?.currentStepValidatedFields() ?? []
-  );
-
-  protected readonly currentStepPending = computed(
-    () => this.formBody()?.currentStepPending() ?? false
+  protected readonly currentStepFeedback = computed(
+    () => this.formBody()?.feedback
   );
 
   protected readonly wizardInfo = computed(() => [
@@ -222,7 +203,7 @@ export class WizardFormPageComponent {
 
     afterNextRender(
       () => {
-        this.formBody()?.focusCurrentStepFirstInvalidControl();
+        this.formBody()?.currentForm()?.focusFirstInvalidControl();
       },
       { injector: this.injector }
     );
@@ -236,7 +217,7 @@ export class WizardFormPageComponent {
 
     afterNextRender(
       () => {
-        this.formBody()?.focusCurrentStepFirstInvalidControl({
+        this.formBody()?.currentForm()?.focusFirstInvalidControl({
           behavior: 'auto',
           block: 'start',
           inline: 'nearest',
@@ -254,20 +235,20 @@ export class WizardFormPageComponent {
 
     afterNextRender(
       () => {
-        this.formBody()?.focusCurrentStepFirstInvalidControl();
+        this.formBody()?.currentForm()?.focusFirstInvalidControl();
       },
       { injector: this.injector }
     );
   }
 
   protected async submitAll(): Promise<void> {
-    this.formBody()?.markAllAsTouched();
+    this.formBody()?.currentForm()?.markAllAsTouched();
 
     await this.waitForNextRender();
 
     const currentStep = this.currentStep();
     const currentStepIsValid =
-      this.formBody()?.currentStepIsValid() ?? this.getStepValid(currentStep);
+      this.formBody()?.currentForm()?.valid() ?? this.getStepValid(currentStep);
 
     const step1IsValid =
       currentStep === 1 ? currentStepIsValid : this.step1Valid();
@@ -291,7 +272,7 @@ export class WizardFormPageComponent {
 
       afterNextRender(
         () => {
-          this.formBody()?.focusCurrentStepFirstInvalidControl();
+          this.formBody()?.currentForm()?.focusFirstInvalidControl();
         },
         { injector: this.injector }
       );

@@ -24,16 +24,21 @@ parent page that orchestrates navigation, validity, and the final submit.
   password). Step 2 demonstrates conditional validation (newsletter frequency
   required only when subscribed), with the validation config rebuilt inside a
   `computed()`. Step 3 demonstrates an `optional()` comments field.
-- Step data and per-step validity live in page-level signals, so navigating
+- Step data and per-step validity live in page-level signals, bound two-way
+  through `model()` inputs (`[(step1Data)]`, `[(step1Valid)]`), so navigating
   back never discards what the user entered.
-- Sidebar status badges reflect per-step validity and overall readiness.
+- Sidebar status badges reflect per-step validity and overall readiness. The
+  form state card shows the rendered step's errors and pending state.
 
 ## ngx-vest-forms APIs showcased
 
 - `createValidationConfig<T>()` with `.bidirectional()` (Step 1) and
   `.whenChanged()` rebuilt reactively (Step 2).
-- Per-step form components exposing `isValid()`, `validatedFields()`,
-  `pending()`, `markAllAsTouched()`, and `focusFirstInvalidControl()`.
+- Each step exposes its `FormDirective` as `vestForm`. The page calls the
+  directive's own `valid()`, `markAllAsTouched()` and
+  `focusFirstInvalidControl()` on the rendered step, and
+  `createFormFeedbackSignals()` turns it into errors, pending state and
+  validated fields for the sidebar.
 - `NgxFirstInvalidOptions` to customize scroll/focus on Step 2's invalid
   submit.
 - Vest `optional()` so a blank `comments` field does not block validity but
@@ -44,7 +49,7 @@ parent page that orchestrates navigation, validity, and the final submit.
 - `wizard-form.page.ts` — step state, validity signals, navigation, final
   submit, focus orchestration.
 - `wizard.form.ts` / `wizard.form.html` — body that switches the active step
-  component and forwards step APIs to the page.
+  component and exposes its form (`currentForm`, `feedback`) to the page.
 - `wizard-step1.form.ts`, `wizard-step2.form.ts`, `wizard-step3.form.ts` —
   individual step forms.
 - `wizard.validations.ts` — the three Vest suites (bidirectional, conditional,
@@ -58,3 +63,9 @@ parent page that orchestrates navigation, validity, and the final submit.
 - Validity and entered data persist across step navigation by design.
 - Focus management deliberately differs on Step 2 to show
   `NgxFirstInvalidOptions` in use.
+- The wizard keeps three forms on purpose. A single `ngxVestForm` that
+  renders one step at a time drops the hidden steps' controls, so their
+  values leave `formValueChange` and the final `(submitSettled)` sees only
+  the last step. Rendering every step and hiding the inactive ones keeps the
+  values, but "Next" then has no step-scoped submit to call. Issue #336 has
+  the details.
