@@ -319,16 +319,9 @@
             />
           </label>
         </ngx-control-wrapper>
-        <ngx-control-wrapper
-          class="form-field"
-          [ariaRequired]="!!formValue().passwords?.password"
-        >
+        <ngx-control-wrapper class="form-field" ariaRequired>
           <label>
-            <span
-              class="label-text"
-              [class.label-required]="!!formValue().passwords?.password"
-              >Confirm Password</span
-            >
+            <span class="label-text label-required">Confirm Password</span>
             <input
               class="input-field"
               placeholder="Confirm password"

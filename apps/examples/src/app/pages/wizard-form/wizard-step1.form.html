@@ -30,10 +30,7 @@
     </ngx-control-wrapper>
 
     <ngx-control-wrapper>
-      <label
-        for="confirmEmail"
-        class="label-text"
-        [class.label-required]="!!data().email"
+      <label for="confirmEmail" class="label-text label-required"
         >Confirm Email</label
       >
       <input
@@ -42,7 +39,7 @@
         name="confirmEmail"
         autocomplete="email"
         class="input-field"
-        [attr.aria-required]="data().email ? 'true' : null"
+        aria-required="true"
         [ngModel]="data().confirmEmail"
       />
     </ngx-control-wrapper>
@@ -61,10 +58,7 @@
     </ngx-control-wrapper>
 
     <ngx-control-wrapper>
-      <label
-        for="confirmPassword"
-        class="label-text"
-        [class.label-required]="!!data().password"
+      <label for="confirmPassword" class="label-text label-required"
         >Confirm Password</label
       >
       <input
@@ -73,7 +67,7 @@
         name="confirmPassword"
         autocomplete="new-password"
         class="input-field"
-        [attr.aria-required]="data().password ? 'true' : null"
+        aria-required="true"
         [ngModel]="data().confirmPassword"
       />
     </ngx-control-wrapper>
