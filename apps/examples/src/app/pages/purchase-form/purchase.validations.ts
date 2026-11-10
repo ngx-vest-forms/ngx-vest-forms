@@ -1,4 +1,8 @@
-import { type NgxVestSuite, ROOT_FORM } from 'ngx-vest-forms';
+import {
+  type FormFieldName,
+  type NgxVestSuite,
+  ROOT_FORM,
+} from 'ngx-vest-forms';
 import { fromEvent, lastValueFrom, takeUntil } from 'rxjs';
 import { create, enforce, omitWhen, test, warn } from 'vest';
 import { memo } from 'vest/memo';
@@ -158,7 +162,15 @@ export const createPurchaseValidationSuite = (
   return suite;
 };
 
-export const purchaseValidationErrorRulesByField: Record<string, string[]> = {
+/**
+ * Rule messages per field path. `_flat` is the form-state card's key for
+ * messages that belong to no single field (here, the per-row phone checks).
+ */
+type RulesByField = Partial<
+  Record<FormFieldName<PurchaseFormModel> | '_flat', string[]>
+>;
+
+export const purchaseValidationErrorRulesByField = {
   [ROOT_FORM]: ['Brecht is not 30 anymore'],
   userId: ['userId is already taken'],
   firstName: ['First name is required'],
@@ -187,19 +199,19 @@ export const purchaseValidationErrorRulesByField: Record<string, string[]> = {
   passwords: ['Passwords do not match'],
   phonenumbers: ['You should have at least one phonenumber'],
   _flat: ['Should be a valid phonenumber'],
-};
+} satisfies RulesByField;
 
-export const purchaseValidationWarningRulesByField: Record<string, string[]> = {
+export const purchaseValidationWarningRulesByField = {
   'passwords.password': [
     'Password should be at least 12 characters for better security',
     'Consider using a mix of uppercase, lowercase, numbers, and symbols',
   ],
-};
+} satisfies RulesByField;
 
-export const purchaseValidationRulesByField: Record<string, string[]> = {
+export const purchaseValidationRulesByField = {
   ...purchaseValidationErrorRulesByField,
   'passwords.password': [
     ...(purchaseValidationErrorRulesByField['passwords.password'] ?? []),
     ...(purchaseValidationWarningRulesByField['passwords.password'] ?? []),
   ],
-};
+} satisfies RulesByField;
