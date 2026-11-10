@@ -762,8 +762,8 @@ For working with field paths at runtime, see:
   - Works with the types defined in this guide
   - No example in the examples app calls it; it is for code that reads Standard Schema issue paths
 - **`deepArrayToObject()` from `ngx-vest-forms`** - Turns a nested array (arrays inside objects inside arrays) into numeric-keyed objects at every level, so a template-driven form can bind it with `ngModelGroup`. `arrayToObject()` converts one level only; see the [utils README](../packages/ngx-vest-forms/src/lib/utils/README.md#deeparraytoobject)
-  - Use it when you load a backend payload with nested arrays; the paths it produces (`0.phones.1` above) match the dot form above
-  - No example in the examples app calls it, because the examples build their keyed records directly
+  - Use it when you load a backend payload with nested arrays; the paths it produces (`0.phones.1` in the snippet below) use the dot form described above
+  - No example in the examples app calls it, because no example has nested arrays; the phone numbers example uses the one-level `arrayToObject()`, and the complex nested example builds its keyed record directly
 
 ```typescript
 import { deepArrayToObject } from 'ngx-vest-forms';

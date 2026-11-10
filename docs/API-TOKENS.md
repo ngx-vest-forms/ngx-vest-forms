@@ -225,7 +225,7 @@ export class CheckoutFormComponent {
 }
 ```
 
-The factory runs once, in an injection context, when the provider is created. Reach for it only when the contract has to come from an injected service. A contract that is a constant, even one that covers every branch of a conditional form, belongs in `provideFormContract(...)`. No example in the examples app uses the factory, because all their contracts are constants.
+The factory runs once, in an injection context, when the provider is created. Use it when the contract depends on other injected services or has to be built lazily. A contract that is a constant, even one that covers every branch of a conditional form, belongs in `provideFormContract(...)`. No example in the examples app uses the factory, because all their contracts are constants.
 
 #### Interaction with `[formContract]`
 
