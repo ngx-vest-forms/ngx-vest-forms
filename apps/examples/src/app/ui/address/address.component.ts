@@ -5,7 +5,7 @@ import {
   NgxVestForms,
   vestFormsViewProviders,
 } from 'ngx-vest-forms';
-import type { AddressModel } from '../../models/address.model';
+import type { AddressModel } from '../../shared/models/address.model';
 
 let nextAddressInstanceId = 0;
 

@@ -1,5 +1,5 @@
 import { create } from 'vest';
-import type { PhoneNumberModel } from '../../models/phonenumber.model';
+import type { PhoneNumberModel } from '../models/phonenumber.model';
 import { phonenumberValidations } from './phonenumber.validations';
 
 const createSuite = () =>

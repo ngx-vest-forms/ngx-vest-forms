@@ -1,5 +1,8 @@
 import type { NgxDeepPartial, NgxDeepRequired } from 'ngx-vest-forms';
-import { type AddressModel, addressContract } from '../../models/address.model';
+import {
+  type AddressModel,
+  addressContract,
+} from '../../shared/models/address.model';
 
 /** A single team member entry inside the keyed `teamMembers` record. */
 export type TeamMemberModel = {
