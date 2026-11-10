@@ -247,11 +247,11 @@ export class AutoSaveDemoPageComponent {
   }
 
   protected save(event: NgxSubmitSettledEvent<AutoSaveDemoModel>): void {
-    if (!event.valid) {
+    if (!event.valid || !event.value) {
       return;
     }
 
-    const draft = structuredClone(this.formValue());
+    const draft = event.value;
     const key = this.#createDraftKey(draft);
     if (key === this.lastSavedDraftKey() || key === this.lastQueuedDraftKey()) {
       return;

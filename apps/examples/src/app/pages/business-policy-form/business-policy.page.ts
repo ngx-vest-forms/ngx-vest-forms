@@ -73,11 +73,11 @@ export class BusinessPolicyPageComponent {
 
   protected onSubmit(event: NgxSubmitSettledEvent<BusinessPolicyModel>): void {
     // Warnings are advisory and never block submit — only errors gate it.
-    if (!event.valid) {
+    if (!event.valid || !event.value) {
       this.submittedValue.set(null);
       return;
     }
-    this.submittedValue.set(structuredClone(this.formValue()));
+    this.submittedValue.set(event.value);
   }
 
   protected reset(): void {

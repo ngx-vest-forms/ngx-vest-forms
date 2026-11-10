@@ -63,14 +63,13 @@ export class ComplexNestedPageComponent {
   }
 
   protected onSubmit(event: NgxSubmitSettledEvent<ComplexNestedModel>): void {
-    if (!event.valid) {
+    if (!event.valid || !event.value) {
       this.submittedValue.set(null);
       this.submittedPayload.set(null);
       return;
     }
-    const value = structuredClone(this.formValue());
-    this.submittedValue.set(value);
-    this.submittedPayload.set(objectToArray(value, ['teamMembers']));
+    this.submittedValue.set(event.value);
+    this.submittedPayload.set(objectToArray(event.value, ['teamMembers']));
   }
 
   protected onReset(): void {

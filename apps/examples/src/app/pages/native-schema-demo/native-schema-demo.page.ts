@@ -1,5 +1,7 @@
 import { Component, signal } from '@angular/core';
+import type { NgxSubmitSettledEvent } from 'ngx-vest-forms';
 import type { NativeSchemaDemoModel } from '../../models/native-schema-demo.model';
+import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
 import {
@@ -14,6 +16,7 @@ import { nativeSchemaDemoSuite } from './native-schema-demo.validations';
 @Component({
   selector: 'ngx-native-schema-demo-page',
   imports: [
+    AlertPanel,
     ExampleCardsComponent,
     FormStateCardComponent,
     PageTitle,
@@ -30,7 +33,17 @@ export class NativeSchemaDemoPageComponent {
 
   protected readonly exampleContent = nativeSchemaContent;
 
-  protected save(): void {
-    // Intentionally no console output in examples to keep CI and demos quiet
+  protected readonly outcome = signal<'success' | 'invalid' | null>(null);
+
+  protected onFormValueChange(value: NativeSchemaDemoModel): void {
+    this.formValue.set(value);
+    // The outcome describes the value that was submitted; an edit makes it stale.
+    this.outcome.set(null);
+  }
+
+  protected onSubmit(
+    event: NgxSubmitSettledEvent<NativeSchemaDemoModel>
+  ): void {
+    this.outcome.set(event.valid ? 'success' : 'invalid');
   }
 }
