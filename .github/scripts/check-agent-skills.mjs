@@ -114,6 +114,39 @@ for (const [name, entry] of Object.entries(upstream)) {
   }
 }
 
+// The formatter and the CodeRabbit review must leave upstream skills alone.
+const excluders = [
+  {
+    file: '.oxfmtrc.json',
+    patterns: JSON.parse(readFileSync(path.join(root, '.oxfmtrc.json'), 'utf8')).ignorePatterns,
+  },
+  {
+    file: '.coderabbit.yaml',
+    // Path filters of the form `- '!<folder>/**'`.
+    patterns: readFileSync(path.join(root, '.coderabbit.yaml'), 'utf8')
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.startsWith("- '!") && line.endsWith("/**'"))
+      .map((line) => line.slice("- '!".length, -"/**'".length)),
+  },
+];
+/** Glob match where `*` stays inside one path segment. */
+const matches = (pattern, target) =>
+  new RegExp(
+    `^${pattern
+      .split('*')
+      .map((part) => part.replace(/[.+?^${}()|[\]\\]/g, '\\$&'))
+      .join('[^/]*')}$`,
+  ).test(target);
+
+for (const name of Object.keys(upstream)) {
+  for (const { file, patterns } of excluders) {
+    if (!patterns.some((pattern) => matches(pattern, `.agents/skills/${name}`))) {
+      errors.push(`${name}: upstream skill without an exclusion in ${file}. Add \`.agents/skills/${name}\` there.`);
+    }
+  }
+}
+
 for (const name of skillNames) {
   const internal = isInternal(path.join(skillsDir, name, 'SKILL.md'));
   if (name in upstream) continue;

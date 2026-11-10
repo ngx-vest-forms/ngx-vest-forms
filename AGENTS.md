@@ -40,6 +40,7 @@ Consumer-facing examples import from `'ngx-vest-forms'` and use only symbols in 
 - `pnpm check:skills` guards `.agents/skills/`, and its messages say how to fix a failure:
   - `ngx-vest-forms` and `vestjs` are the public skills that `npx skills add ngx-vest-forms/ngx-vest-forms` installs. Their TypeScript examples must compile.
   - Upstream skills stay identical to their upstream; make no local edits. `angular-developer` is Angular's (`skills-lock.json`); update it with `npx skills update -p`. The Nx skills (`nx-*`, `monitor-ci`, `link-workspace-packages`) are recorded in `.agents/nx-skills-lock.json`.
+  - In a code review, raise no findings on the upstream skills: a defect there goes to `angular/skills` or `nrwl/nx-ai-agents-config`. `.coderabbit.yaml` and `.oxfmtrc.json` exclude the same folders, and the check fails when a new upstream skill is missing from either.
   - Maintainer skills set `metadata.internal: true`, which hides them from `npx skills add`.
 - The Nx skills and the Nx block below belong to the Nx installer, which installs all of them or none. Refresh them with `pnpm nx configure-ai-agents --agents codex`, then record them with `node .github/scripts/check-agent-skills.mjs --write-nx-lock`. The `claude` and `copilot` targets recreate `CLAUDE.md`, `.claude/settings.json` and `.github/skills/`, which this repo has removed.
 - This workspace has no Nx Cloud connection, so `monitor-ci` and the `nx-cloud-*` skills have nothing to read. Watch CI with `gh`.
