@@ -54,6 +54,15 @@ test.describe('Display Modes Demo Form', () => {
     ).toHaveCount(1);
   });
 
+  test('should show invalid submit feedback from the settled submit', async ({
+    page,
+  }) => {
+    await page.getByRole('button', { name: /^submit$/i }).click();
+
+    await expect(page.getByText('Form not submitted')).toBeVisible();
+    await expect(page.getByText('Form submitted')).toHaveCount(0);
+  });
+
   test('should show on-dirty error after typing in dirty error field', async ({
     page,
   }) => {

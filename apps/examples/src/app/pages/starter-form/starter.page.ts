@@ -54,7 +54,7 @@ export class StarterPageComponent {
       this.submittedValue.set(null);
       return;
     }
-    this.submittedValue.set(structuredClone(this.formValue()));
+    this.submittedValue.set(event.value);
   }
 
   protected reset(): void {

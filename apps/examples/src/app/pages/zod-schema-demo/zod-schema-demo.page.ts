@@ -1,5 +1,7 @@
 import { Component, signal } from '@angular/core';
+import type { NgxSubmitSettledEvent } from 'ngx-vest-forms';
 import type { ZodSchemaDemoModel } from '../../models/zod-schema-demo.model';
+import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
 import {
@@ -14,6 +16,7 @@ import { zodSchemaDemoSuite } from './zod-schema-demo.validations';
 @Component({
   selector: 'ngx-zod-schema-demo-page',
   imports: [
+    AlertPanel,
     ExampleCardsComponent,
     FormStateCardComponent,
     PageTitle,
@@ -31,7 +34,9 @@ export class ZodSchemaDemoPageComponent {
 
   protected readonly exampleContent = zodSchemaContent;
 
-  protected save(): void {
-    // Intentionally no console output in examples to keep CI and demos quiet
+  protected readonly outcome = signal<'success' | 'invalid' | null>(null);
+
+  protected onSubmit(event: NgxSubmitSettledEvent<ZodSchemaDemoModel>): void {
+    this.outcome.set(event.valid ? 'success' : 'invalid');
   }
 }

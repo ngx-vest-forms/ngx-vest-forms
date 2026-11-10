@@ -68,9 +68,11 @@ export class ComplexNestedPageComponent {
       this.submittedPayload.set(null);
       return;
     }
-    const value = structuredClone(this.formValue());
+    const value = event.value;
     this.submittedValue.set(value);
-    this.submittedPayload.set(objectToArray(value, ['teamMembers']));
+    this.submittedPayload.set(
+      value ? objectToArray(value, ['teamMembers']) : null
+    );
   }
 
   protected onReset(): void {

@@ -81,6 +81,9 @@ test.describe('Zod Schema Demo Form', () => {
         await expectFieldHasError(page.getByLabel(/street/i), /required/i);
         await expectFieldHasError(page.getByLabel(/city/i), /required/i);
         await expectFieldHasError(page.getByLabel(/zip code/i), /required/i);
+
+        await expect(page.getByText('Form not submitted')).toBeVisible();
+        await expect(page.getByText('Form submitted')).toHaveCount(0);
       });
     });
 
@@ -109,6 +112,9 @@ test.describe('Zod Schema Demo Form', () => {
 
         // At this point, field-level validations should pass for entered values.
         await expectFieldValid(page.getByLabel(/zip code/i));
+
+        await expect(page.getByText('Form submitted')).toBeVisible();
+        await expect(page.getByText('Form not submitted')).toHaveCount(0);
 
         // The sidebar form state should also reflect a valid submitted form.
         await expect(

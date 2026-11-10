@@ -8,6 +8,7 @@ import {
 import {
   createFormFeedbackSignals,
   type FormDirective,
+  type NgxSubmitSettledEvent,
   NgxVestForms,
   type NgxVestSuite,
 } from 'ngx-vest-forms';
@@ -25,7 +26,7 @@ export class DisplayModesDemoFormBody {
   readonly suite = input.required<NgxVestSuite<DisplayModesDemoModel>>();
 
   readonly formValueChange = output<DisplayModesDemoModel>();
-  readonly submitted = output();
+  readonly submitted = output<NgxSubmitSettledEvent<DisplayModesDemoModel>>();
 
   private readonly vestForm =
     viewChild<FormDirective<DisplayModesDemoModel>>('vestForm');
@@ -50,7 +51,7 @@ export class DisplayModesDemoFormBody {
     form.triggerFormValidation();
   }
 
-  protected onSubmit(): void {
-    this.submitted.emit();
+  protected onSubmitSettled(event: NgxSubmitSettledEvent<DisplayModesDemoModel>): void {
+    this.submitted.emit(event);
   }
 }

@@ -58,7 +58,7 @@ export class AccessibleWrapperPageComponent {
       return;
     }
 
-    this.submittedValue.set(structuredClone(this.formValue()));
+    this.submittedValue.set(event.value);
   }
 
   protected reset(): void {
