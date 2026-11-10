@@ -225,7 +225,7 @@ export class CheckoutFormComponent {
 }
 ```
 
-The factory runs once, in an injection context, when the provider is created. Use it when the contract depends on other injected services or has to be built lazily. A contract that is a constant, even one that covers every branch of a conditional form, belongs in `provideFormContract(...)`. No example in the examples app uses the factory, because all their contracts are constants.
+The factory is lazy. It runs in an injection context the first time `NGX_FORM_CONTRACT` is resolved (in practice when the first form under that provider is created), once per injector that provides it. Later injections reuse the returned value. Use it when the contract depends on other injected services or has to be built lazily. A contract that is a constant, even one that covers every branch of a conditional form, belongs in `provideFormContract(...)`. No example in the examples app uses the factory, because all their contracts are constants.
 
 #### Interaction with `[formContract]`
 
