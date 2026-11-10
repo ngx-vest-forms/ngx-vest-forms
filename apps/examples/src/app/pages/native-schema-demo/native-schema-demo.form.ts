@@ -2,6 +2,7 @@ import { Component, input, output, viewChild } from '@angular/core';
 import {
   createFormFeedbackSignals,
   FormDirective,
+  type NgxSubmitSettledEvent,
   NgxVestForms,
   type NgxVestSuite,
 } from 'ngx-vest-forms';
@@ -23,7 +24,7 @@ export class NativeSchemaDemoFormBody {
   readonly formContract = nativeSchemaDemoContract;
 
   readonly formValueChange = output<NativeSchemaDemoModel>();
-  readonly submitted = output();
+  readonly submitted = output<NgxSubmitSettledEvent<NativeSchemaDemoModel>>();
 
   private readonly vestForm = viewChild('vestForm', {
     read: FormDirective<NativeSchemaDemoModel>,
@@ -31,7 +32,9 @@ export class NativeSchemaDemoFormBody {
 
   readonly feedback = createFormFeedbackSignals(this.vestForm);
 
-  protected onSubmit(): void {
-    this.submitted.emit();
+  protected onSubmitSettled(
+    event: NgxSubmitSettledEvent<NativeSchemaDemoModel>
+  ): void {
+    this.submitted.emit(event);
   }
 }

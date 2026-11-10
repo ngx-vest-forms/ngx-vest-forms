@@ -53,8 +53,20 @@ test.describe('Native Schema Demo Form', () => {
     await waitForFormProcessing(page);
 
     await expectFieldValid(page.getByLabel(/zip code/i));
+    await expect(page.getByText('Form submitted')).toBeVisible();
+    await expect(page.getByText('Form not submitted')).toHaveCount(0);
     await expect(
       page.locator('ngx-form-state-card').getByLabel('Valid')
     ).toBeVisible();
+  });
+
+  test('should show invalid feedback when submitting an empty form', async ({
+    page,
+  }) => {
+    await page.getByRole('button', { name: /^submit$/i }).click();
+    await waitForFormProcessing(page);
+
+    await expect(page.getByText('Form not submitted')).toBeVisible();
+    await expect(page.getByText('Form submitted')).toHaveCount(0);
   });
 });
