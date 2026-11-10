@@ -2,6 +2,8 @@
 
 Shared instructions for every coding agent in this repo (Claude Code, Copilot). Skills live in `.agents/skills/`; `.claude/skills` is a symlink to it.
 
+This codebase is yours to shape and keep improving: follow the boy scout rule and leave code you touch or reuse simpler than you found it, changing working code only when that removes real complexity or a real defect.
+
 ## Pointers
 
 - Code that uses ngx-vest-forms or Vest: load the `ngx-vest-forms` and `vestjs` skills first. They hold the invariants (`[ngModel]` binding, `name` = model path, Vest 6 suite shape).
