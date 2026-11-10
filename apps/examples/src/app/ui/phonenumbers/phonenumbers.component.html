@@ -1,7 +1,7 @@
 <div class="space-y-3">
   <div ngModelGroup="values" class="space-y-3">
     @for (item of values() | keyvalue: byNumericKey; track item.key) {
-      <ngx-control-wrapper>
+      <ngx-control-wrapper ariaRequired>
         <div class="relative flex items-center gap-2">
           <input
             type="tel"

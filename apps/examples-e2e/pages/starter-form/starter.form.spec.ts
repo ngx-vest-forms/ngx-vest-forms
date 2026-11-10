@@ -9,6 +9,19 @@ test.describe('Starter Form', () => {
     await page.goto('/starter');
   });
 
+  test('should expose every required field to assistive tech', async ({
+    page,
+  }) => {
+    // Each field has a "required" Vest test; a screen reader only learns that
+    // from aria-required, not from the card subtitle.
+    for (const name of [/^name$/i, /^email$/i, /^subject$/i, /^message$/i]) {
+      await expect(page.getByRole('textbox', { name })).toHaveAttribute(
+        'aria-required',
+        'true'
+      );
+    }
+  });
+
   test('should show validation errors on empty submit', async ({ page }) => {
     await page.getByRole('button', { name: /send message/i }).click();
     await waitForValidationToSettle(page);

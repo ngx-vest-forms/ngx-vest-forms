@@ -16,9 +16,9 @@
       description="Project name is required. Setting it to fail simulates a save error so you can exercise retry behavior."
     >
       <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <ngx-control-wrapper class="form-field">
+        <ngx-control-wrapper class="form-field" ariaRequired>
           <label for="projectName">
-            <span class="label-text">Project name</span>
+            <span class="label-text label-required">Project name</span>
             <input
               id="projectName"
               name="projectName"
@@ -37,9 +37,11 @@
           </p>
         </ngx-control-wrapper>
 
-        <ngx-control-wrapper class="form-field">
+        <ngx-control-wrapper class="form-field" ariaRequired>
           <label for="preferredContactMethod">
-            <span class="label-text">Draft update preference</span>
+            <span class="label-text label-required"
+              >Draft update preference</span
+            >
             <select
               id="preferredContactMethod"
               name="preferredContactMethod"
@@ -55,9 +57,13 @@
 
       @if (formValue().preferredContactMethod === 'email') {
         <div class="mt-6">
-          <ngx-control-wrapper errorDisplayMode="on-blur" class="form-field">
+          <ngx-control-wrapper
+            errorDisplayMode="on-blur"
+            class="form-field"
+            ariaRequired
+          >
             <label for="email">
-              <span class="label-text">Notification email</span>
+              <span class="label-text label-required">Notification email</span>
               <input
                 id="email"
                 name="email"
@@ -79,9 +85,17 @@
       description="Either field can make the other required immediately, while the dependent error still waits for that field's own blur."
     >
       <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <ngx-control-wrapper errorDisplayMode="on-blur" class="form-field">
+        <ngx-control-wrapper
+          errorDisplayMode="on-blur"
+          class="form-field"
+          [ariaRequired]="!!formValue().quantityJustification"
+        >
           <label for="quantity">
-            <span class="label-text">Quantity</span>
+            <span
+              class="label-text"
+              [class.label-required]="!!formValue().quantityJustification"
+              >Quantity</span
+            >
             <input
               id="quantity"
               name="quantity"
@@ -93,9 +107,17 @@
           </label>
         </ngx-control-wrapper>
 
-        <ngx-control-wrapper errorDisplayMode="on-blur" class="form-field">
+        <ngx-control-wrapper
+          errorDisplayMode="on-blur"
+          class="form-field"
+          [ariaRequired]="!!formValue().quantity"
+        >
           <label for="quantityJustification">
-            <span class="label-text">Quantity justification</span>
+            <span
+              class="label-text"
+              [class.label-required]="!!formValue().quantity"
+              >Quantity justification</span
+            >
             <textarea
               id="quantityJustification"
               name="quantityJustification"

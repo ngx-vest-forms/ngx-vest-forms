@@ -7,13 +7,13 @@
   (submitSettled)="onSubmitSettled($event)"
   class="space-y-6"
 >
-  <ngx-control-wrapper class="form-field">
-    <span class="label-text">Rating</span>
+  <ngx-control-wrapper class="form-field" ariaRequired>
+    <span class="label-text label-required">Rating</span>
     <ngx-star-rating name="rating" [ngModel]="formValue().rating" />
   </ngx-control-wrapper>
 
-  <ngx-control-wrapper class="form-field">
-    <span class="label-text">Experience level</span>
+  <ngx-control-wrapper class="form-field" ariaRequired>
+    <span class="label-text label-required">Experience level</span>
     <ngx-segmented-control
       name="experience"
       [ngModel]="formValue().experience"
@@ -32,8 +32,8 @@
     The attribute form of the wrapper keeps native semantics. The fieldset's
     legend names the group, and the wrapper still renders errors and warnings.
   -->
-  <fieldset ngxControlWrapper class="form-shell form-field">
-    <legend class="label-text">Tags</legend>
+  <fieldset ngxControlWrapper class="form-shell form-field" ariaRequired>
+    <legend class="label-text label-required">Tags</legend>
     <ngx-tag-input name="tags" [ngModel]="formValue().tags" />
   </fieldset>
 

@@ -7,8 +7,8 @@
   (submitSettled)="onSubmitSettled($event)"
   class="space-y-6"
 >
-  <ngx-control-wrapper class="form-field">
-    <label for="name" class="label-text">Name</label>
+  <ngx-control-wrapper class="form-field" ariaRequired>
+    <label for="name" class="label-text label-required">Name</label>
     <input
       class="input-field"
       type="text"
@@ -20,8 +20,8 @@
     />
   </ngx-control-wrapper>
 
-  <ngx-control-wrapper class="form-field">
-    <label for="email" class="label-text">Email</label>
+  <ngx-control-wrapper class="form-field" ariaRequired>
+    <label for="email" class="label-text label-required">Email</label>
     <input
       class="input-field"
       type="email"
@@ -34,8 +34,8 @@
     />
   </ngx-control-wrapper>
 
-  <ngx-control-wrapper class="form-field">
-    <label for="subject" class="label-text">Subject</label>
+  <ngx-control-wrapper class="form-field" ariaRequired>
+    <label for="subject" class="label-text label-required">Subject</label>
     <input
       class="input-field"
       type="text"
@@ -46,8 +46,8 @@
     />
   </ngx-control-wrapper>
 
-  <ngx-control-wrapper class="form-field">
-    <label for="message" class="label-text">Message</label>
+  <ngx-control-wrapper class="form-field" ariaRequired>
+    <label for="message" class="label-text label-required">Message</label>
     <textarea
       class="input-field"
       id="message"

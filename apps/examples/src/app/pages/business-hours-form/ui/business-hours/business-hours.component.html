@@ -81,6 +81,7 @@
       <ngx-business-hour
         [businessHour]="addValue()"
         idPrefix="business-hours-add"
+        [required]="!!(addValue()?.from?.trim() || addValue()?.to?.trim())"
         class="business-hours-item-main"
       ></ngx-business-hour>
 

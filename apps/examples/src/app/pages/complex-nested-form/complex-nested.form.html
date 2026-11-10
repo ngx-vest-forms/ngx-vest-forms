@@ -21,8 +21,10 @@
   <div class="form-shell form-stack">
     <ngx-form-section title="Company" tone="neutral">
       <ngx-form-group-wrapper class="form-stack" ngModelGroup="company">
-        <ngx-control-wrapper class="form-field form-grid-full">
-          <label class="label-text" for="company-name">Company name</label>
+        <ngx-control-wrapper class="form-field form-grid-full" ariaRequired>
+          <label class="label-text label-required" for="company-name"
+            >Company name</label
+          >
           <input
             id="company-name"
             class="input-field"

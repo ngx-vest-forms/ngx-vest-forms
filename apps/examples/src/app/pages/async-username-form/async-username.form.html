@@ -7,8 +7,12 @@
   (submitSettled)="onSubmitSettled($event)"
   class="space-y-6"
 >
-  <ngx-control-wrapper class="form-field" [pendingDebounce]="pendingDebounce">
-    <label for="username" class="label-text">Username</label>
+  <ngx-control-wrapper
+    class="form-field"
+    [pendingDebounce]="pendingDebounce"
+    ariaRequired
+  >
+    <label for="username" class="label-text label-required">Username</label>
     <input
       class="input-field"
       type="text"
@@ -31,8 +35,10 @@
     </p>
   </ngx-control-wrapper>
 
-  <ngx-control-wrapper class="form-field">
-    <label for="displayName" class="label-text">Display name</label>
+  <ngx-control-wrapper class="form-field" ariaRequired>
+    <label for="displayName" class="label-text label-required"
+      >Display name</label
+    >
     <input
       class="input-field"
       type="text"
