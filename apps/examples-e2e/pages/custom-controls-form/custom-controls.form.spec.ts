@@ -103,6 +103,43 @@ test.describe('Custom Controls Form', () => {
     await expect(experience).not.toHaveAttribute('aria-invalid');
   });
 
+  test('should name the rating radiogroup from its visible label', async ({
+    page,
+  }) => {
+    const label = (await page.locator('#rating-label').textContent())?.trim();
+
+    expect(label).toBe('Rating');
+    await expect(
+      page.getByRole('radiogroup', { name: label, exact: true })
+    ).toBeVisible();
+  });
+
+  test('should not mark the rating touched or show its error while arrowing between stars', async ({
+    page,
+  }) => {
+    const rating = page.locator('ngx-star-rating');
+    const ratingGroup = page.getByRole('radiogroup', {
+      name: 'Rating',
+      exact: true,
+    });
+    const ratingWrapper = rating.locator(
+      'xpath=ancestor::ngx-control-wrapper[1]'
+    );
+
+    await page.getByRole('radio', { name: /1 star/i }).focus();
+    await page.keyboard.press('ArrowRight');
+    await page.keyboard.press('ArrowRight');
+    await expect(page.getByRole('radio', { name: /3 stars/i })).toBeFocused();
+
+    await expect(rating).not.toHaveClass(/ng-touched/);
+    await expect(ratingGroup).not.toHaveAttribute('aria-invalid');
+    await expect(ratingWrapper.getByText(/pick a rating/i)).toHaveCount(0);
+
+    // Leaving the control is what marks it touched.
+    await page.getByLabel(/add a tag/i).focus();
+    await expect(rating).toHaveClass(/ng-touched/);
+  });
+
   test('should confirm the experience level once it is valid and touched (ngxControlState)', async ({
     page,
   }) => {

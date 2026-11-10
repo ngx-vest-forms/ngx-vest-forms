@@ -10,7 +10,7 @@ export const displayModesContent = defineExampleContent({
       'Error timing compared side by side: "always" (immediate, even pristine), "on-dirty" (after typing), and "on-submit" (only after programmatic submit).',
       'Warning timing compared: "always", "on-dirty", and "on-touch" (after blur).',
       "The form is validated on first render so every mode's difference is visible without interacting.",
-      'A parent-controlled submit path: an external button calls NgForm.onSubmit(), markAllAsTouched(), and triggerFormValidation() to reveal on-submit fields.',
+      'A parent-controlled submit path: an external button calls requestSubmit() on the form element, which dispatches a real submit event through the submit pipeline to reveal on-submit fields.',
       'Errors (blocking, via enforce) and warnings (non-blocking, via Vest warn()) tracked separately in the same suite.',
     ],
   },
@@ -30,8 +30,8 @@ export const displayModesContent = defineExampleContent({
       {
         title: 'Programmatic submission',
         points: [
-          'Reveal on-submit feedback by calling NgForm.onSubmit() from a parent.',
-          'Pair it with markAllAsTouched() and triggerFormValidation() for full feedback.',
+          'Reveal on-submit feedback by calling requestSubmit() on the form element from a parent.',
+          'The submit event goes through NgForm and the submit pipeline, so no manual markAllAsTouched() or triggerFormValidation() call is needed.',
           'Use triggerFormValidation() on render to show every mode immediately.',
         ],
       },

@@ -32,9 +32,13 @@ button-based star rating therefore needs only the right role on its root:
 
 ```html
 <ngx-control-wrapper>
-  <span class="label-text">Rating</span>
-  <!-- renders <div role="radiogroup" aria-label="Rating"> with radio buttons -->
-  <ngx-star-rating name="rating" [ngModel]="formValue().rating" />
+  <span id="rating-label" class="label-text">Rating</span>
+  <!-- renders <div role="radiogroup" aria-labelledby="rating-label"> with radio buttons -->
+  <ngx-star-rating
+    name="rating"
+    ariaLabelledby="rating-label"
+    [ngModel]="formValue().rating"
+  />
 </ngx-control-wrapper>
 ```
 
