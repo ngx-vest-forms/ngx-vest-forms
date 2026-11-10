@@ -432,6 +432,36 @@ test.describe('Purchase Form', () => {
     });
   });
 
+  test.describe('Phone Numbers row removal', () => {
+    test('should clear the error of a blank row once that row is removed', async ({
+      page,
+    }) => {
+      const add = page.getByRole('textbox', { name: 'Add new phone number' });
+      const addButton = page.getByRole('button', { name: 'Add', exact: true });
+      const first = page.getByLabel('Phone number 1', { exact: true });
+      const second = page.getByLabel('Phone number 2', { exact: true });
+
+      await add.fill('111');
+      await addButton.click();
+      await add.fill('222');
+      await addButton.click();
+      await expect(second).toHaveValue('222');
+
+      await fillAndBlur(first, '');
+      await expectFieldHasError(first, /valid phonenumber/i);
+
+      await page.getByRole('button', { name: 'Remove phone number 1' }).click();
+
+      // The remaining row moves to index 0 and must not inherit the error.
+      await expect(first).toHaveValue('222');
+      await expect(first).not.toHaveAttribute('aria-invalid', 'true');
+      await expect(page.getByText(/valid phonenumber/i)).toHaveCount(0);
+      await expect(
+        page.getByLabel('Phone number 2', { exact: true })
+      ).toHaveCount(0);
+    });
+  });
+
   test.describe('Product Selection Validation', () => {
     test('should require product selection', async ({ page }) => {
       await test.step('Blur product dropdown without selection', async () => {

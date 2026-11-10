@@ -118,9 +118,13 @@ test.describe('Custom Controls Form', () => {
     page,
   }) => {
     const rating = page.locator('ngx-star-rating');
-    const ratingError = page
-      .getByRole('region', { name: 'Errors' })
-      .getByText(/pick a rating/i);
+    const ratingGroup = page.getByRole('radiogroup', {
+      name: 'Rating',
+      exact: true,
+    });
+    const ratingWrapper = rating.locator(
+      'xpath=ancestor::ngx-control-wrapper[1]'
+    );
 
     await page.getByRole('radio', { name: /1 star/i }).focus();
     await page.keyboard.press('ArrowRight');
@@ -128,7 +132,8 @@ test.describe('Custom Controls Form', () => {
     await expect(page.getByRole('radio', { name: /3 stars/i })).toBeFocused();
 
     await expect(rating).not.toHaveClass(/ng-touched/);
-    await expect(ratingError).toHaveCount(0);
+    await expect(ratingGroup).not.toHaveAttribute('aria-invalid');
+    await expect(ratingWrapper.getByText(/pick a rating/i)).toHaveCount(0);
 
     // Leaving the control is what marks it touched.
     await page.getByLabel(/add a tag/i).focus();
