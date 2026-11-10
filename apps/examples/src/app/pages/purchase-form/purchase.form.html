@@ -158,19 +158,12 @@
             </label>
           </ngx-control-wrapper>
 
-          <ngx-control-wrapper
-            class="form-field"
-            [ariaRequired]="!emergencyContactDisabled()"
-          >
+          <ngx-control-wrapper class="form-field">
             <label>
-              <span
-                class="label-text"
-                [class.label-required]="!emergencyContactDisabled()"
-                >Emergency Contact</span
-              >
+              <span class="label-text">Emergency Contact</span>
               <input
                 class="input-field"
-                placeholder="Type your emergency contact"
+                placeholder="Required if under 18"
                 type="text"
                 autocomplete="off"
                 [disabled]="emergencyContactDisabled()"

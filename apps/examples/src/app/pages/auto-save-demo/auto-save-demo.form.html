@@ -85,17 +85,9 @@
       description="Either field can make the other required immediately, while the dependent error still waits for that field's own blur."
     >
       <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <ngx-control-wrapper
-          errorDisplayMode="on-blur"
-          class="form-field"
-          [ariaRequired]="!!formValue().quantityJustification"
-        >
+        <ngx-control-wrapper errorDisplayMode="on-blur" class="form-field">
           <label for="quantity">
-            <span
-              class="label-text"
-              [class.label-required]="!!formValue().quantityJustification"
-              >Quantity</span
-            >
+            <span class="label-text">Quantity</span>
             <input
               id="quantity"
               name="quantity"
@@ -107,17 +99,9 @@
           </label>
         </ngx-control-wrapper>
 
-        <ngx-control-wrapper
-          errorDisplayMode="on-blur"
-          class="form-field"
-          [ariaRequired]="!!formValue().quantity"
-        >
+        <ngx-control-wrapper errorDisplayMode="on-blur" class="form-field">
           <label for="quantityJustification">
-            <span
-              class="label-text"
-              [class.label-required]="!!formValue().quantity"
-              >Quantity justification</span
-            >
+            <span class="label-text">Quantity justification</span>
             <textarea
               id="quantityJustification"
               name="quantityJustification"

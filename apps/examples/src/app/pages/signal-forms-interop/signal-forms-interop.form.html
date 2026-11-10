@@ -17,19 +17,11 @@
     validators to the control; ngx-vest-forms attaches them itself, so Vest
     validates the field with no extra directive.
   -->
-  <ngx-control-wrapper
-    class="form-field"
-    [ariaRequired]="formValue().lockSeats !== true"
-  >
-    <label
-      for="seats"
-      class="label-text"
-      [class.label-required]="formValue().lockSeats !== true"
-      >Seats</label
-    >
+  <ngx-control-wrapper class="form-field">
+    <label for="seats" class="label-text">Seats</label>
     <p id="seats-hint" class="mb-2 text-sm text-gray-600 dark:text-gray-300">
-      Between 1 and 8. Use the buttons, type a number, or press Arrow Up and
-      Arrow Down.
+      Between 1 and 8. Required unless the seat count is locked. Use the
+      buttons, type a number, or press Arrow Up and Arrow Down.
     </p>
     <ngx-seat-stepper
       name="seats"

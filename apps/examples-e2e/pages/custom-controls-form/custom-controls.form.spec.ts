@@ -11,14 +11,18 @@ test.describe('Custom Controls Form', () => {
     // The wrapper only stamps the attribute on native controls and ARIA form
     // widgets, so this fails if a custom control stops exposing its role.
     await expect(
-      page.getByRole('radiogroup', { name: 'Rating, 1 to 5 stars' })
+      page.getByRole('radiogroup', { name: /^rating/i })
     ).toHaveAttribute('aria-required', 'true');
     await expect(
       page.getByRole('radiogroup', { name: 'Experience level' })
     ).toHaveAttribute('aria-required', 'true');
-    await expect(
-      page.getByRole('textbox', { name: 'Add a tag' })
-    ).toHaveAttribute('aria-required', 'true');
+    const tagInput = page.getByRole('textbox', { name: 'Add a tag' });
+    await expect(tagInput).toHaveAttribute('aria-required', 'true');
+
+    // Once a tag exists the input is no longer the thing that is missing.
+    await tagInput.fill('angular');
+    await tagInput.press('Enter');
+    await expect(tagInput).not.toHaveAttribute('aria-required', 'true');
   });
 
   test('should validate empty controls and submit a completed custom-control form', async ({

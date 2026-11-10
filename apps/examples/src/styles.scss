@@ -131,6 +131,7 @@ html.dark [ngxFormGroupWrapper] {
   /* Visual required marker. The empty alt text after "/" keeps the asterisk
      out of the accessible name; assistive tech gets aria-required instead. */
   .label-required::after {
+    content: ' *';
     content: ' *' / '';
     @apply text-red-600 dark:text-red-400;
   }

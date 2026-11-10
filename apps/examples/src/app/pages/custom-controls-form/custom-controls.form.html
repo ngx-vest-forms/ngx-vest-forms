@@ -31,8 +31,13 @@
   <!--
     The attribute form of the wrapper keeps native semantics. The fieldset's
     legend names the group, and the wrapper still renders errors and warnings.
+    ariaRequired follows the inner input: it is required only until the first tag exists.
   -->
-  <fieldset ngxControlWrapper class="form-shell form-field" ariaRequired>
+  <fieldset
+    ngxControlWrapper
+    class="form-shell form-field"
+    [ariaRequired]="!formValue().tags?.length"
+  >
     <legend class="label-text label-required">Tags</legend>
     <ngx-tag-input name="tags" [ngModel]="formValue().tags" />
   </fieldset>

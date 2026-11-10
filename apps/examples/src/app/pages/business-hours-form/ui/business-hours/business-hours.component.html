@@ -76,12 +76,15 @@
     class="form-shell business-hours-add-card"
   >
     <legend class="sr-only">Add new business hour slot</legend>
+    <p class="mb-3 text-sm text-gray-600 dark:text-gray-300">
+      Optional. Fill in both times to add a slot.
+    </p>
 
     <div class="business-hours-item-layout">
       <ngx-business-hour
         [businessHour]="addValue()"
         idPrefix="business-hours-add"
-        [required]="!!(addValue()?.from?.trim() || addValue()?.to?.trim())"
+        [required]="false"
         class="business-hours-item-main"
       ></ngx-business-hour>
 
