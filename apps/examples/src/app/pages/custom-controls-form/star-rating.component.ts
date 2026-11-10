@@ -2,6 +2,7 @@ import {
   Component,
   type ElementRef,
   forwardRef,
+  input,
   signal,
   viewChildren,
 } from '@angular/core';
@@ -15,16 +16,20 @@ import { type ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
  *
  * Accessibility: rendered as a `radiogroup` of `radio` buttons, fully keyboard
  * operable (Arrow/Home/End), with `focus-visible` styling. `onTouched` fires on
- * blur so ngx-vest-forms marks the field touched and shows errors on time.
+ * focus leaving the control, so ngx-vest-forms marks the field touched and
+ * shows errors on time, not while the user arrows between stars. Name the
+ * group with `ariaLabelledby`, the id of the visible label; without it the
+ * group falls back to a generic name.
  */
 @Component({
   selector: 'ngx-star-rating',
   template: `
     <div
       role="radiogroup"
-      [attr.aria-label]="'Rating, 1 to 5 stars'"
+      [attr.aria-labelledby]="ariaLabelledby() || null"
+      [attr.aria-label]="ariaLabelledby() ? null : 'Rating, 1 to 5 stars'"
       class="flex items-center gap-1"
-      (focusout)="onBlur()"
+      (focusout)="onFocusOut($event)"
     >
       @let shown = hovered() ?? value() ?? 0;
       @for (star of stars; track star) {
@@ -65,6 +70,9 @@ import { type ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
   host: { style: 'display: block;' },
 })
 export class StarRatingComponent implements ControlValueAccessor {
+  /** Id of the element that labels the group, normally the field's label. */
+  readonly ariaLabelledby = input<string>();
+
   protected readonly stars = [1, 2, 3, 4, 5] as const;
 
   protected readonly value = signal<number | null>(null);
@@ -89,7 +97,16 @@ export class StarRatingComponent implements ControlValueAccessor {
     this.onChange(star);
   }
 
-  protected onBlur(): void {
+  /**
+   * Focus moves between stars as the user arrows. Only mark the control touched
+   * once focus leaves it. `relatedTarget` is null when focus leaves the
+   * document, which also counts as leaving.
+   */
+  protected onFocusOut(event: FocusEvent): void {
+    const next = event.relatedTarget;
+    if (next instanceof Node && event.currentTarget instanceof Node) {
+      if (event.currentTarget.contains(next)) return;
+    }
     this.onTouched();
   }
 

@@ -8,8 +8,12 @@
   class="space-y-6"
 >
   <ngx-control-wrapper class="form-field" ariaRequired>
-    <span class="label-text label-required">Rating</span>
-    <ngx-star-rating name="rating" [ngModel]="formValue().rating" />
+    <span id="rating-label" class="label-text label-required">Rating</span>
+    <ngx-star-rating
+      name="rating"
+      ariaLabelledby="rating-label"
+      [ngModel]="formValue().rating"
+    />
   </ngx-control-wrapper>
 
   <ngx-control-wrapper class="form-field" ariaRequired>
