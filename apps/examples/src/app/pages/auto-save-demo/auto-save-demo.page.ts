@@ -42,6 +42,9 @@ import {
 
 type AlertTone = 'error' | 'info' | 'success' | 'warning';
 
+// `field` names what triggered the save: the blurred control's path, which
+// `NgxFieldBlurEvent` reports as a plain string, or `'submit'`. It is shown
+// to the user and never used as a model path, so it stays `string`.
 type AutoSaveStatus =
   | { kind: 'idle' }
   | { kind: 'saving'; field: string }

@@ -3,6 +3,7 @@ import { delay, type Observable, of, throwError } from 'rxjs';
 import type { AutoSaveDemoModel } from '../../models/auto-save-demo.model';
 
 export type AutoSaveDraftResult = {
+  /** What triggered the save: a blurred control's path or `'submit'`. */
   field: string;
   savedAt: string;
   version: number;

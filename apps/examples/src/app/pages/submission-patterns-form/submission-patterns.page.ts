@@ -13,7 +13,10 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, EMPTY, finalize } from 'rxjs';
-import type { SubmissionPatternsModel } from '../../models/submission-patterns.model';
+import {
+  type SubmissionPatternsModel,
+  submissionPatternsShape,
+} from '../../models/submission-patterns.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
@@ -24,7 +27,11 @@ import {
 } from '../../ui/intro-section';
 import { PageTitle } from '../../ui/page-title/page-title.component';
 
-import type { NgxSubmitSettledEvent } from 'ngx-vest-forms';
+import {
+  type FormFieldName,
+  type NgxSubmitSettledEvent,
+  ROOT_FORM,
+} from 'ngx-vest-forms';
 import { submissionPatternsContent } from './submission-patterns.content';
 import { SubmissionPatternsFormBody } from './submission-patterns.form';
 import { submissionPatternsSuite } from './submission-patterns.validations';
@@ -34,6 +41,16 @@ type Scenario = 'normal' | 'email-taken' | 'server-error' | 'network-error';
 
 /** The four distinct submission concerns, modelled as one page state. */
 type SubmissionState = 'editing' | 'submitting' | 'server-error' | 'success';
+
+/**
+ * Error maps are keyed by plain strings, so this narrows a key to a field of
+ * this form before the summary hands it to `focusField`.
+ */
+function isSubmissionPatternsField(
+  path: string
+): path is FormFieldName<SubmissionPatternsModel> {
+  return path === ROOT_FORM || Object.hasOwn(submissionPatternsShape, path);
+}
 
 /**
  * Submission Patterns — models the FOUR submission concerns distinctly:
@@ -88,7 +105,10 @@ export class SubmissionPatternsPageComponent {
    * fields; the inline errors stay live.
    */
   protected readonly blockedSubmitErrors = signal<
-    ReadonlyArray<{ field: string; message: string }>
+    ReadonlyArray<{
+      field: FormFieldName<SubmissionPatternsModel>;
+      message: string;
+    }>
   >([]);
   protected readonly scenarios: ReadonlyArray<{
     label: string;
@@ -134,7 +154,9 @@ export class SubmissionPatternsPageComponent {
       const errors = this.formBody()?.errorSnapshot().errors ?? {};
       this.blockedSubmitErrors.set(
         Object.entries(errors).flatMap(([field, messages]) =>
-          messages.map((message) => ({ field, message }))
+          isSubmissionPatternsField(field)
+            ? messages.map((message) => ({ field, message }))
+            : []
         )
       );
       // Focus after the render that shows the errors, the same timing the
@@ -205,7 +227,7 @@ export class SubmissionPatternsPageComponent {
       });
   }
 
-  protected focusField(field: string): void {
+  protected focusField(field: FormFieldName<SubmissionPatternsModel>): void {
     this.formBody()?.focusField(field);
   }
 

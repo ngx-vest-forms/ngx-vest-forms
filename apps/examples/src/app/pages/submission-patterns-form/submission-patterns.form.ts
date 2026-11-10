@@ -8,6 +8,7 @@ import {
 import {
   createFormFeedbackSignals,
   type FormDirective,
+  type FormFieldName,
   getAllFormErrors,
   NGX_ERROR_DISPLAY_MODE_TOKEN,
   type NgxFormErrorsByPath,
@@ -68,7 +69,7 @@ export class SubmissionPatternsFormBody {
   }
 
   /** Focuses the control bound to `field`, for the blocked-submit summary. */
-  focusField(field: string): void {
+  focusField(field: FormFieldName<SubmissionPatternsModel>): void {
     this.formElement()
       ?.nativeElement.querySelector<HTMLElement>(
         `[name="${CSS.escape(field)}"]`
