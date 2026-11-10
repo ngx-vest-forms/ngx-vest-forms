@@ -42,6 +42,30 @@
       "prompt": "My schema-aware Vest suite uses enforce.isNumeric().toNumber(). Why does suite.run accept a string but the callback data and result.value look typed as numbers?",
       "expected_output": "Routes to core or results/type guidance, explains schema parser input-versus-output typing, and mentions that result.value contains parsed output when the suite is valid.",
       "files": []
+    },
+    {
+      "id": 8,
+      "prompt": "I copied the compose example from the Vest docs into my pnpm project with vest 6.3.4: `import { enforce, compose } from 'vest'` and `compose(enforce.isNumber(), enforce.greaterThanOrEquals(18))`. TypeScript says vest has no exported member compose. What is wrong?",
+      "expected_output": "Checks the installed version and its type declarations, says that Vest 6.3.4 exports compose from n4s and not from vest, tells the user to add n4s as a direct dependency because pnpm does not expose a transitive one, and rewrites the rule as chains that start from a type rule: compose(enforce.isNumber().greaterThanOrEquals(18), ...).",
+      "files": []
+    },
+    {
+      "id": 9,
+      "prompt": "My Vest 6 suite has optional('nickname') and a test that the nickname has at least 3 characters. The form model is a partial object, so a new form is just {}. The suite is invalid before the user types anything. Why?",
+      "expected_output": "Routes to conditional control flow guidance, explains that optional reads the value from the data argument and that in Vest 6.3.4 an absent key is not treated as empty, and recommends the function form with an explicit empty check, optional({ nickname: () => data.nickname == null || data.nickname === '' }), or an explicit empty value in the model.",
+      "files": []
+    },
+    {
+      "id": 10,
+      "prompt": "Our coupon field calls the server on every keystroke and often repeats the same code. How do I cut the number of requests in Vest 6 without getting stale results?",
+      "expected_output": "Routes to async and warnings guidance, keeps the per-test signal passed to the request, adds debounce from vest/debounce for bursts and memo from vest/memo with every outcome-changing input in the dependency list, says that neither replaces the signal, and shows pending state with isPending.",
+      "files": []
+    },
+    {
+      "id": 11,
+      "prompt": "This project has vest ^5.4.0 in package.json. Add a rule that the end date is after the start date to our staticSuite.",
+      "expected_output": "Pins the version first, answers with Vest 5 API (staticSuite, callback field parameter with only(field)), says that the code targets Vest 5, points to the 5.x docs, and offers the upgrade to Vest 6 without rewriting the suite to Vest 6 unasked.",
+      "files": []
     }
   ]
 }

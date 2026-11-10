@@ -1,0 +1,15 @@
+{
+  "source": "nrwl/nx-ai-agents-config",
+  "skills": {
+    "link-workspace-packages": "28a62513af1293c1ca064203a3d6e4dcdbd08f5be6e5ce9a16acc6176bef2ca4",
+    "monitor-ci": "0fc0080bbf51b2ecaa36cd44badd4dcb8c905ac84000d0a2bdd564b276f7e5a0",
+    "nx-cloud-api": "a4deda314b838b052bd49cf81a795c916e0683dde9018a9d60c79fd4ecf92d48",
+    "nx-cloud-cache-investigator": "dcb64d2aa74915884a195d5466469fdd44280e6da75c4ae957f68ddef6a71429",
+    "nx-cloud-ci-failure-review": "aa51a5401bc43f1c44d006522a1b518a3abd24febae3a89e250baaf4c7c76a62",
+    "nx-generate": "457b9fb8c001dfeade092170bbea1ec2959467e054639d01c93cf94153a13269",
+    "nx-import": "11ada1b25edcf0164a76c310e989119c3e0431cae3b7283a6f10d392df9da200",
+    "nx-plugins": "e93d10328f589667d6a7cc71d134c96b3c28ab4a1468eaec7bc29420c950e4e2",
+    "nx-run-tasks": "e42dec15f588268887d88d606187b0fab9cbb3f90fd4ce41d66d2faffc9295c4",
+    "nx-workspace": "93c1a07cb550b8b85ce62ccd2481073b6ab520be86d1a910686054d8096207a7"
+  }
+}

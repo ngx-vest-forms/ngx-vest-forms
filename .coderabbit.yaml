@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+
+# Keep the settings from the CodeRabbit UI; this file only adds to them.
+inheritance: true
+
+reviews:
+  # Upstream skills belong to Angular and Nx and carry no local edits
+  # (`pnpm check:skills`), so a finding on them has no fix in this repo.
+  # Report a defect to angular/skills or nrwl/nx-ai-agents-config.
+  path_filters:
+    - '!.agents/skills/angular-developer/**'
+    - '!.agents/skills/link-workspace-packages/**'
+    - '!.agents/skills/monitor-ci/**'
+    - '!.agents/skills/nx-*/**'

@@ -143,8 +143,8 @@ function cycleCheck() {
     message: limitReached
       ? `Cycle limit reached (${cycleCount}/${maxCycles}). Stopping.`
       : approachingLimit
-        ? `Approaching cycle limit (${cycleCount}/${maxCycles})`
-        : null,
+      ? `Approaching cycle limit (${cycleCount}/${maxCycles})`
+      : null,
   });
 }
 

@@ -58,7 +58,7 @@ Wire `validationConfig.bidirectional('departureDate', 'returnDate')` for cross-f
 Keep fields flat in the model. Do not introduce nesting just for the adapter.
 
 ```typescript
-import { NgxDeepPartial, NgxDeepRequired } from 'ngx-vest-forms';
+import type { NgxDeepPartial, NgxDeepRequired } from 'ngx-vest-forms';
 
 export type TravelFormModel = NgxDeepPartial<{
   departureDate: string;
@@ -76,6 +76,7 @@ export const travelFormContract: NgxDeepRequired<TravelFormModel> = {
 ```typescript
 import type { NgxVestSuite } from 'ngx-vest-forms';
 import { create, enforce, omitWhen, test } from 'vest';
+import type { TravelFormModel } from './travel.model';
 
 export const travelValidationSuite: NgxVestSuite<TravelFormModel> = create(
   (model: TravelFormModel) => {
