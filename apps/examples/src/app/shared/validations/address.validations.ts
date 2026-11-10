@@ -3,6 +3,8 @@ import type { AddressModel } from '../../models/address.model';
 
 export function addressValidations(
   model: AddressModel | undefined,
+  // Plain string: the prefix is a path in each caller's own model, and a
+  // FieldPath<T> here would make every caller spell out T.
   field: string
 ): void {
   test(`${field}.street`, 'Street is required', () => {

@@ -3,6 +3,8 @@ import type { PhoneNumberModel } from '../../models/phonenumber.model';
 
 export function phonenumberValidations(
   model: PhoneNumberModel | undefined,
+  // Plain string: the prefix is a path in each caller's own model, and a
+  // FieldPath<T> here would make every caller spell out T.
   field: string
 ): void {
   const phonenumbers = model?.values ? Object.values(model.values) : [];
