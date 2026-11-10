@@ -61,11 +61,11 @@ export class AsyncUsernamePageComponent {
     // `submitSettled` fires once the availability check has finished, so a
     // submit made while it is still running is decided on its real outcome.
     // Focus handling stays with the directive (`focusFirstInvalidOnSubmit`).
-    if (!event.valid) {
+    if (!event.valid || !event.value) {
       this.submittedValue.set(null);
       return;
     }
-    this.submittedValue.set(structuredClone(this.formValue()));
+    this.submittedValue.set(event.value);
   }
 
   protected reset(): void {

@@ -102,6 +102,7 @@ export class SubmissionPatternsPageComponent {
   protected readonly scenario = signal<Scenario>('normal');
 
   private readonly formBody = viewChild(SubmissionPatternsFormBody);
+  private lastSubmitted: SubmissionPatternsModel | null = null;
 
   protected readonly feedback = computed(() => this.formBody()?.feedback);
 
@@ -127,7 +128,7 @@ export class SubmissionPatternsPageComponent {
     // errors, and move focus to the first invalid control. `submitSettled`
     // fires once validation for this submit has finished, so `event` holds
     // the real outcome.
-    if (!event.valid) {
+    if (!event.valid || !event.value) {
       this.state.set('editing');
       this.serverError.set(null);
       const errors = this.formBody()?.errorSnapshot().errors ?? {};
@@ -145,16 +146,17 @@ export class SubmissionPatternsPageComponent {
     }
 
     this.blockedSubmitErrors.set([]);
-    void this.callServer();
+    this.lastSubmitted = event.value;
+    void this.callServer(event.value);
   }
 
   /** (c)/(d) — the only place the server is contacted. */
-  private async callServer(): Promise<void> {
+  private async callServer(submitted: SubmissionPatternsModel): Promise<void> {
     this.state.set('submitting');
     this.serverError.set(null);
 
     const scenario = this.scenario();
-    const value = structuredClone(this.formValue());
+    const value = structuredClone(submitted);
     if (scenario === 'email-taken') {
       // The mock returns 409 when the email contains "taken".
       value.email = 'taken@example.com';
@@ -209,7 +211,9 @@ export class SubmissionPatternsPageComponent {
 
   /** Retry re-submits the exact same value through the same path. */
   protected retry(): void {
-    void this.callServer();
+    if (this.lastSubmitted) {
+      void this.callServer(this.lastSubmitted);
+    }
   }
 
   /** End the current submit cycle while preserving values and control metadata. */
@@ -226,6 +230,7 @@ export class SubmissionPatternsPageComponent {
     this.createdId.set(null);
     this.submitCycleActive.set(false);
     this.blockedSubmitErrors.set([]);
+    this.lastSubmitted = null;
     this.formBody()?.resetFormState({});
     this.formValue.set({});
   }

@@ -2,6 +2,7 @@ import { Component, input, output, viewChild } from '@angular/core';
 import {
   createFormFeedbackSignals,
   FormDirective,
+  type NgxSubmitSettledEvent,
   NgxVestForms,
   type NgxVestSuite,
 } from 'ngx-vest-forms';
@@ -23,7 +24,7 @@ export class ZodSchemaDemoFormBody {
   readonly formContract = zodSchemaDemoContract;
 
   readonly formValueChange = output<ZodSchemaDemoModel>();
-  readonly submitted = output();
+  readonly submitted = output<NgxSubmitSettledEvent<ZodSchemaDemoModel>>();
 
   private readonly vestForm = viewChild('vestForm', {
     read: FormDirective<ZodSchemaDemoModel>,
@@ -31,7 +32,9 @@ export class ZodSchemaDemoFormBody {
 
   readonly feedback = createFormFeedbackSignals(this.vestForm);
 
-  protected onSubmit(): void {
-    this.submitted.emit();
+  protected onSubmitSettled(
+    event: NgxSubmitSettledEvent<ZodSchemaDemoModel>
+  ): void {
+    this.submitted.emit(event);
   }
 }

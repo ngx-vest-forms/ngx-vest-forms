@@ -35,13 +35,26 @@
       <ngx-form-state-card [feedback]="formBody.feedback" />
     </div>
 
-    <div>
+    <div class="space-y-6">
+      @switch (outcome()) {
+        @case ('success') {
+          <ngx-alert-panel tone="success" title="Form submitted">
+            <p>All fields passed validation.</p>
+          </ngx-alert-panel>
+        }
+        @case ('invalid') {
+          <ngx-alert-panel tone="error" title="Form not submitted">
+            <p>Fix the highlighted fields and submit again.</p>
+          </ngx-alert-panel>
+        }
+      }
+
       <ngx-native-schema-demo-form-body
         #formBody
         [formValue]="formValue()"
         [suite]="suite"
-        (formValueChange)="formValue.set($event)"
-        (submitted)="save()"
+        (formValueChange)="onFormValueChange($event)"
+        (submitted)="onSubmit($event)"
       />
     </div>
   </div>
