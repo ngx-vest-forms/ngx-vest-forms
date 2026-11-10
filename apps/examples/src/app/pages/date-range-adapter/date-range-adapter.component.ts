@@ -42,11 +42,12 @@ let nextId = 0;
       <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div class="form-field">
           <label [for]="departureInputId">
-            <span class="label-text">Departure Date</span>
+            <span class="label-text label-required">Departure Date</span>
             <input
               [id]="departureInputId"
               type="date"
               class="input-field"
+              aria-required="true"
               [value]="departureValue()"
               [attr.aria-invalid]="shouldShowDepartureErrors() || null"
               [attr.aria-describedby]="departureAriaDescribedBy()"
@@ -58,11 +59,12 @@ let nextId = 0;
 
         <div class="form-field">
           <label [for]="returnInputId">
-            <span class="label-text">Return Date</span>
+            <span class="label-text label-required">Return Date</span>
             <input
               [id]="returnInputId"
               type="date"
               class="input-field"
+              aria-required="true"
               [value]="returnValue()"
               [attr.aria-invalid]="shouldShowReturnErrors() || null"
               [attr.aria-describedby]="returnAriaDescribedBy()"

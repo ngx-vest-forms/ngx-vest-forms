@@ -1,37 +1,8 @@
-import type { NgxSuiteRunResult } from 'ngx-vest-forms';
 import { delay, of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi, type Mocked } from 'vitest';
+import { waitForSuiteResult } from '../../shared/testing/wait-for-suite-result';
 import { createPurchaseValidationSuite } from './purchase.validations';
 import type { SwapiService } from './swapi.service';
-
-type ThenableSuiteResult = NgxSuiteRunResult & {
-  then: NonNullable<NgxSuiteRunResult['then']>;
-};
-
-type ResolvedSuiteResult = {
-  result: NgxSuiteRunResult;
-};
-
-function isThenableSuiteResult(
-  result: NgxSuiteRunResult
-): result is ThenableSuiteResult {
-  return typeof result.then === 'function';
-}
-
-function waitForSuiteResult(
-  result: NgxSuiteRunResult
-): Promise<ResolvedSuiteResult> {
-  if (!isThenableSuiteResult(result)) {
-    return Promise.resolve({ result });
-  }
-
-  return new Promise((resolve, reject) => {
-    result.then(
-      (resolvedResult) => resolve({ result: resolvedResult }),
-      reject
-    );
-  });
-}
 
 describe('Purchase Validations', () => {
   let mockSwapiService: Mocked<Pick<SwapiService, 'userIdExists'>>;

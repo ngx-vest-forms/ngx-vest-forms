@@ -23,6 +23,20 @@ import { conditionalStructureContent } from './conditional-structure.content';
 import { ConditionalStructureFormBody } from './conditional-structure.form';
 import { conditionalStructureSuite } from './conditional-structure.validations';
 
+/** Keeps only the fields the current delivery mode actually uses. */
+function toPayload(
+  value: ConditionalStructureModel
+): ConditionalStructureModel {
+  const deliveryMode = value.deliveryMode ?? 'pickup';
+
+  return keepFieldsWhen(value, {
+    contactName: true,
+    deliveryMode: true,
+    shippingAddress: deliveryMode === 'shipment',
+    deliveryEmail: deliveryMode === 'digital',
+  });
+}
+
 @Component({
   selector: 'ngx-conditional-structure-page',
   imports: [
@@ -50,16 +64,9 @@ export class ConditionalStructurePageComponent {
   private readonly formBody = viewChild(ConditionalStructureFormBody);
 
   protected readonly feedback = computed(() => this.formBody()?.feedback);
-  protected readonly payloadPreview = computed(() => {
-    const deliveryMode = this.formValue().deliveryMode ?? 'pickup';
-
-    return keepFieldsWhen(this.formValue(), {
-      contactName: true,
-      deliveryMode: true,
-      shippingAddress: deliveryMode === 'shipment',
-      deliveryEmail: deliveryMode === 'digital',
-    });
-  });
+  protected readonly payloadPreview = computed(() =>
+    toPayload(this.formValue())
+  );
 
   protected onFormValueChange(value: ConditionalStructureModel): void {
     const previousDeliveryMode = this.formValue().deliveryMode ?? 'pickup';
@@ -91,14 +98,14 @@ export class ConditionalStructurePageComponent {
   protected onSubmit(
     event: NgxSubmitSettledEvent<ConditionalStructureModel>
   ): void {
-    if (!event.valid) {
+    if (!event.valid || !event.value) {
       // The directive focuses the first invalid control on submit by default
       // (`focusFirstInvalidOnSubmit`), so no manual focus handling is needed.
       this.submittedPayload.set(null);
       return;
     }
 
-    this.submittedPayload.set(structuredClone(this.payloadPreview()));
+    this.submittedPayload.set(toPayload(event.value));
   }
 
   protected reset(): void {

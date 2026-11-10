@@ -1,7 +1,21 @@
-import type { NgxVestSuite } from 'ngx-vest-forms';
+import type { NgxDeepPartial, NgxVestSuite } from 'ngx-vest-forms';
 import { create, enforce, omitWhen, test, warn } from 'vest';
-import type { StarterFormModel } from '../../models/starter-form.model';
-import { EMAIL_PATTERN } from '../../shared/validations/email.validations';
+
+/**
+ * The form model. `NgxDeepPartial` is the recommended shape: every field is
+ * optional because the template owns the truth and fields fill in as the user
+ * types.
+ */
+export type StarterFormModel = NgxDeepPartial<{
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+}>;
+
+// Mirrors shared/validations/email.validations.ts; inlined so this file copies
+// into another app on its own.
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
  * The canonical Vest suite for the starter form.

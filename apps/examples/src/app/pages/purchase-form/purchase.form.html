@@ -14,9 +14,9 @@
     <ngx-form-section title="Order Details" tone="neutral">
       <div class="form-stack">
         <div class="form-grid">
-          <ngx-control-wrapper class="form-field">
+          <ngx-control-wrapper class="form-field" ariaRequired>
             <label>
-              <span class="label-text">Product</span>
+              <span class="label-text label-required">Product</span>
               <select
                 class="input-field"
                 [ngModel]="formValue().productId"
@@ -29,9 +29,9 @@
               </select>
             </label>
           </ngx-control-wrapper>
-          <ngx-control-wrapper class="form-field">
+          <ngx-control-wrapper class="form-field" ariaRequired>
             <label>
-              <span class="label-text">Quantity</span>
+              <span class="label-text label-required">Quantity</span>
               <input
                 class="input-field"
                 placeholder="Enter quantity"
@@ -45,9 +45,9 @@
         </div>
 
         @if (showJustification()) {
-          <ngx-control-wrapper class="form-field form-grid-full">
+          <ngx-control-wrapper class="form-field form-grid-full" ariaRequired>
             <label>
-              <span class="label-text"
+              <span class="label-text label-required"
                 >Justification (required when quantity > 5)</span
               >
               <textarea
@@ -101,9 +101,9 @@
             </label>
           </ngx-control-wrapper>
 
-          <ngx-control-wrapper class="form-field">
+          <ngx-control-wrapper class="form-field" ariaRequired>
             <label>
-              <span class="label-text">First Name</span>
+              <span class="label-text label-required">First Name</span>
               <input
                 class="input-field"
                 placeholder="Type your first name"
@@ -116,9 +116,9 @@
             </label>
           </ngx-control-wrapper>
 
-          <ngx-control-wrapper class="form-field">
+          <ngx-control-wrapper class="form-field" ariaRequired>
             <label>
-              <span class="label-text">Last Name</span>
+              <span class="label-text label-required">Last Name</span>
               <input
                 class="input-field"
                 placeholder="Type your last name"
@@ -131,9 +131,9 @@
             </label>
           </ngx-control-wrapper>
 
-          <ngx-control-wrapper class="form-field">
+          <ngx-control-wrapper class="form-field" ariaRequired>
             <label>
-              <span class="label-text">Birth Date</span>
+              <span class="label-text label-required">Birth Date</span>
               <input
                 class="input-field"
                 type="date"
@@ -144,9 +144,9 @@
             </label>
           </ngx-control-wrapper>
 
-          <ngx-control-wrapper class="form-field">
+          <ngx-control-wrapper class="form-field" ariaRequired>
             <label>
-              <span class="label-text">Age</span>
+              <span class="label-text label-required">Age</span>
               <input
                 class="input-field"
                 placeholder="Choose your age"
@@ -163,7 +163,7 @@
               <span class="label-text">Emergency Contact</span>
               <input
                 class="input-field"
-                placeholder="Type your emergency contact"
+                placeholder="Required if under 18"
                 type="text"
                 autocomplete="off"
                 [disabled]="emergencyContactDisabled()"
@@ -180,7 +180,7 @@
       <div class="form-stack">
         <ngx-form-group-wrapper class="form-stack" ngModelGroup="phonenumbers">
           <div class="label">
-            <span class="label-text">Phone Numbers</span>
+            <span class="label-text label-required">Phone Numbers</span>
             <ngx-phonenumbers
               [values]="formValue().phonenumbers?.values || {}"
               (valuesChange)="onPhoneNumbersChange($event)"
@@ -191,8 +191,10 @@
         <div class="form-divider" aria-hidden="true"></div>
 
         <div class="form-stack">
-          <fieldset class="form-field">
-            <legend class="label-text radio-group-label">Select gender</legend>
+          <fieldset class="form-field" role="radiogroup" aria-required="true">
+            <legend class="label-text label-required radio-group-label">
+              Select gender
+            </legend>
             <div class="radio-group">
               <div class="radio-item">
                 <input
@@ -231,9 +233,9 @@
           </fieldset>
 
           @if (showGenderOther()) {
-            <ngx-control-wrapper class="form-field form-grid-full">
+            <ngx-control-wrapper class="form-field form-grid-full" ariaRequired>
               <label>
-                <span class="label-text">Specify gender</span>
+                <span class="label-text label-required">Specify gender</span>
                 <input
                   class="input-field"
                   placeholder="Specify gender"
@@ -297,9 +299,9 @@
 
     <ngx-form-section title="Security" tone="neutral">
       <ngx-form-group-wrapper class="form-grid" ngModelGroup="passwords">
-        <ngx-control-wrapper class="form-field">
+        <ngx-control-wrapper class="form-field" ariaRequired>
           <label>
-            <span class="label-text">Password</span>
+            <span class="label-text label-required">Password</span>
             <input
               class="input-field"
               placeholder="Type password"
@@ -310,9 +312,9 @@
             />
           </label>
         </ngx-control-wrapper>
-        <ngx-control-wrapper class="form-field">
+        <ngx-control-wrapper class="form-field" ariaRequired>
           <label>
-            <span class="label-text">Confirm Password</span>
+            <span class="label-text label-required">Confirm Password</span>
             <input
               class="input-field"
               placeholder="Confirm password"

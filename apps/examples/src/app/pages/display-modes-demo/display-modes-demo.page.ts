@@ -2,8 +2,10 @@ import { Component, signal } from '@angular/core';
 import {
   NGX_ERROR_DISPLAY_MODE_TOKEN,
   NGX_WARNING_DISPLAY_MODE_TOKEN,
+  type NgxSubmitSettledEvent,
 } from 'ngx-vest-forms';
 import type { DisplayModesDemoModel } from '../../models/display-modes-demo.model';
+import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
 import {
@@ -18,6 +20,7 @@ import { displayModesDemoSuite } from './display-modes-demo.validations';
 @Component({
   selector: 'ngx-display-modes-demo-page',
   imports: [
+    AlertPanel,
     ExampleCardsComponent,
     PageTitle,
     IntroSectionComponent,
@@ -45,7 +48,17 @@ export class DisplayModesDemoPageComponent {
 
   protected readonly suite = displayModesDemoSuite;
 
-  protected save(): void {
-    // Intentionally no console output in examples to keep CI and demos quiet
+  protected readonly outcome = signal<'success' | 'invalid' | null>(null);
+
+  protected onFormValueChange(value: DisplayModesDemoModel): void {
+    this.formValue.set(value);
+    // The outcome describes the value that was submitted; an edit makes it stale.
+    this.outcome.set(null);
+  }
+
+  protected onSubmit(
+    event: NgxSubmitSettledEvent<DisplayModesDemoModel>
+  ): void {
+    this.outcome.set(event.valid ? 'success' : 'invalid');
   }
 }

@@ -128,6 +128,14 @@ html.dark [ngxFormGroupWrapper] {
     @apply mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300;
   }
 
+  /* Visual required marker. The empty alt text after "/" keeps the asterisk
+     out of the accessible name; assistive tech gets aria-required instead. */
+  .label-required::after {
+    content: ' *';
+    content: ' *' / '';
+    @apply text-red-600 dark:text-red-400;
+  }
+
   .input-field {
     @apply focus:border-primary-500 focus:ring-primary-500 dark:focus:border-primary-400 dark:focus:ring-primary-300 block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-500;
 

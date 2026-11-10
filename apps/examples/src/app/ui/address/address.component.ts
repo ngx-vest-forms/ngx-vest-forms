@@ -1,6 +1,10 @@
 import { Component, computed, input } from '@angular/core';
 
-import { NgxVestForms, vestFormsViewProviders } from 'ngx-vest-forms';
+import {
+  type LeafFieldPath,
+  NgxVestForms,
+  vestFormsViewProviders,
+} from 'ngx-vest-forms';
 import type { AddressModel } from '../../models/address.model';
 
 let nextAddressInstanceId = 0;
@@ -23,7 +27,8 @@ export class AddressComponent {
 
   readonly address = input<AddressModel>();
 
-  protected readonly idFor = (field: string) => `${this.idPrefix()}-${field}`;
+  protected readonly idFor = (field: LeafFieldPath<AddressModel>) =>
+    `${this.idPrefix()}-${field}`;
 
   protected readonly fieldIds = computed(() => ({
     street: this.idFor('street'),

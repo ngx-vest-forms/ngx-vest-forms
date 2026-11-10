@@ -1,6 +1,7 @@
 import {
   afterNextRender,
   Component,
+  ElementRef,
   input,
   output,
   viewChild,
@@ -8,6 +9,7 @@ import {
 import {
   createFormFeedbackSignals,
   type FormDirective,
+  type NgxSubmitSettledEvent,
   NgxVestForms,
   type NgxVestSuite,
 } from 'ngx-vest-forms';
@@ -25,10 +27,13 @@ export class DisplayModesDemoFormBody {
   readonly suite = input.required<NgxVestSuite<DisplayModesDemoModel>>();
 
   readonly formValueChange = output<DisplayModesDemoModel>();
-  readonly submitted = output();
+  readonly submitted = output<NgxSubmitSettledEvent<DisplayModesDemoModel>>();
 
   private readonly vestForm =
     viewChild<FormDirective<DisplayModesDemoModel>>('vestForm');
+  private readonly formElement = viewChild('vestForm', {
+    read: ElementRef<HTMLFormElement>,
+  });
   readonly feedback = createFormFeedbackSignals(this.vestForm);
 
   constructor() {
@@ -40,17 +45,14 @@ export class DisplayModesDemoFormBody {
   }
 
   submitProgrammatically(): void {
-    const form = this.vestForm();
-    if (!form) {
-      return;
-    }
-
-    form.ngForm.onSubmit(new Event('submit'));
-    form.markAllAsTouched();
-    form.triggerFormValidation();
+    // A real submit event goes through NgForm and the ngx-vest-forms submit
+    // pipeline, like a click on a submit button.
+    this.formElement()?.nativeElement.requestSubmit();
   }
 
-  protected onSubmit(): void {
-    this.submitted.emit();
+  protected onSubmitSettled(
+    event: NgxSubmitSettledEvent<DisplayModesDemoModel>
+  ): void {
+    this.submitted.emit(event);
   }
 }

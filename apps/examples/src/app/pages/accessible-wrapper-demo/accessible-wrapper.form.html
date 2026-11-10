@@ -20,7 +20,9 @@
     ariaAssociationMode="single-control"
     class="rounded-2xl border border-gray-200 bg-white p-4 shadow-xs dark:border-gray-700 dark:bg-gray-900"
   >
-    <label for="preferredName" class="label-text">Preferred name</label>
+    <label for="preferredName" class="label-text label-required"
+      >Preferred name</label
+    >
     <p
       id="preferred-name-hint"
       class="mt-1 text-sm text-gray-600 dark:text-gray-300"
@@ -33,6 +35,7 @@
       type="text"
       id="preferredName"
       name="preferredName"
+      aria-required="true"
       [ngModel]="formValue().preferredName"
       autocomplete="nickname"
       aria-describedby="preferred-name-hint"
@@ -60,7 +63,9 @@
     ariaAssociationMode="none"
     class="rounded-2xl border border-gray-200 bg-white p-4 shadow-xs dark:border-gray-700 dark:bg-gray-900"
   >
-    <label for="searchQuery" class="label-text">Search query</label>
+    <label for="searchQuery" class="label-text label-required"
+      >Search query</label
+    >
     <p
       id="search-query-hint"
       class="mt-1 text-sm text-gray-600 dark:text-gray-300"
@@ -74,6 +79,7 @@
         type="search"
         id="searchQuery"
         name="searchQuery"
+        aria-required="true"
         [ngModel]="formValue().searchQuery"
         [attr.aria-describedby]="'search-query-hint ' + searchControl.errorId"
         [attr.aria-invalid]="searchDisplay.shouldShowErrors() ? 'true' : null"

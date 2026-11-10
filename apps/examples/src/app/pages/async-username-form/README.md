@@ -1,7 +1,7 @@
 # Async Username Availability
 
 Validates a username against a mock remote endpoint, layering the async
-validation pattern on top of the canonical starter wiring.
+validation pattern on top of the page/form-body split of the larger demos.
 
 ## Why this demo exists
 
@@ -18,8 +18,10 @@ first, the network last, every stale request cancelled.
   service is injected by the component while the suite stays a plain,
   unit-testable Vest spec.
 - Synchronous rules — required, min length 3, pattern `^[a-z0-9_]+$` — that
-  gate the async availability test via `omitWhen`, so the endpoint is only
-  hit once the username is structurally valid.
+  gate the async availability test via
+  `skipWhen((res) => res.hasErrors('username'), …)`, so the endpoint is only
+  hit once the username has no sync errors. The condition reads the result
+  instead of repeating the rules.
 - The async test wrapped in `vest/memo` keyed on `[username]` so it does not
   re-run when other fields change, and aborted via
   `takeUntil(fromEvent(signal, 'abort'))` when the username changes mid-flight.

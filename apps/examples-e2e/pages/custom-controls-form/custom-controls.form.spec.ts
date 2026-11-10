@@ -5,6 +5,26 @@ test.describe('Custom Controls Form', () => {
     await page.goto('/custom-controls', { waitUntil: 'domcontentloaded' });
   });
 
+  test('should put aria-required on the element that carries each custom control role', async ({
+    page,
+  }) => {
+    // The wrapper only stamps the attribute on native controls and ARIA form
+    // widgets, so this fails if a custom control stops exposing its role.
+    await expect(
+      page.getByRole('radiogroup', { name: /^rating/i })
+    ).toHaveAttribute('aria-required', 'true');
+    await expect(
+      page.getByRole('radiogroup', { name: 'Experience level' })
+    ).toHaveAttribute('aria-required', 'true');
+    const tagInput = page.getByRole('textbox', { name: 'Add a tag' });
+    await expect(tagInput).toHaveAttribute('aria-required', 'true');
+
+    // Once a tag exists the input is no longer the thing that is missing.
+    await tagInput.fill('angular');
+    await tagInput.press('Enter');
+    await expect(tagInput).not.toHaveAttribute('aria-required', 'true');
+  });
+
   test('should validate empty controls and submit a completed custom-control form', async ({
     page,
   }) => {
@@ -81,6 +101,43 @@ test.describe('Custom Controls Form', () => {
 
     await expect(rating).not.toHaveAttribute('aria-invalid');
     await expect(experience).not.toHaveAttribute('aria-invalid');
+  });
+
+  test('should name the rating radiogroup from its visible label', async ({
+    page,
+  }) => {
+    const label = (await page.locator('#rating-label').textContent())?.trim();
+
+    expect(label).toBe('Rating');
+    await expect(
+      page.getByRole('radiogroup', { name: label, exact: true })
+    ).toBeVisible();
+  });
+
+  test('should not mark the rating touched or show its error while arrowing between stars', async ({
+    page,
+  }) => {
+    const rating = page.locator('ngx-star-rating');
+    const ratingGroup = page.getByRole('radiogroup', {
+      name: 'Rating',
+      exact: true,
+    });
+    const ratingWrapper = rating.locator(
+      'xpath=ancestor::ngx-control-wrapper[1]'
+    );
+
+    await page.getByRole('radio', { name: /1 star/i }).focus();
+    await page.keyboard.press('ArrowRight');
+    await page.keyboard.press('ArrowRight');
+    await expect(page.getByRole('radio', { name: /3 stars/i })).toBeFocused();
+
+    await expect(rating).not.toHaveClass(/ng-touched/);
+    await expect(ratingGroup).not.toHaveAttribute('aria-invalid');
+    await expect(ratingWrapper.getByText(/pick a rating/i)).toHaveCount(0);
+
+    // Leaving the control is what marks it touched.
+    await page.getByLabel(/add a tag/i).focus();
+    await expect(rating).toHaveClass(/ng-touched/);
   });
 
   test('should confirm the experience level once it is valid and touched (ngxControlState)', async ({

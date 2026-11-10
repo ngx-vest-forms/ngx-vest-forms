@@ -5,21 +5,21 @@
   [focusFirstInvalidOnSubmit]="false".
 -->
 <form
-  #step2Form="ngxVestForm"
   ngxVestForm
   [suite]="suite()"
   [formValue]="data()"
   [validationConfig]="validationConfig()"
   [focusFirstInvalidOnSubmit]="false"
-  (formValueChange)="dataChange.emit($event)"
-  (validChange)="validChange.emit($event)"
-  (errorsChange)="errorsChange.emit($event)"
+  (formValueChange)="data.set($event)"
+  (validChange)="valid.set($event)"
   (submitSettled)="stepSubmit.emit($event.valid)"
 >
   <div class="space-y-6">
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <ngx-control-wrapper>
-        <label for="firstName" class="label-text">First Name</label>
+        <label for="firstName" class="label-text label-required"
+          >First Name</label
+        >
         <input
           id="firstName"
           type="text"
@@ -32,7 +32,9 @@
       </ngx-control-wrapper>
 
       <ngx-control-wrapper>
-        <label for="lastName" class="label-text">Last Name</label>
+        <label for="lastName" class="label-text label-required"
+          >Last Name</label
+        >
         <input
           id="lastName"
           type="text"
@@ -46,7 +48,7 @@
     </div>
 
     <ngx-control-wrapper>
-      <label for="phone" class="label-text">Phone Number</label>
+      <label for="phone" class="label-text label-required">Phone Number</label>
       <input
         id="phone"
         type="tel"
@@ -59,7 +61,9 @@
     </ngx-control-wrapper>
 
     <ngx-control-wrapper>
-      <label for="dateOfBirth" class="label-text">Date of Birth</label>
+      <label for="dateOfBirth" class="label-text label-required"
+        >Date of Birth</label
+      >
       <input
         id="dateOfBirth"
         type="date"
@@ -95,7 +99,7 @@
       @if (data().subscribeNewsletter) {
         <div class="mt-4">
           <ngx-control-wrapper>
-            <label for="newsletterFrequency" class="label-text"
+            <label for="newsletterFrequency" class="label-text label-required"
               >Newsletter Frequency</label
             >
             <select

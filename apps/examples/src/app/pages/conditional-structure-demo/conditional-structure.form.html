@@ -7,8 +7,10 @@
   (submitSettled)="onSubmitSettled($event)"
   class="space-y-6"
 >
-  <ngx-control-wrapper class="form-field">
-    <label for="contactName" class="label-text">Contact name</label>
+  <ngx-control-wrapper class="form-field" ariaRequired>
+    <label for="contactName" class="label-text label-required"
+      >Contact name</label
+    >
     <input
       class="input-field"
       type="text"
@@ -20,8 +22,10 @@
     />
   </ngx-control-wrapper>
 
-  <ngx-control-wrapper class="form-field">
-    <label for="deliveryMode" class="label-text">Delivery method</label>
+  <ngx-control-wrapper class="form-field" ariaRequired>
+    <label for="deliveryMode" class="label-text label-required"
+      >Delivery method</label
+    >
     <select
       class="input-field"
       id="deliveryMode"
@@ -36,8 +40,10 @@
 
   @switch (formValue().deliveryMode) {
     @case ('shipment') {
-      <ngx-control-wrapper class="form-field">
-        <label for="shippingAddress" class="label-text">Shipping address</label>
+      <ngx-control-wrapper class="form-field" ariaRequired>
+        <label for="shippingAddress" class="label-text label-required"
+          >Shipping address</label
+        >
         <input
           class="input-field"
           type="text"
@@ -50,8 +56,10 @@
       </ngx-control-wrapper>
     }
     @case ('digital') {
-      <ngx-control-wrapper class="form-field">
-        <label for="deliveryEmail" class="label-text">Delivery email</label>
+      <ngx-control-wrapper class="form-field" ariaRequired>
+        <label for="deliveryEmail" class="label-text label-required"
+          >Delivery email</label
+        >
         <input
           class="input-field"
           type="email"

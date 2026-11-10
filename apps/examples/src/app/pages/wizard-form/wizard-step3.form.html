@@ -4,14 +4,12 @@
   [focusFirstInvalidOnSubmit]="false".
 -->
 <form
-  #step3Form="ngxVestForm"
   ngxVestForm
   [suite]="suite()"
   [formValue]="data()"
   [focusFirstInvalidOnSubmit]="false"
-  (formValueChange)="dataChange.emit($event)"
-  (validChange)="validChange.emit($event)"
-  (errorsChange)="errorsChange.emit($event)"
+  (formValueChange)="data.set($event)"
+  (validChange)="valid.set($event)"
   (submitSettled)="stepSubmit.emit($event.valid)"
 >
   <div class="mb-6 space-y-4">
@@ -61,7 +59,7 @@
         />
         <label
           for="acceptTerms"
-          class="text-sm text-gray-700 dark:text-gray-300"
+          class="label-required text-sm text-gray-700 dark:text-gray-300"
         >
           I accept the Terms of Service
         </label>
@@ -80,7 +78,7 @@
         />
         <label
           for="acceptPrivacy"
-          class="text-sm text-gray-700 dark:text-gray-300"
+          class="label-required text-sm text-gray-700 dark:text-gray-300"
         >
           I accept the Privacy Policy
         </label>

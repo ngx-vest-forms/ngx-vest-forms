@@ -8,15 +8,15 @@
     [suite]="suite()"
     [formValue]="formValue()"
     (formValueChange)="formValueChange.emit($event)"
-    (ngSubmit)="onSubmit()"
+    (submitSettled)="onSubmitSettled($event)"
     class="space-y-8"
   >
     <ngx-form-section
       title="Token default: errorDisplayMode='on-submit'"
       description="This wrapper does not set errorDisplayMode itself — the page-level NGX_ERROR_DISPLAY_MODE_TOKEN provides the default."
     >
-      <ngx-control-wrapper>
-        <label for="tokenDefaultError" class="label-text"
+      <ngx-control-wrapper ariaRequired>
+        <label for="tokenDefaultError" class="label-text label-required"
           >Username (Token Default Error)</label
         >
         <p
@@ -64,8 +64,8 @@
       title="Error Display Mode: 'always'"
       description="Errors appear immediately, even on pristine fields."
     >
-      <ngx-control-wrapper errorDisplayMode="always">
-        <label for="alwaysError" class="label-text"
+      <ngx-control-wrapper errorDisplayMode="always" ariaRequired>
+        <label for="alwaysError" class="label-text label-required"
           >Username (Always Mode)</label
         >
         <p
@@ -88,8 +88,8 @@
       title="Error Display Mode: 'on-dirty'"
       description="Errors appear as soon as you type."
     >
-      <ngx-control-wrapper errorDisplayMode="on-dirty">
-        <label for="dirtyError" class="label-text"
+      <ngx-control-wrapper errorDisplayMode="on-dirty" ariaRequired>
+        <label for="dirtyError" class="label-text label-required"
           >Username (On-Dirty Mode)</label
         >
         <p
@@ -112,8 +112,8 @@
       title="Error Display Mode: 'on-submit'"
       description="This field stays quiet until the parent container submits the form programmatically."
     >
-      <ngx-control-wrapper errorDisplayMode="on-submit">
-        <label for="submitError" class="label-text"
+      <ngx-control-wrapper errorDisplayMode="on-submit" ariaRequired>
+        <label for="submitError" class="label-text label-required"
           >Username (On-Submit Mode)</label
         >
         <input
@@ -129,8 +129,8 @@
         class="mt-3 text-sm text-gray-600 dark:text-gray-300"
       >
         Use the external button below to simulate a parent component calling
-        <code>NgForm.onSubmit()</code>, then marking controls as touched and
-        retriggering validation.
+        <code>requestSubmit()</code> on the form, which dispatches a real submit
+        event through the form's submit pipeline.
       </p>
     </ngx-form-section>
 

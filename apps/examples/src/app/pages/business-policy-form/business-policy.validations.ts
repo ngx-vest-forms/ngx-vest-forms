@@ -1,6 +1,14 @@
-import { type NgxVestSuite, ROOT_FORM } from 'ngx-vest-forms';
+import {
+  type FormFieldName,
+  type NgxVestSuite,
+  ROOT_FORM,
+} from 'ngx-vest-forms';
 import { create, enforce, omitWhen, test, warn } from 'vest';
 import type { BusinessPolicyModel } from '../../models/business-policy.model';
+
+type RulesByField = Partial<
+  Record<FormFieldName<BusinessPolicyModel>, string[]>
+>;
 
 /**
  * EU member-state country codes that trigger the conditional VAT-ID rule.
@@ -144,7 +152,7 @@ export const businessPolicySuite: NgxVestSuite<BusinessPolicyModel> = create(
  * Blocking error rules per field path. Mirrors the auto-save-demo map; used by
  * the form-state card to show the policy that hasn't been triggered yet.
  */
-export const businessPolicyErrorRulesByField: Record<string, string[]> = {
+export const businessPolicyErrorRulesByField = {
   accountType: ['Account type is required'],
   legalName: ['Legal name is required'],
   country: ['Country is required'],
@@ -152,16 +160,16 @@ export const businessPolicyErrorRulesByField: Record<string, string[]> = {
   requestedCreditLimit: ['Requested credit limit must be greater than 0'],
   paymentTermsDays: ['Payment terms must be one of 0, 14, 30 or 60 days'],
   [ROOT_FORM]: ['Credit limit exceeds policy for this revenue band'],
-};
+} satisfies RulesByField;
 
 /**
  * Advisory (non-blocking) `warn()` rules per field path. These never prevent
  * submission — they are surfaced separately from errors in the UI.
  */
-export const businessPolicyWarningRulesByField: Record<string, string[]> = {
+export const businessPolicyWarningRulesByField = {
   requestedCreditLimit: [
     'Requested credit limit is high relative to revenue — expect manual review',
     'Personal accounts above 5000 usually need a business upgrade',
   ],
   paymentTermsDays: ['Long payment terms may slow onboarding'],
-};
+} satisfies RulesByField;

@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, booleanAttribute, input } from '@angular/core';
 import { NgxMaskDirective } from 'ngx-mask';
 import { NgxVestForms, vestFormsViewProviders } from 'ngx-vest-forms';
 import type { BusinessHourFormModel } from '../../../../models/business-hours-form.model';
@@ -16,6 +16,9 @@ export class BusinessHourComponent {
   private readonly instanceId = BusinessHourComponent.nextInstanceId++;
 
   readonly businessHour = input<BusinessHourFormModel | undefined>({});
+
+  /** Whether both times are required; the optional add-new row turns it off while empty. */
+  readonly required = input(true, { transform: booleanAttribute });
 
   /**
    * Used to generate unique input ids so labels remain correctly associated.

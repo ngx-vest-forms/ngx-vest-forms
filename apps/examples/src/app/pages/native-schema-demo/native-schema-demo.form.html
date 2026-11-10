@@ -6,7 +6,7 @@
     [formContract]="formContract"
     [formValue]="formValue()"
     (formValueChange)="formValueChange.emit($event)"
-    (ngSubmit)="onSubmit()"
+    (submitSettled)="onSubmitSettled($event)"
     class="space-y-8"
   >
     <ngx-form-section
@@ -17,7 +17,7 @@
       <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <ngx-control-wrapper class="form-field" ariaRequired>
           <label for="nativeFirstName">
-            <span class="label-text">First Name</span>
+            <span class="label-text label-required">First Name</span>
             <input
               class="input-field"
               type="text"
@@ -31,7 +31,7 @@
 
         <ngx-control-wrapper class="form-field" ariaRequired>
           <label for="nativeLastName">
-            <span class="label-text">Last Name</span>
+            <span class="label-text label-required">Last Name</span>
             <input
               class="input-field"
               type="text"
@@ -46,7 +46,7 @@
 
       <ngx-control-wrapper class="form-field" ariaRequired>
         <label for="nativeEmail">
-          <span class="label-text">Email</span>
+          <span class="label-text label-required">Email</span>
           <input
             class="input-field"
             type="email"
@@ -62,7 +62,7 @@
 
       <ngx-control-wrapper class="form-field" ariaRequired>
         <label for="nativeAge">
-          <span class="label-text">Age</span>
+          <span class="label-text label-required">Age</span>
           <input
             class="input-field"
             type="number"
@@ -85,7 +85,7 @@
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <ngx-control-wrapper class="form-field sm:col-span-2" ariaRequired>
             <label for="nativeStreet">
-              <span class="label-text">Street</span>
+              <span class="label-text label-required">Street</span>
               <input
                 class="input-field"
                 type="text"
@@ -100,7 +100,7 @@
 
           <ngx-control-wrapper class="form-field" ariaRequired>
             <label for="nativeCity">
-              <span class="label-text">City</span>
+              <span class="label-text label-required">City</span>
               <input
                 class="input-field"
                 type="text"
@@ -115,7 +115,7 @@
 
           <ngx-control-wrapper class="form-field" ariaRequired>
             <label for="nativeZipCode">
-              <span class="label-text">ZIP Code</span>
+              <span class="label-text label-required">ZIP Code</span>
               <input
                 class="input-field"
                 type="text"

@@ -23,8 +23,7 @@ from the suite.
 
 ## ngx-vest-forms public APIs showcased
 
-- `provideFormContract(nativeSchemaDemoContract)` — registers the shape contract
-  for the form body.
+- `[formContract]` — binds a hand-written Standard Schema as the Form Contract on the form.
 - `NgxVestForms` — template directives (`ngxVestForm`, `[ngModel]`, control
   wrappers) used by the form HTML.
 - `FormDirective<NativeSchemaDemoModel>` — accessed via `viewChild` to read
