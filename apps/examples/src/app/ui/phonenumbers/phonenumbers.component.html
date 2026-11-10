@@ -6,7 +6,7 @@
           <input
             type="tel"
             name="{{ item.key }}"
-            [ngModel]="values()[item.key]"
+            [ngModel]="item.value"
             placeholder="Type phone number"
             class="input-field pr-20"
             [attr.aria-label]="'Phone number ' + (+item.key + 1)"
