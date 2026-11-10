@@ -1,6 +1,8 @@
 import { Component, computed, signal, viewChild } from '@angular/core';
 import {
   createValidationConfig,
+  type FormFieldName,
+  type NgxFormErrorsByPath,
   type NgxSubmitSettledEvent,
 } from 'ngx-vest-forms';
 import type { ValidationDemoModel } from '../../models/validation-demo.model';
@@ -78,8 +80,8 @@ export class ValidationConfigDemoPageComponent {
   }
 
   #getMessagesByFields(
-    messagesByField: Record<string, string[]>,
-    fields: readonly string[]
+    messagesByField: NgxFormErrorsByPath['errors'],
+    fields: ReadonlyArray<FormFieldName<ValidationDemoModel>>
   ): string[] {
     return [
       ...new Set(fields.flatMap((field) => messagesByField[field] ?? [])),
@@ -87,10 +89,10 @@ export class ValidationConfigDemoPageComponent {
   }
 
   #getMessagesExcludingFields(
-    messagesByField: Record<string, string[]>,
-    excludedFields: readonly string[]
+    messagesByField: NgxFormErrorsByPath['errors'],
+    excludedFields: ReadonlyArray<FormFieldName<ValidationDemoModel>>
   ): string[] {
-    const excluded = new Set(excludedFields);
+    const excluded = new Set<string>(excludedFields);
     return [
       ...new Set(
         Object.entries(messagesByField)

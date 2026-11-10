@@ -1,6 +1,7 @@
 import { Component, computed, input } from '@angular/core';
 import {
   createEmptyFormState,
+  type NgxFormErrorsByPath,
   type NgxFormFeedbackSignals,
   type NgxFormState,
   ROOT_FORM,
@@ -13,8 +14,14 @@ import { StatusBadge } from '../status-badge/status-badge.component';
 /**
  * Accepts either a flat string array or a field-keyed record.
  * The component normalises both forms internally.
+ *
+ * The card is shared by every demo, so record keys stay plain strings, as in
+ * `NgxFormErrorsByPath`. Pages check their rule maps against their own model
+ * where they define them. For the same reason the internal
+ * `Record<string, string[]>` helpers and `validatedFields` use plain strings
+ * on purpose.
  */
-type MessageInput = readonly string[] | Record<string, string[]>;
+type MessageInput = readonly string[] | NgxFormErrorsByPath['errors'];
 
 @Component({
   selector: 'ngx-form-state-card',

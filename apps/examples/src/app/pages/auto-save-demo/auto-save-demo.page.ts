@@ -32,6 +32,7 @@ import { AutoSaveDemoFormBody } from './auto-save-demo.form';
 import {
   AutoSaveDemoService,
   type AutoSaveDraftResult,
+  type AutoSaveTrigger,
   type StoredAutoSaveDraft,
 } from './auto-save-demo.service';
 import {
@@ -44,12 +45,17 @@ type AlertTone = 'error' | 'info' | 'success' | 'warning';
 
 type AutoSaveStatus =
   | { kind: 'idle' }
-  | { kind: 'saving'; field: string }
-  | { kind: 'saved'; field: string; savedAtLabel: string; version: number }
-  | { kind: 'error'; field: string; message: string };
+  | { kind: 'saving'; field: AutoSaveTrigger }
+  | {
+      kind: 'saved';
+      field: AutoSaveTrigger;
+      savedAtLabel: string;
+      version: number;
+    }
+  | { kind: 'error'; field: AutoSaveTrigger; message: string };
 
 type AutoSaveRequest = {
-  field: string;
+  field: AutoSaveTrigger;
   key: string;
   draft: AutoSaveDemoModel;
   generation: number;
@@ -331,7 +337,7 @@ export class AutoSaveDemoPageComponent {
     }).format(new Date(value));
   }
 
-  #humanizeField(field: string): string {
+  #humanizeField(field: AutoSaveTrigger): string {
     const normalized = field.replace(/([a-z])([A-Z])/g, '$1 $2');
     return normalized.charAt(0).toUpperCase() + normalized.slice(1);
   }

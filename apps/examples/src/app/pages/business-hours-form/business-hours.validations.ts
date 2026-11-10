@@ -1,4 +1,4 @@
-import { type NgxVestSuite, ROOT_FORM } from 'ngx-vest-forms';
+import { type FieldPath, type NgxVestSuite, ROOT_FORM } from 'ngx-vest-forms';
 import { create, each, enforce, omitWhen, test } from 'vest';
 import type {
   BusinessHourFormModel,
@@ -70,7 +70,7 @@ function isBlank(value: unknown): boolean {
  * - Angular's `validationConfig` controls WHEN to trigger revalidation
  */
 function validateBusinessHourModel(
-  field: string,
+  field: FieldPath<BusinessHoursFormModel>,
   model?: BusinessHourFormModel,
   options?: { allowEmptyPair?: boolean }
 ) {
