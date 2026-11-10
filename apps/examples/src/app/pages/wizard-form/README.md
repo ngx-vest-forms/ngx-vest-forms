@@ -64,8 +64,9 @@ parent page that orchestrates navigation, validity, and the final submit.
 - Focus management deliberately differs on Step 2 to show
   `NgxFirstInvalidOptions` in use.
 - The wizard keeps three forms on purpose. A single `ngxVestForm` that
-  renders one step at a time drops the hidden steps' controls, so their
-  values leave `formValueChange` and the final `(submitSettled)` sees only
-  the last step. Rendering every step and hiding the inactive ones keeps the
-  values, but "Next" then has no step-scoped submit to call. Issue #336 has
-  the details.
+  renders only the current step with `@switch` loses the other steps'
+  values. Their controls unregister, so those values leave
+  `formValueChange`, and the final `(submitSettled)` sees only the last
+  step. Rendering every step and hiding the inactive ones with `[hidden]`
+  keeps every value, but "Next" then has no step-scoped submit to call.
+  Issue #336 has the details.

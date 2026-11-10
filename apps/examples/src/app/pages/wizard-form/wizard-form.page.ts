@@ -94,6 +94,8 @@ export class WizardFormPageComponent {
   });
 
   private readonly formBody = viewChild(WizardFormBodyComponent);
+  /** The rendered step's `FormDirective`. */
+  private readonly currentForm = computed(() => this.formBody()?.currentForm());
   private readonly stepHeading =
     viewChild<ElementRef<HTMLElement>>('stepHeading');
 
@@ -203,7 +205,7 @@ export class WizardFormPageComponent {
 
     afterNextRender(
       () => {
-        this.formBody()?.currentForm()?.focusFirstInvalidControl();
+        this.currentForm()?.focusFirstInvalidControl();
       },
       { injector: this.injector }
     );
@@ -217,7 +219,7 @@ export class WizardFormPageComponent {
 
     afterNextRender(
       () => {
-        this.formBody()?.currentForm()?.focusFirstInvalidControl({
+        this.currentForm()?.focusFirstInvalidControl({
           behavior: 'auto',
           block: 'start',
           inline: 'nearest',
@@ -235,20 +237,20 @@ export class WizardFormPageComponent {
 
     afterNextRender(
       () => {
-        this.formBody()?.currentForm()?.focusFirstInvalidControl();
+        this.currentForm()?.focusFirstInvalidControl();
       },
       { injector: this.injector }
     );
   }
 
   protected async submitAll(): Promise<void> {
-    this.formBody()?.currentForm()?.markAllAsTouched();
+    this.currentForm()?.markAllAsTouched();
 
     await this.waitForNextRender();
 
     const currentStep = this.currentStep();
     const currentStepIsValid =
-      this.formBody()?.currentForm()?.valid() ?? this.getStepValid(currentStep);
+      this.currentForm()?.valid() ?? this.getStepValid(currentStep);
 
     const step1IsValid =
       currentStep === 1 ? currentStepIsValid : this.step1Valid();
@@ -272,7 +274,7 @@ export class WizardFormPageComponent {
 
       afterNextRender(
         () => {
-          this.formBody()?.currentForm()?.focusFirstInvalidControl();
+          this.currentForm()?.focusFirstInvalidControl();
         },
         { injector: this.injector }
       );
