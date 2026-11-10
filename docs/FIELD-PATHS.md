@@ -105,7 +105,9 @@ const badConfig: ValidationConfigMap<FormModel> = {
 
 ### `FormFieldName<T>`
 
-Type-safe field names for Vest test() calls, combining field paths with the ROOT_FORM constant.
+Type-safe field names, combining field paths with the ROOT_FORM constant. Use it for values you pass around, such as a helper's field parameter or a typed constant.
+
+Vest's global `test()` takes `fieldName: string`, so a misspelled name inside a suite still compiles and gets no autocomplete. Only the `test` method on a suite created with Vest's field generic (`create<{ fields: FormFieldName<T> }, T>(...)`, then `suite.test(...)`) checks field names.
 
 ```typescript
 import { FormFieldName, ROOT_FORM } from 'ngx-vest-forms';
@@ -118,13 +120,16 @@ type FormModel = {
   };
 };
 
+// ✅ Checked at compile time: 'email' | 'user' | 'user.name' | typeof ROOT_FORM
+const userName: FormFieldName<FormModel> = 'user.name';
+
 export const suite = create((data: FormModel) => {
-  // ✅ Autocomplete suggests: 'email' | 'user' | 'user.name' | typeof ROOT_FORM
+  // Global test() takes a plain string; these names are not checked
   test('email', 'Required', () => {
     enforce(data.email).isNotBlank();
   });
 
-  test('user.name', 'Required', () => {
+  test(userName, 'Required', () => {
     enforce(data.user?.name).isNotBlank();
   });
 
@@ -251,10 +256,10 @@ export const suite: NgxVestSuite<UserModel> = staticSuite(
 ```typescript
 import { NgxVestSuite } from 'ngx-vest-forms';
 
-// ✅ RECOMMENDED: Vest 6 model-only callback with autocomplete
+// ✅ RECOMMENDED: Vest 6 model-only callback
 export const suite: NgxVestSuite<UserModel> = create(
   (model: UserModel) => {
-    // ✅ Autocomplete for field names!
+    // Global test() still takes a plain string
     test('email', 'Required', () => {
       enforce(model.email).isNotBlank();
     });
@@ -486,7 +491,7 @@ When defining validation suites in TypeScript files, use `NgxVestSuite` in new c
 
 ```typescript
 export const suite: NgxVestSuite<FormModel> = create((model: FormModel) => {
-  // Full autocomplete for field names
+  // run(model) and the [suite] binding are typed against FormModel
 });
 ```
 

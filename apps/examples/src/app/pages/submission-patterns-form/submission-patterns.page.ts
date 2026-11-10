@@ -13,7 +13,10 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, EMPTY, finalize } from 'rxjs';
-import type { SubmissionPatternsModel } from '../../models/submission-patterns.model';
+import {
+  type SubmissionPatternsModel,
+  submissionPatternsShape,
+} from '../../models/submission-patterns.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
@@ -24,7 +27,11 @@ import {
 } from '../../ui/intro-section';
 import { PageTitle } from '../../ui/page-title/page-title.component';
 
-import type { NgxSubmitSettledEvent } from 'ngx-vest-forms';
+import {
+  type FormFieldName,
+  type NgxSubmitSettledEvent,
+  ROOT_FORM,
+} from 'ngx-vest-forms';
 import { submissionPatternsContent } from './submission-patterns.content';
 import { SubmissionPatternsFormBody } from './submission-patterns.form';
 import { submissionPatternsSuite } from './submission-patterns.validations';
@@ -34,6 +41,19 @@ type Scenario = 'normal' | 'email-taken' | 'server-error' | 'network-error';
 
 /** The four distinct submission concerns, modelled as one page state. */
 type SubmissionState = 'editing' | 'submitting' | 'server-error' | 'success';
+
+/**
+ * Error maps are keyed by plain strings, so this narrows a key to a field of
+ * this form before the summary hands it to `focusField`. The summary itself
+ * stays string-keyed like the library's error maps, so it lists every error.
+ * The `Object.hasOwn` check only works because this model is flat; a form
+ * with nested paths such as `address.street` needs a path-aware check.
+ */
+function isSubmissionPatternsField(
+  path: string
+): path is FormFieldName<SubmissionPatternsModel> {
+  return path === ROOT_FORM || Object.hasOwn(submissionPatternsShape, path);
+}
 
 /**
  * Submission Patterns — models the FOUR submission concerns distinctly:
@@ -206,7 +226,9 @@ export class SubmissionPatternsPageComponent {
   }
 
   protected focusField(field: string): void {
-    this.formBody()?.focusField(field);
+    if (isSubmissionPatternsField(field)) {
+      this.formBody()?.focusField(field);
+    }
   }
 
   /** Retry re-submits the exact same value through the same path. */
