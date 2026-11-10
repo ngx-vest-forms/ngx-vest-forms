@@ -13,6 +13,8 @@ export type StarterFormModel = NgxDeepPartial<{
   message: string;
 }>;
 
+// Mirrors shared/validations/email.validations.ts; inlined so this file copies
+// into another app on its own.
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**

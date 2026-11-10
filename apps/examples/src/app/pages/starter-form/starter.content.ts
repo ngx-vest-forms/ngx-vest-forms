@@ -26,7 +26,7 @@ export const starterContent = defineExampleContent({
       {
         title: 'Copy this baseline',
         points: [
-          'Copy starter.form.ts and starter.validations.ts; nothing else is needed',
+          'Copy starter.form.ts and starter.validations.ts; the suite needs the vest package, and the CSS classes are cosmetic',
           'Every public symbol used here is part of the supported API surface',
           'Suites are plain Vest specs you can unit-test without rendering',
         ],

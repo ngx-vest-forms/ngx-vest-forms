@@ -1,7 +1,7 @@
 import { Component, signal, viewChild } from '@angular/core';
 import {
   createFormFeedbackSignals,
-  type FormDirective,
+  FormDirective,
   type NgxDeepRequired,
   type NgxSubmitSettledEvent,
   NgxVestForms,
@@ -27,7 +27,10 @@ const starterFormShape: NgxDeepRequired<StarterFormModel> = {
   imports: [NgxVestForms],
   template: `
     @if (submittedValue(); as sent) {
-      <p role="status" class="mb-6 rounded-lg border p-4 text-sm">
+      <p
+        role="status"
+        class="mb-6 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-300"
+      >
         <strong>Message sent.</strong> Thanks {{ sent.name }}, we'll reply to
         {{ sent.email }} shortly.
       </p>
@@ -35,7 +38,6 @@ const starterFormShape: NgxDeepRequired<StarterFormModel> = {
 
     <form
       ngxVestForm
-      #vestForm="ngxVestForm"
       [suite]="suite"
       [formValue]="formValue()"
       (formValueChange)="formValue.set($event)"
@@ -110,8 +112,9 @@ export class StarterFormComponent {
   protected readonly formValue = signal<StarterFormModel>({});
   protected readonly submittedValue = signal<StarterFormModel | null>(null);
 
-  private readonly vestForm =
-    viewChild<FormDirective<StarterFormModel>>('vestForm');
+  private readonly vestForm = viewChild.required(
+    FormDirective<StarterFormModel>
+  );
 
   /** Packaged form state; the page reads it for the form-state card. */
   readonly feedback = createFormFeedbackSignals(this.vestForm);
@@ -127,7 +130,7 @@ export class StarterFormComponent {
 
   protected reset(): void {
     this.submittedValue.set(null);
-    this.vestForm()?.resetForm({});
     this.formValue.set({});
+    this.vestForm().resetForm();
   }
 }
