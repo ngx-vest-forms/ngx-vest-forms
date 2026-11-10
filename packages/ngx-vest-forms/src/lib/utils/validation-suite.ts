@@ -122,7 +122,7 @@ export type NgxSuiteRunResult = {
  * );
  * ```
  *
- * @see {@link https://vestjs.dev/docs/writing_your_suite | Vest Documentation}
+ * @see {@link https://vestjs.dev/docs/writing_your_suite/vests_suite | Vest Documentation}
  */
 export type NgxVestSuite<T = unknown> = {
   /**

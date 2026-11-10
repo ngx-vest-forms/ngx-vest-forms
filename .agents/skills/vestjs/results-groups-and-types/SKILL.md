@@ -1,127 +1,101 @@
 ---
 name: results-groups-and-types
-description: Helps developers inspect Vest.js 6 results and structure larger typed suites. Use this whenever the user mentions `isValid`, `hasErrors`, `getErrors`, `getWarnings`, `getMessage`, `afterEach`, `afterField`, `isPending`, `isTested`, `group`, `each`, execution `mode`, multi-step forms, dynamic collections, `result.value`, or asks how to type suites and result APIs in TypeScript.
+description: Reading Vest 6 results and structuring larger typed suites. Read it for result selectors (`isValid`, `hasErrors`, `getErrors`, `isPending`, `isTested`), `group`, `each`, execution `mode`, multi-step forms, dynamic lists, typed suites, `result.value`, or Standard Schema interop.
 ---
 
-# Vest.js 6 results, groups, and type guidance
+# Vest 6 results, groups and types
 
-Use this skill when the question is about **reading suite state, organizing larger suites, or adding type safety**.
+The invariants live in the router, [`../SKILL.md`](../SKILL.md).
 
-## Result access model
+## Read the result
 
-Vest exposes the same suite state in three equivalent ways:
+The same state is available from three places: the value `suite.run(data)` returns, `suite.get()`, and the selector methods on the suite itself. Use one of them per example.
 
-1. the immediate result object returned by `suite.run(model)` (or `suite.only(field).run(model)` for focused runs)
-2. methods called directly on the suite
-3. `suite.get()`
+| Question                                   | Selector                                                      |
+| ------------------------------------------ | ------------------------------------------------------------- |
+| does this field, or the suite, have errors | `hasErrors(field?)`                                           |
+| the messages                               | `getErrors(field?)`, `getWarnings(field?)`                    |
+| the first message                          | `getError(field?)`, `getWarning(field?)`, `getMessage(field)` |
+| warnings present                           | `hasWarnings(field?)`                                         |
+| async tests still running                  | `isPending(field?)`                                           |
+| has this field been validated yet          | `isTested(field)`                                             |
+| can the form be submitted                  | `isValid(field?)`                                             |
 
-Use whichever is clearest for the situation, but keep the choice consistent within one example.
+`isValid()` is `true` only when every required test ran and passed. It is `false` while a field is untested or pending, so `!isValid()` is no reason to show an error; `hasErrors(field)` is.
 
-When the suite contains async tests, the returned result is also promise-like: sync selectors still work immediately, and `await result` gives the fully settled result.
-
-## Result and completion helpers to reach for first
-
-- `isValid()` when the user asks about overall or field validity
-- `hasErrors()` / `hasWarnings()` for quick checks
-- `getErrors()` / `getWarnings()` when the messages matter
-- `getError()` / `getWarning()` / `getMessage()` when the user needs the first message rather than arrays
-- `isPending()` for async state
-- `isTested()` for “has this field been validated yet?”
-- `await suite.run()`, `suite.afterEach()`, or `suite.afterField()` when the user needs completion callbacks
-
-If the user only wants to know whether a field currently has problems, prefer `hasErrors(field)` over manual inspection of arrays.
-
-## Run metadata and completion
-
-Reach for run metadata when the question is about “what happened in this run?” rather than just “is it valid?”
-
-- `result.run.data` for the raw/parsed input of the current run
-- `result.run.time` for execution timing metadata
-- `result.run.focus` for the exact `only` / `skip` / `onlyGroup` / `skipGroup` modifiers used in that run
-
-For completion handling in Vest 6:
-
-- prefer `await suite.run(data)` for one final settled result
-- use `suite.afterEach(() => { ... }).run(data)` for suite-wide reactive updates
-- use `suite.afterField('fieldName', () => { ... }).run(data)` for field-specific completion
+`result.run` describes the run itself: `run.focus` holds the focus modifiers, `run.data.raw` the input, `run.data.parsed` the schema output, `run.time` the `Date` of the run.
 
 ## Execution modes
 
-Vest 6 supports three execution modes:
+Call `mode(...)` at the top of the suite callback:
 
-- `Modes.EAGER` — default; stop after the first failure for a field
-- `Modes.ALL` — collect all failures for a field
-- `Modes.ONE` — stop after the first failing test across the suite
+```ts
+import { Modes, create, enforce, mode, test } from 'vest';
 
-Practical guidance:
+export const passwordSuite = create((data: { password?: string }) => {
+  mode(Modes.ALL);
 
-- use `EAGER` for interactive validation
-- use `ALL` when the user wants a fuller error list
-- use `ONE` for fast-fail flows, often server-side
+  test('password', 'At least 8 characters', () => {
+    enforce(data.password).longerThanOrEquals(8);
+  });
+  test('password', 'At least one digit', () => {
+    enforce(data.password).matches(/[0-9]/);
+  });
+});
+```
 
-## Grouping tests
+| Mode                    | Behaviour                                  | Fits                                |
+| ----------------------- | ------------------------------------------ | ----------------------------------- |
+| `Modes.EAGER` (default) | each field stops at its first failing test | interactive forms                   |
+| `Modes.ALL`             | every test runs                            | a full list of problems per field   |
+| `Modes.ONE`             | the suite stops at the first failing test  | fail-fast checks, often server-side |
 
-Use named `group(name, callback)` when the group needs to appear in the result object.
+## Groups
 
-That is especially useful for:
+`group('name', () => { ... })` names a section, such as a step of a multi-step form. A named group can be focused (`suite.focus({ onlyGroup: 'name' })`) and queried: `isValidByGroup`, `hasErrorsByGroup`, `hasWarningsByGroup`, `getErrorsByGroup`, `getWarningsByGroup`.
 
-- multi-step or multi-tab forms
-- flows where each section needs separate status
-- querying `hasErrorsByGroup(...)`, `hasWarningsByGroup(...)`, `getErrorsByGroup(...)`, `getWarningsByGroup(...)`, or `isValidByGroup(...)`
+Name a group only when something focuses or queries it by that name.
 
-Use unnamed `group(callback)` when the goal is structural grouping without exposing a named group in results.
+## Dynamic lists
 
-## Dynamic collections with `each`
+`each(list, (item) => { ... })` declares tests per item. Give every test in it a stable key as the last argument, taken from the item's identity:
 
-Use `each(list, callback)` for repeated or user-generated fields.
+```ts
+each(data.travelers, (traveler) => {
+  test(
+    `travelers.${traveler.id}.name`,
+    'Name is required',
+    () => {
+      enforce(traveler.name).isNotBlank();
+    },
+    traveler.id
+  );
+});
+```
 
-Important rule: provide a **stable key** as the last argument to each dynamic `test(...)` call when ordering or membership can change. Do not use shifting indexes as durable identity when a better item key exists.
+The result of a test follows its key when items are inserted, removed or reordered. An array index is a stable key only when the list never reorders.
 
-## TypeScript guidance
+## Types
 
-Vest 6 supports typed suites through `create(...)` and typed result access on the returned suite object.
+Pick the lightest form that gives the names you need:
 
-Use typed suites when:
+| Form                                                                           | Gives                                                                                    |
+| ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| `create((data: Model) => { ... })`                                             | typed `data`; field and group names are any string                                       |
+| `create<{ fields: 'username' \| 'email'; groups: 'auth' }>((data) => { ... })` | field and group names checked in `test`, `only`, `focus`, `resetField` and the selectors |
+| `create((data) => { ... }, enforce.shape({ ... }))`                            | `data` and the field names inferred from the schema                                      |
+| `create<null>((data: any) => { ... })`                                         | opts out: every name is accepted                                                         |
 
-- field names should autocomplete
-- result access should reject impossible field names
-- group names should stay constrained
+`const { test, group, include, optional } = suite;` gives helpers that carry the suite's field and group names.
 
-If the user wants typed runtime helpers like `group` or `test`, keep the suite typed and let the suite-object methods (`run`, `only`, `focus`, `get`) carry the field/group information.
+A schema suite adds typed output: `suite.run(...)` takes the schema's input type, the callback and `result.value` use its output type, and `result.value` exists only when `result.valid === true`. A failed result carries `result.issues`, a list of `{ message, path }`.
 
-When the suite is schema-aware (`create(callback, schema)`), remember the parser typing model:
+The exported types are `Suite`, `SuiteResult`, `SuiteSummary` and `SuiteConfig`.
 
-- `suite.run(...)` accepts the schema input type
-- the callback data uses the parsed output type
-- `result.value` holds the parsed output when the suite is valid
-- `result.types.input` / `result.types.output` can carry the schema input/output typing information
+## Standard Schema
 
-## Pitfalls to fix immediately
+A suite is a Standard Schema. Pass the suite itself to a library that accepts one; that library calls `suite['~standard'].validate(data)`. For normal runs keep `suite.run()` and `suite.runStatic()`.
 
-- using custom dirty state instead of `isTested()`
-- using `getErrors()` when `hasErrors()` would be simpler and less fragile
-- naming groups even though the user never needs group-level results
-- forgetting stable keys in `each(...)`
-- claiming only `EAGER` and `ALL` exist when `ONE` also exists
-- teaching result `.done()` as if it still exists in Vest 6
-- teaching direct callable suite execution like `suite(model, field)` instead of `run()`/`only(...).run()`
+## Answer shape
 
-## Output style
-
-When answering:
-
-- match the result method to the user’s question instead of dumping the whole API
-- show named groups only when group queries matter
-- keep TypeScript unions small and realistic in examples
-
-## References to consult when needed
-
-- [`../SKILL.md`](../SKILL.md) for the Vest 6 invariants
-- `https://vestjs.dev/docs/writing_your_suite/accessing_the_result`
-- `https://vestjs.dev/docs/writing_your_suite/handling_completion`
-- `https://vestjs.dev/docs/writing_your_suite/execution_modes`
-- `https://vestjs.dev/docs/writing_your_suite/schema_validation`
-- `https://vestjs.dev/docs/writing_tests/advanced_test_features/grouping_tests`
-- `https://vestjs.dev/docs/writing_tests/advanced_test_features/dynamic_tests`
-- `https://vestjs.dev/docs/typescript_support`
-- `https://vestjs.dev/docs/api_reference`
+Answer with the one selector that matches the question, and add group or type machinery only when the user's code needs it.

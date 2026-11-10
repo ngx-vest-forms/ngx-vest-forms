@@ -1,139 +1,65 @@
 ---
 name: vestjs
-description: Routes Vest.js 6 questions to the right workflow. Use this whenever the user broadly asks about Vest.js validation, wants help writing or refactoring a suite, asks for modern best practices, or mentions `only`, `focus`, `skip`, `skipGroup`, `onlyGroup`, `include`, `skipWhen`, `omitWhen`, `optional`, `warn`, `useWarn`, `afterEach`, `afterField`, `group`, `each`, `mode`, async validations, result access, typed suites, or native schema-aware suites without yet narrowing the exact problem.
+description: Writes, reviews and debugs Vest.js 6 validation suites. Use for a new or refactored suite, focused runs (`suite.only`, `suite.focus`), conditional tests (`skipWhen`, `omitWhen`, `optional`, `include`), async tests and warnings, result access, groups and `each`, typed and schema suites, custom `enforce` rules, server-side runs, or an upgrade from Vest 5.
 license: MIT
 metadata:
   author: ngx-vest-forms
-  version: "1.0"
 ---
 
-# Vest.js router skill
+# Vest.js
 
-Use this as the broad entry point for **Vest.js guidance**.
+Vest validates with a suite of named tests and keeps the result of every field between runs. The guidance in this skill is for Vest 6.3.
 
-## Version contract
+## 1. Pin the installed version
 
-This skill is a **stable public router**.
+Before writing code, read the `version` field of `node_modules/vest/package.json`. When dependencies are not installed yet, use the `vest` range in the project's `package.json`. The step is done when you know which branch applies.
 
-It currently defaults to the **Vest 6.x** lane.
+| Installed            | Branch                                                                                                                                                                                                                                                |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `6.x`                | Continue with this skill.                                                                                                                                                                                                                             |
+| `5.x`                | Answer from the Vest 5 docs; every page lives under `https://vestjs.dev/docs/5.x/`. Vest 5 code is `staticSuite(...)`, a callable suite (`suite(data, field)`) and result `.done(cb)`. Say that the code targets Vest 5, and offer the upgrade below. |
+| user asks to upgrade | Apply the replacements below, then check the code against the invariants. The full list is the [upgrade guide](https://vestjs.dev/docs/upgrade_guide).                                                                                                |
 
-- Prefer the current Vest 6 documentation set.
-- Do not reintroduce the Vest 5 callback-field pattern as if it were current guidance.
-- If the user is explicitly migrating older 5.x code, call that out and explain the API differences instead of papering over them.
+| Vest 5                             | Vest 6                                                                               |
+| ---------------------------------- | ------------------------------------------------------------------------------------ |
+| `suite(data)`                      | `suite.run(data)`                                                                    |
+| `staticSuite(cb)` + `suite(data)`  | `create(cb)` + `suite.runStatic(data)`                                               |
+| `promisify(suite)(data)`           | `await suite.run(data)`                                                              |
+| `result.done(cb)`                  | `suite.afterEach(cb).run(data)`, or `await suite.run(data)`                          |
+| `result.done('field', cb)`         | `suite.afterField('field', cb).run(data)`                                            |
+| `test.memo(name, msg, fn, deps)`   | `memo(() => { test(name, msg, fn); }, deps)` with `import { memo } from 'vest/memo'` |
+| `only(field)` driven by a UI event | `suite.only(field).run(data)`                                                        |
 
-Read `references/version-selection.md` before changing that default or adding another major-version lane.
+## 2. Use the installed API
 
-## Internal versioned layout
+The authority for which exports and methods exist is the installed type declarations: the file named by the `types` field of `node_modules/vest/package.json`. The docs describe a newer state than the published package and sometimes differ from it. Example: the docs import `compose` from `'vest'`, and Vest 6.3.4 exports it only from `n4s`. When a doc sample fails to compile or behaves differently, trust the installed package and say so.
 
-This package keeps `vestjs` as the installable public skill name, while version-specific material lives internally.
+For the docs, start from the index [`https://vestjs.dev/llms.txt`](https://vestjs.dev/llms.txt), which lists every page. The problem-first guides live under `https://vestjs.dev/docs/guides/`.
 
-- `references/5.x/` contains historical 5.x source notes.
-- `evals/5.x.json` contains historical 5.x eval coverage.
-- `evals/evals.json` should reflect the active supported lane.
-
-If new major-version support is added later, mirror the same structure under a new versioned lane rather than renaming the public skill immediately.
-
-## Vest 6 invariants
+## 3. Hold the invariants
 
 Every answer and code sample follows these. When the user's code breaks one, correct it before anything else.
 
-1. **Model-only suite.** `create((model) => { ... })`, run as `suite.run(model)`. Vest 5's `(model, field)` callbacks, callable suites (`suite(model, field)`) and `staticSuite(...)` are gone.
-2. **Focused Runs at the call site.** `suite.only(field).run(model)` or `suite.focus(...)`, with `skipGroup` / `onlyGroup` when the target is a named group. Inside the callback, `only()` is a Vest 5 pattern.
-3. **`suite.run()` is stateful.** Call `suite.reset()` on form reset and between tests that share a suite. Use `suite.runStatic(model)` for stateless and server-side runs.
-4. **Read validation state from the result.** `hasErrors`, `getErrors`, `isPending` and `isTested(field)` (whether the field's tests have run) replace parallel error and pending tracking. Interaction state such as dirty or touched belongs to the form controls, not the Suite.
-5. **Declarative conditions.** `skipWhen`, `omitWhen`, `include.when` and `optional` replace ad-hoc `if` branches. `omitWhen` makes an inactive branch stop affecting validity.
-6. **Cancellable async tests.** Destructure `signal` from the test context and pass it to the request: `test('email', 'Email is taken', async ({ signal }) => { await check(model.email, { signal }); })`. Vest aborts the previous run's signal when the same test runs again; `run()` takes only the model. Await completion with `await suite.run(model)`, `suite.afterEach()` or `suite.afterField()`; result `.done()` is gone.
-7. **Warnings.** A Warning leaves its field valid. Call `warn()` before the first `await` in the test body; after an `await`, use `useWarn()`.
-8. **Schema suites.** `create((data) => { ... }, enforce.shape(...))` when native schema validation helps. Focused Runs subset the schema automatically.
+1. **Suite object.** `create((data) => { ... })` returns a suite. Run it with `suite.run(data)`.
+2. **Focus at the call site.** A UI event runs `suite.only(field).run(data)` or `suite.focus({ only, skip, onlyGroup, skipGroup }).run(data)`. A focus applies to the next run only, and the other fields keep their stored results. `only()` and `skip()` inside the callback are for inclusion that business data decides.
+3. **`suite.run()` is stateful.** `suite.reset()` starts a new form; `suite.resetField(field)` clears one field and cancels its pending async tests; `suite.remove(field)` drops a field that no longer exists. `suite.runStatic(data)` is the stateless run for servers, scripts and unit tests.
+4. **Read validation state from the result.** `hasErrors`, `getErrors`, `isPending` and `isTested(field)` replace hand-kept error and pending flags. `isValid()` is also `false` while a required test is untested or pending, so show messages from `hasErrors`. Dirty and touched state belong to the form, outside the suite.
+5. **Declarative conditions.** `skipWhen`, `omitWhen`, `include(...).when(...)` and `optional` replace `if` branches around tests. `omitWhen` is the one that stops an inactive section from counting toward validity.
+6. **Cancellable async tests.** The test takes `{ signal }` and passes it to the request. Vest aborts that signal when the same test runs again. Completion is `await suite.run(data)`, `suite.afterEach(cb)` or `suite.afterField(field, cb)`.
+7. **Warnings.** A warning leaves its field valid. Call `warn()` before the first `await` in the test body; for a severity decided after an `await`, take the setter from `useWarn()` first.
+8. **Schema suites.** `create((data) => { ... }, enforce.shape({ ... }))` validates and parses the input before the tests run. A focused run validates only the focused part of the schema, so decide a submit from a full `suite.run(data)`.
 
-## Available workflow sub-skills
+## 4. Route to the workflow
 
-Use these nested workflow sub-skills when the feature area is clear:
+Read the sub-skill whose triggers match; combine several when the question spans them.
 
-| Sub-skill | Use when | Path |
-|---|---|---|
-| `core` | first suites, `create`, `create(..., schema)`, `runStatic`, `test`, `enforce`, `suite.only`, stateful vs stateless usage | `core/SKILL.md` |
-| `conditional-control-flow` | `skip`, `focus`, `only`, `skipGroup`, `onlyGroup`, `include`, `skipWhen`, `omitWhen`, `optional`, dependent fields, conditional validation | `conditional-control-flow/SKILL.md` |
-| `async-and-warnings` | async tests, `AbortSignal`, username availability checks, `warn()`, `useWarn()`, `afterEach()`, `afterField()`, pending state, async hygiene | `async-and-warnings/SKILL.md` |
-| `results-groups-and-types` | result APIs, `isValid`, `hasErrors`, `run.focus`, `group`, `each`, execution modes, TypeScript generics, typed runtime helpers | `results-groups-and-types/SKILL.md` |
-| `enforce-and-custom-rules` | reusable `enforce` logic, `condition`, `extend`, `compose`, native schema-aware suites, `enforce.shape`, `enforce.record`, `enforce.lazy`, `enforce.tuple`, custom matcher typing | `enforce-and-custom-rules/SKILL.md` |
-| `server-side-validation` | API validation, `runStatic`, request isolation, stateless server flows, SSR hydration | `server-side-validation/SKILL.md` |
+| Sub-skill                                                       | Triggers                                                                                                                                                  |
+| --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`core`](core/SKILL.md)                                         | first suite, suite structure, `create`, `test`, `enforce` basics, which run to call                                                                       |
+| [`conditional-control-flow`](conditional-control-flow/SKILL.md) | `suite.only`, `suite.focus`, `skipGroup`, `onlyGroup`, `include`, `skipWhen`, `omitWhen`, `optional`, dependent fields, hidden sections, multi-step forms |
+| [`async-and-warnings`](async-and-warnings/SKILL.md)             | remote checks, stale requests, `signal`, `debounce`, `memo`, pending state, `warn()`, `useWarn()`, `afterEach`, `afterField`                              |
+| [`results-groups-and-types`](results-groups-and-types/SKILL.md) | result selectors, `group`, `each`, execution modes, typed suites, `result.value`, Standard Schema                                                         |
+| [`enforce-and-custom-rules`](enforce-and-custom-rules/SKILL.md) | `enforce.shape` and other schema rules, parsers, `enforce.condition`, `enforce.extend`, `compose`, `enforce.context()`, typing custom rules               |
+| [`server-side-validation`](server-side-validation/SKILL.md)     | request validation, `runStatic` on a server, error responses, `SuiteSerializer`, SSR                                                                      |
 
-## Route to the right workflow
-
-### Core suite setup
-
-Read `core/SKILL.md` when the user is:
-
-- starting a Vest suite from scratch
-- asking for a “proper” or idiomatic Vest example
-- unsure when to use `create`, `create(..., schema)`, or `runStatic`
-- asking about how Vest fits into app code at all
-
-### Conditional validation flow
-
-Read `conditional-control-flow/SKILL.md` when the user is:
-
-- deciding between `skipWhen`, `omitWhen`, and `optional`
-- wiring linked fields like password/confirm password
-- asking why skipped tests still affect validity
-- dealing with conditional sections, feature flags, or dependent fields
-
-### Async validation and warnings
-
-Read `async-and-warnings/SKILL.md` when the user is:
-
-- validating against a server or remote service
-- asking how to cancel stale async work
-- using `warn()` or `useWarn()` for non-blocking guidance
-- asking how to replace legacy `.done()` callbacks or why async completion callbacks are flaky
-
-### Results, groups, collections, and types
-
-Read `results-groups-and-types/SKILL.md` when the user is:
-
-- inspecting suite output or field state
-- asking about `isTested`, `isPending`, `getErrors`, or group-specific queries
-- working with multi-step forms or grouped validations
-- validating dynamic arrays with `each`
-- asking for typed suites in TypeScript
-
-### Enforce composition and custom rules
-
-Read `enforce-and-custom-rules/SKILL.md` when the user is:
-
-- trying to make a reusable matcher or domain validator
-- asking how to use native schema-aware suites with `create(..., schema)`
-- asking about `enforce.condition`, `enforce.extend`, or `compose`
-- asking about `enforce.shape`, `enforce.record`, `enforce.lazy`, or `enforce.tuple`
-- designing custom rule APIs or TypeScript matcher declarations
-- validating object shapes with reusable composed rules
-
-### Server-side validation
-
-Read `server-side-validation/SKILL.md` when the user is:
-
-- validating request payloads or backend DTOs
-- asking how to use Vest safely on Node/server runtimes
-- deciding between stateful `suite.run(...)` and stateless `suite.runStatic(...)` on the server
-- migrating old `staticSuite(...)` examples to Vest 6
-- asking about fast-fail vs full error collection for API responses
-
-## Routing heuristics
-
-- If the user mentions several of these at once, combine the relevant sub-skills instead of forcing a single lens.
-- If the user is working specifically with Angular template-driven forms and ngx-vest-forms, combine this skill with the `ngx-vest-forms` skill rather than answering as if Vest were the only moving part.
-- If the user only wants raw API signatures from the library docs, prioritize documentation-backed answers over inventing abstractions.
-- If the question is mostly about `enforce` rule design or backend payload validation, do not over-route it through the basic `core` skill just because a suite also exists.
-
-## Core references
-
-- `references/version-selection.md`
-- `references/5.x/source-map.md`
-- `https://vestjs.dev/docs/get_started`
-- `https://vestjs.dev/docs/api_reference`
-- `https://vestjs.dev/docs/typescript_support`
-
-## Goal
-
-Use this skill to keep **`vestjs` as the stable entry point**, identify the correct version lane for the current context, and then route into the matching focused sub-skill instead of giving a shapeless overview of the whole library.
+In an Angular project that uses ngx-vest-forms, combine this skill with the `ngx-vest-forms` skill: the form directive runs the suite, and that skill holds the rules for the suite's shape.

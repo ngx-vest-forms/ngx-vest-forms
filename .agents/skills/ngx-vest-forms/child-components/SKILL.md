@@ -27,6 +27,8 @@ import {
   type NgxDeepPartial,
 } from 'ngx-vest-forms';
 
+type Address = { street: string; city: string };
+
 @Component({
   selector: 'app-address-section',
   imports: [NgxVestForms],

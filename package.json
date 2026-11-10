@@ -19,6 +19,8 @@
     "e2e": "nx run examples-e2e:e2e",
     "format": "oxfmt \"{apps,packages}/**/*.{ts,js,json,css,scss,html}\"",
     "format:check": "oxfmt --check \"{apps,packages}/**/*.{ts,js,json,css,scss,html}\"",
+    "check:skills": "node .github/scripts/check-agent-skills.mjs && node .github/scripts/check-skill-snippets.mjs",
+    "verify": "pnpm format:check && pnpm check:skills && nx run-many --target=lint,lint-templates && tsc --noEmit -p packages/ngx-vest-forms/tsconfig.spec.json && nx run ngx-vest-forms:build --configuration=production && nx run ngx-vest-forms:test --coverage && nx run-many --target=test --exclude=ngx-vest-forms",
     "semantic-release": "semantic-release",
     "prepare": "husky"
   },

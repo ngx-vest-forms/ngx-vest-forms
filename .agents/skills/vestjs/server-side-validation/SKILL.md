@@ -1,80 +1,76 @@
 ---
 name: server-side-validation
-description: Helps developers use Vest.js 6 safely in server and request-validation workflows. Use this whenever the user mentions API validation, Node/server-side Vest usage, `runStatic`, request isolation, fast-fail behavior, SSR hydration, or asks how to structure Vest for backend or submit-only validation.
+description: Vest 6 on a server. Read it for request or DTO validation, `runStatic`, isolation between requests, error responses, fail-fast modes, `SuiteSerializer`, or SSR hydration of validation state.
 ---
 
-# Vest.js 6 server-side validation guidance
+# Vest 6 server-side validation
 
-Use this skill when the problem is about **request isolation, stateless validation, or backend-oriented execution**.
+The invariants live in the router, [`../SKILL.md`](../SKILL.md).
 
-## Core rule
+## Validate a request
 
-On the server, treat validation as **stateless by default**.
+A server validates each request in isolation, so the run is `suite.runStatic(data)`: it starts from an empty state every time, and no result of one user reaches another.
 
-Vest’s normal stateful behavior is useful in interactive clients, but shared suite state across requests can produce incorrect results.
+```ts
+import { create, enforce, test } from 'vest';
 
-## Preferred approach
+type SignupRequest = { email?: string; password?: string };
 
-Use `suite.runStatic(data)` for server-side or request-style validation.
+const signupSuite = create((data: SignupRequest) => {
+  test('email', 'Email is required', () => {
+    enforce(data.email).isNotBlank();
+  });
+  test('password', 'Password has at least 12 characters', () => {
+    enforce(data.password).longerThanOrEquals(12);
+  });
+});
 
-- each run creates a fresh result
-- there is no cross-request state leakage
-- there is no need to `reset()` between calls
-- if async tests exist, the returned result may still be promise-like, so `await` it or handle the thenable result explicitly
+export async function validateSignup(body: SignupRequest) {
+  const result = await signupSuite.runStatic(body);
 
-In Vest 6, `staticSuite(...)` was removed. If the user shows older examples or code that still uses it, migrate them to `create(...)` plus `runStatic(...)`.
+  return result.isValid()
+    ? { ok: true as const }
+    : { ok: false as const, errors: result.getErrors() };
+}
+```
 
-## Stateful fallback
+- `await` the run whenever the suite has, or may get, async tests; the response then uses the settled result.
+- `result.getErrors()` is a map of field name to messages, ready for the response body.
+- Share the suite file between client and server: the client calls `suite.only(field).run(data)`, the server calls `suite.runStatic(data)`.
 
-If a regular `create(...)` suite must be reused on the server in a stateful way, that should be an intentional and well-contained choice. Most request validation should still call `suite.runStatic(data)`.
+## Choose the mode
 
-Stateful server usage is the exception, not the default.
+| The response needs               | Mode                    |
+| -------------------------------- | ----------------------- |
+| the first problem per field      | `Modes.EAGER` (default) |
+| every problem per field          | `Modes.ALL`             |
+| one problem, as fast as possible | `Modes.ONE`             |
 
-## Execution mode guidance
+Set it with `mode(...)` at the top of the suite callback; [`../results-groups-and-types/SKILL.md`](../results-groups-and-types/SKILL.md) has the example.
 
-Choose mode based on what the server needs to return:
+## Carry state to the client
 
-- `Modes.ONE` for fast-fail request validation when one failure is enough
-- `Modes.ALL` when the API should return a fuller error list
-- `Modes.EAGER` when field-level short-circuiting is still the best tradeoff
+For SSR or a server action that returns validation state, serialize the server result and resume the client suite from it:
 
-## Output shaping guidance
+```ts
+import { SuiteSerializer } from 'vest/SuiteSerializer';
+import { signupSuite } from './signup.suite';
 
-For server-side flows, prefer examples that show:
+// server: the string travels to the client with the response
+export function serializeSignup(body: unknown): string {
+  return SuiteSerializer.serialize(signupSuite.runStatic(body));
+}
 
-- input payload
-- suite run
-- `isValid()` or `hasErrors()`
-- structured `getErrors()` output for responses
+// client: the suite continues from the server's result
+export function resumeSignup(serialized: string): void {
+  SuiteSerializer.resume(signupSuite, serialized);
+}
+```
 
-If the suite includes async tests, show either `await suite.runStatic(data)` or an explicit thenable branch so the response only uses the settled result.
+Use this only when the client must continue from the server's result; a plain API validation returns `getErrors()`.
 
-Keep the example stateless unless the user explicitly asks about shared suite instances.
+## Answer shape
 
-## Full-stack note
+Start from `runStatic`, show the input, the run and the response body, and name the mode when the user asks about the response contents.
 
-If the user is asking about client/server continuity rather than backend-only validation, mention that Vest also supports suite serialization and resumption via `SuiteSerializer.serialize(...)` and `SuiteSerializer.resume(...)`. Do not drag that into a basic API validation answer unless it is relevant.
-
-## Pitfalls to fix immediately
-
-- using one long-lived stateful suite instance across requests without resets
-- recommending stateful `.run(...)` when `suite.runStatic(...)` would avoid cross-request state entirely
-- recommending removed `staticSuite(...)` in Vest 6 code
-- pretending server-side validation needs interactive field-scoped patterns by default
-- using the reset workaround as the primary example instead of the stateless option
-
-## Output style
-
-When answering:
-
-- start by explaining why request isolation matters
-- prefer `suite.runStatic(...)` first
-- call out the execution mode choice when the user mentions API response behavior
-
-## References to consult when needed
-
-- [`../SKILL.md`](../SKILL.md) for the Vest 6 invariants
-- `https://vestjs.dev/docs/server_side_validations`
-- `https://vestjs.dev/docs/suite_serialization`
-- `https://vestjs.dev/docs/writing_your_suite/execution_modes`
-- `https://vestjs.dev/docs/api_reference`
+The docs pages are `https://vestjs.dev/docs/server_side_validations` and `https://vestjs.dev/docs/suite_serialization`; the guides `client-server-validation` and `nextjs-server-actions` under `https://vestjs.dev/docs/guides/` show full flows.

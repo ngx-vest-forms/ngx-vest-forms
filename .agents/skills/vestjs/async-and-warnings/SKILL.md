@@ -1,137 +1,107 @@
 ---
 name: async-and-warnings
-description: Helps developers write safe async and warning-based validations in Vest.js 6. Use this whenever the user mentions async tests, server checks, username/email availability, `AbortSignal`, stale requests, `warn()`, `useWarn()`, non-blocking guidance, `afterEach()`, `afterField()`, pending state, or asks how to keep async validation responsive and correct.
+description: Async tests and warnings in Vest 6. Read it for remote checks such as username availability, stale or repeated requests, the per-test `signal`, `debounce`, `memo`, pending state, `warn()`, `useWarn()`, or completion with `afterEach` and `afterField`.
 ---
 
-# Vest.js 6 async and warning guidance
+# Vest 6 async tests and warnings
 
-Use this skill when the suite needs **remote work, cancellation, pending state, or non-blocking warnings**.
+The invariants live in the router, [`../SKILL.md`](../SKILL.md).
 
-## Core rules
+## Write an async test
 
-1. An async Vest test returns a promise or is declared `async`.
-2. In Vest 6, each async test receives an `AbortSignal` via the test context.
-3. Pass that `signal` into async work when supported.
-4. Debounce validation at the UI layer when remote checks would otherwise fire on every keystroke.
-5. Guard expensive async checks behind prerequisite sync validation.
-6. Call `warn()` synchronously at the top of the test body, or use `useWarn()` when warning severity must be set after an `await`.
-7. `suite.run()` returns a hybrid result object: sync selectors are available immediately, and you can `await` it for final completion.
-8. Register `suite.afterEach()` and `suite.afterField()` unconditionally; put branching logic inside the callback instead.
+Build in this order; the test is done when every step is present:
 
-## Recommended async pattern
+1. A synchronous test for the same field first, so the cheap rule fails before any request.
+2. The async test inside `skipWhen((result) => result.hasErrors(field), ...)`, so it waits until the synchronous rules pass.
+3. `async ({ signal }) => { ... }` as the test body, with `signal` passed to the request. Vest aborts the signal when the same test runs again, which cancels the stale request.
+4. A request limiter when the field fires often: `debounce` for bursts of input, `memo` for values that repeat. Neither one cancels a request, so step 3 stays.
+5. Pending UI from `result.isPending(field)`.
 
-1. Add a cheap synchronous test first.
-2. Use `skipWhen(res => res.hasErrors(field), ...)` to avoid firing remote validation when prerequisites already failed.
-3. Inside the async `test(...)`, accept `{ signal }`.
-4. Pass `signal` into `fetch` or any cancellable adapter.
-5. Use `isPending()` or `isPending(field)` to drive loading UI.
-6. Prefer `suite.only(field).run(model)` when async validation should follow the active field instead of the whole form.
-7. Use `await suite.run(data)`, `suite.afterEach()`, or `suite.afterField(field, ...)` depending on whether the caller needs one final result or reactive updates while async tests complete.
-
-## `AbortSignal` guidance
-
-Vest cancels stale async tests when the same test reruns before completion.
-
-The per-test `AbortSignal` arrives through the test context (`async ({ signal }) => …`). Note that `ngx-vest-forms` does NOT pass a signal into suite runs itself — Vest 6.3's `run()` has no per-run signal or hooks parameter (any args after the model are just forwarded to the suite callback), so the library calls `run(model)` and handles subscription teardown (unsubscribe, destroy, superseded runs) purely at the RxJS layer.
-
-Use the per-test signal to:
-
-- abort `fetch` requests
-- short-circuit work if `signal.aborted` is already true
-- prevent stale async completions from wasting time or clobbering intent
-
-Do not ignore the signal when the underlying API can accept it.
-
-Vest fires the prior run's `AbortSignal` when a new run for the same test ID starts. In ngx-vest-forms v3, each user edit triggers a fresh `suite.only(field).run(model)` through the directive's async validator, so Vest's internal stale-cancellation aborts the in-flight async test automatically — provided the test body passes `signal` to its underlying request.
-
-## Memoize deterministic async checks
-
-Wrap expensive async blocks in `memo()` when the result should be reused until a dependency changes.
-
-```typescript
-import { create, enforce, skipWhen, test } from 'vest';
+```ts
+import { create, enforce, skipWhen, test, warn } from 'vest';
+import debounce from 'vest/debounce';
 import { memo } from 'vest/memo';
 
-export const profileSuite = create((model: ProfileModel) => {
-  test('userId', 'User ID is required', () => {
-    enforce(model.userId).isNotBlank();
+type Signup = { username?: string; password?: string };
+
+export const signupSuite = create((data: Signup) => {
+  test('username', 'Username is required', () => {
+    enforce(data.username).isNotBlank();
   });
 
   skipWhen(
-    (res) => res.hasErrors('userId'),
+    (result) => result.hasErrors('username'),
     () => {
       memo(() => {
-        test('userId', 'User ID is already taken', async ({ signal }) => {
-          const response = await fetch(
-            `/api/users/${encodeURIComponent(model.userId!)}`,
-            { signal }
-          );
-          const { exists } = await response.json();
-          enforce(exists).isFalsy();
-        });
-      }, [model.userId]);
+        test(
+          'username',
+          'Username is already taken',
+          debounce(async ({ signal }) => {
+            const response = await fetch(
+              `/api/users/${encodeURIComponent(data.username ?? '')}`,
+              { signal }
+            );
+            enforce(response.status).equals(404);
+          }, 300)
+        );
+      }, [data.username]);
     }
   );
+
+  test('password', 'A password of 12 characters or more is stronger', () => {
+    warn();
+    enforce(data.password).longerThanOrEquals(12);
+  });
 });
 ```
 
-## `warn()` guidance
+## Limit requests
 
-Use `warn()` when the message is useful but should leave the field valid.
+| Tool                                       | Import                                 | Effect                                                                                                                              |
+| ------------------------------------------ | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `debounce(testBody, delayMs)`              | `import debounce from 'vest/debounce'` | waits for a pause in the runs and executes only the latest. A debounced test is pending even when its body is synchronous.          |
+| `memo(callback, deps, { cacheSize, ttl })` | `import { memo } from 'vest/memo'`     | reuses the tests and results of a dependency list it has seen. List every input that changes the outcome. `ttl` is in milliseconds. |
 
-Common examples:
+Skip `memo` when the answer must be fresh on every run.
 
-- password strength guidance
-- soft formatting recommendations
-- checks that inform rather than require
+## Wait for completion
 
-Important limitation: if the test is async, call `warn()` in the synchronous portion of the test body, ideally first. Calling it after `await` means it may not take effect.
+The run returns its result at once: synchronous selectors work immediately, and `isPending()` is `true` while async tests run.
 
-If the warning can only be determined after async work finishes, use `useWarn()` to capture a setter before `await` and call that setter later.
+| Caller needs                              | Use                                                    |
+| ----------------------------------------- | ------------------------------------------------------ |
+| one settled result, for example on submit | `const result = await suite.run(data)`                 |
+| a UI update after each test settles       | `suite.afterEach(() => render(suite.get())).run(data)` |
+| the completion of one field               | `suite.afterField('username', cb).run(data)`           |
 
-## Completion guidance
+Register `afterEach` and `afterField` on every run and put any condition inside the callback. When a newer run replaces an older one, awaiting the older run resolves with the newest result.
 
-In Vest 6, result `.done(...)` was removed.
+In ngx-vest-forms v3 the form directive starts a new focused run for every edit, so the stale request is aborted as long as the test passes `signal` on.
 
-The model changed because results are now hybrid run outputs: you can inspect sync state immediately, `await` the same run for async completion, or subscribe through suite-level completion hooks. That removes the extra result-level callback API and keeps completion handling on the suite itself.
+## Warnings
 
-Use these patterns instead:
+A warning is a message that leaves the field valid: password strength, a format recommendation.
 
-- `await suite.run(data)` when the caller can wait for one final result
-- `suite.afterEach(() => { ... }).run(data)` when the UI should update after the sync pass and again as async tests finish
-- `suite.afterField('fieldName', () => { ... }).run(data)` when only one field’s completion matters
+- Synchronous test, or a severity known before the first `await`: call `warn()` as the first statement of the test body.
+- Severity decided after an `await`: take the setter before the `await` and call it afterwards.
 
-If the user is migrating older code, translate it explicitly:
+```ts
+test(
+  'password',
+  'This password appears in a known breach',
+  async ({ signal }) => {
+    const markAsWarning = useWarn();
+    const breached = await isBreached(data.password, signal);
+    markAsWarning();
+    enforce(breached).isFalsy();
+  }
+);
+```
 
-- `res.done(cb)` → `suite.afterEach(cb).run(data)` or `await suite.run(data)`
-- `res.done('field', cb)` → `suite.afterField('field', cb).run(data)`
+Read warnings with `hasWarnings(field)` and `getWarnings(field)`.
 
-Register completion callbacks unconditionally. Put conditional logic inside the callback body instead.
+## Answer shape
 
-## Pitfalls to fix immediately
+Show the synchronous test and the async test of a field together, and say whether each message is an error or a warning.
 
-- async tests without `AbortSignal` handling
-- remote validation on every keystroke without debounce
-- remote validation that runs before basic local validation passes
-- calling `warn()` after `await`
-- forgetting `useWarn()` when a warning should be set after async work resolves
-- treating warnings as blocking errors
-- teaching result `.done(...)` as a current Vest 6 API
-- conditional `afterEach()` / `afterField()` registration around async runs
-- custom pending flags when `isPending()` already exists
-
-## Output style
-
-When answering:
-
-- show the sync prerequisite test and async test together
-- include the `{ signal }` parameter when relevant
-- explain whether the message is an Error (the field becomes invalid) or a Warning (`warn()`, the field stays valid)
-
-## References to consult when needed
-
-- [`../SKILL.md`](../SKILL.md) for the Vest 6 invariants
-- `https://vestjs.dev/docs/writing_tests/async_tests`
-- `https://vestjs.dev/docs/writing_tests/warn_only_tests`
-- `https://vestjs.dev/docs/writing_your_suite/accessing_the_result`
-- `https://vestjs.dev/docs/writing_your_suite/handling_completion`
+The guides `async-validation-race-conditions` and `memo-and-debounce` under `https://vestjs.dev/docs/guides/` show full flows.

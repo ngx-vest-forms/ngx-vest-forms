@@ -13,7 +13,11 @@ conventions already used across `apps/examples/src/app` (see
 examples). Ask for the **feature name** (kebab-case, e.g. `shipping-address`)
 and the **field list** if not given.
 
-## Conventions (do not deviate)
+## Conventions
+
+The Vest rules (`warn()` before the first `await`, the per-test `signal`,
+model-only suites) are the invariants of the `vestjs` skill; this list holds
+what is specific to this repo.
 
 - The suite is a **plain Vest spec — no Angular import** — so it is unit
   tested by calling it directly.
@@ -25,22 +29,6 @@ and the **field list** if not given.
   the form invalid. Conditional rules use `omitWhen(...)`. Root-Form Rules use the
   `ROOT_FORM` constant as the field key; a cross-field rule that belongs to a
   field stays on that field and is wired through `validationConfig`.
-- Warning rules must call `warn()` **before any `await`** — after the test
-  suspends on `await`, `warn()` no longer registers the warning severity. If
-  severity must be decided after async work, use `useWarn()` instead.
-- Async-test cancellation is **automatic** in Vest 6 via the per-test `signal`
-  payload — no manual abort wiring. Destructure `signal` from the test context
-  and forward it into the request. Callers do **not** pass an `AbortSignal` or
-  hooks into `suite.run()`; in Vest 6.3 `run()`/`runStatic()` have no such
-  parameter (args after the model are forwarded to the suite callback as-is).
-  Canonical pattern:
-
-  ```ts
-  test('email', 'Email is already taken', async ({ signal }) => {
-    await check(model.email, { signal });
-  });
-  ```
-
 - Spec uses Vitest (`describe/it/expect`) and drives the suite with
   `suite.only('<field>').run(model)` asserting `hasErrors` / `getErrors` /
   `hasWarnings` / `getWarnings`.
@@ -108,12 +96,12 @@ describe('<Pascal> Validations', () => {
 
 ## After scaffolding
 
-Run the new spec through Nx, never raw vitest:
+Run the new spec with the `test` target of the project that owns the files:
 
 ```bash
-pnpm nx run ngx-vest-forms:test
+pnpm nx run examples:test
 ```
 
-(or the owning app's `test` target). Write at least one test per `test()`
+Write at least one test per `test()`
 rule — including the negative/omitted-condition path and any `warn()` rule —
 mirroring the depth of `travel.validations.spec.ts`.
