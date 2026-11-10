@@ -1,8 +1,8 @@
-import { type NgxVestSuite } from 'ngx-vest-forms';
+import type { NgxVestSuite } from 'ngx-vest-forms';
 import { create, enforce, omitWhen, test } from 'vest';
 import {
   SEAT_LIMITS,
-  SignalFormsInteropModel,
+  type SignalFormsInteropModel,
 } from '../../models/signal-forms-interop.model';
 
 /**

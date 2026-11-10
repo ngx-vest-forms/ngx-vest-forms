@@ -1,4 +1,4 @@
-import { NgxDeepPartial, NgxDeepRequired } from 'ngx-vest-forms';
+import type { NgxDeepPartial, NgxDeepRequired } from 'ngx-vest-forms';
 
 /**
  * The canonical starter model: a small, opinionated contact form.

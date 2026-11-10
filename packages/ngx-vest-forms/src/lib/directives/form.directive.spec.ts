@@ -5,15 +5,15 @@ import {
   ErrorHandler,
   forwardRef,
   signal,
-  Type,
+  type Type,
   viewChild,
   ViewChild,
 } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { type ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
-import { isObservable, Observable } from 'rxjs';
+import { isObservable, type Observable } from 'rxjs';
 import {
   create,
   enforce,
@@ -32,7 +32,7 @@ import {
   vi,
 } from 'vitest';
 import type { StandardSchemaV1 } from '../../public-api';
-import {
+import type {
   FormDirective,
   NgxFieldBlurEvent,
   NgxSubmitSettledEvent,

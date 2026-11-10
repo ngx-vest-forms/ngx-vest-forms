@@ -1,20 +1,20 @@
 import { Component, input, output, viewChild } from '@angular/core';
 import {
   createFormFeedbackSignals,
-  FormDirective,
-  NgxValidationConfig,
+  type FormDirective,
+  type NgxValidationConfig,
   NgxVestForms,
-  NgxVestSuite,
+  type NgxVestSuite,
   provideFormContract,
 } from 'ngx-vest-forms';
 import {
   businessHoursFormContract,
-  BusinessHoursFormModel,
+  type BusinessHoursFormModel,
 } from '../../models/business-hours-form.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import {
   BusinessHoursComponent,
-  BusinessHoursMap,
+  type BusinessHoursMap,
 } from './ui/business-hours/business-hours.component';
 
 @Component({

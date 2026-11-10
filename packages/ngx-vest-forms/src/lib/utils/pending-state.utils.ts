@@ -1,4 +1,10 @@
-import { effect, Injector, isSignal, Signal, signal } from '@angular/core';
+import {
+  effect,
+  type Injector,
+  isSignal,
+  type Signal,
+  signal,
+} from '@angular/core';
 
 /**
  * Options for configuring debounced pending state behavior.

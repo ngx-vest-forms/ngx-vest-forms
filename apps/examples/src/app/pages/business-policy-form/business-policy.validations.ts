@@ -1,6 +1,6 @@
-import { NgxVestSuite, ROOT_FORM } from 'ngx-vest-forms';
+import { type NgxVestSuite, ROOT_FORM } from 'ngx-vest-forms';
 import { create, enforce, omitWhen, test, warn } from 'vest';
-import { BusinessPolicyModel } from '../../models/business-policy.model';
+import type { BusinessPolicyModel } from '../../models/business-policy.model';
 
 /**
  * EU member-state country codes that trigger the conditional VAT-ID rule.

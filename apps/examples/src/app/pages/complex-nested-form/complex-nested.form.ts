@@ -2,23 +2,23 @@ import { KeyValuePipe } from '@angular/common';
 import {
   Component,
   computed,
-  ElementRef,
+  type ElementRef,
   input,
   output,
   viewChild,
 } from '@angular/core';
 import {
   createFormFeedbackSignals,
-  FormDirective,
+  type FormDirective,
   type NgxSubmitSettledEvent,
   NgxVestForms,
-  NgxVestSuite,
+  type NgxVestSuite,
   provideFormContract,
 } from 'ngx-vest-forms';
 import {
   complexNestedContract,
-  ComplexNestedModel,
-  TeamMemberModel,
+  type ComplexNestedModel,
+  type TeamMemberModel,
 } from '../../models/complex-nested.model';
 import { RemovalFeedback } from '../../shared/removal-feedback';
 import { AddressComponent } from '../../ui/address/address.component';

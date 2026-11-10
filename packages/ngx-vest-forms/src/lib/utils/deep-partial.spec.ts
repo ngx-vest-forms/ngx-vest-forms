@@ -1,5 +1,5 @@
 import { describe, expect, expectTypeOf, it } from 'vitest';
-import { NgxDeepPartial } from './deep-partial';
+import type { NgxDeepPartial } from './deep-partial';
 
 describe('NgxDeepPartial', () => {
   it('should correctly handle nested objects', () => {

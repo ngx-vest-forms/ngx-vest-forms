@@ -1,21 +1,21 @@
 import {
   DestroyRef,
   Directive,
-  DoCheck,
+  type DoCheck,
   ElementRef,
   inject,
   Injector,
   input,
-  OnInit,
+  type OnInit,
 } from '@angular/core';
 import {
-  AbstractControl,
-  AsyncValidator,
+  type AbstractControl,
+  type AsyncValidator,
   NG_ASYNC_VALIDATORS,
   NgModel,
-  ValidationErrors,
+  type ValidationErrors,
 } from '@angular/forms';
-import { Observable, tap } from 'rxjs';
+import { type Observable, tap } from 'rxjs';
 import { scheduleMicrotask } from '../utils/destroy-scheduler';
 import { getFormControlField } from '../utils/form-utils';
 import { runAsyncValidationBridge } from './async-validator-bridge';
@@ -23,13 +23,13 @@ import { registerControlElement } from './field-element-registry';
 import { FormDirective } from './form.directive';
 import {
   attachMissingValidators,
-  AttachedValidators,
+  type AttachedValidators,
   detachValidators,
   hasValueAccessorProvider,
   isControlSetUp,
   reportNotRegistered,
 } from './signal-control-validators';
-import { ValidationOptions } from './validation-options';
+import type { ValidationOptions } from './validation-options';
 
 /**
  * How many microtasks to wait for a form container to register a Signal

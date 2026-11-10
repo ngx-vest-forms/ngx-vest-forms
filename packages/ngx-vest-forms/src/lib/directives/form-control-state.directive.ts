@@ -7,16 +7,16 @@ import {
   contentChild,
   effect,
   inject,
-  Signal,
+  type Signal,
   signal,
   untracked,
 } from '@angular/core';
 import {
-  AbstractControl,
-  AbstractControlDirective,
+  type AbstractControl,
+  type AbstractControlDirective,
   NgModel,
   NgModelGroup,
-  ValidationErrors,
+  type ValidationErrors,
 } from '@angular/forms';
 import { FormDirective } from './form.directive';
 

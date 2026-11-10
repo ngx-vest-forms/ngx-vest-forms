@@ -1,5 +1,5 @@
 import {
-  AbstractControl,
+  type AbstractControl,
   FormArray,
   FormControl,
   FormGroup,

@@ -50,7 +50,7 @@ export const travelFormContract: NgxDeepRequired<TravelFormModel> = {
 ### Validation suite
 
 ```ts
-import { type NgxVestSuite } from 'ngx-vest-forms';
+import type { NgxVestSuite } from 'ngx-vest-forms';
 import { create, enforce, omitWhen, test, warn } from 'vest';
 import { TravelFormModel } from '../../models/travel-form.model';
 

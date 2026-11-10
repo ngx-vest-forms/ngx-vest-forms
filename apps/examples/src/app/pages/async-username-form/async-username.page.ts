@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal, viewChild } from '@angular/core';
 import type { NgxSubmitSettledEvent } from 'ngx-vest-forms';
-import { AsyncUsernameModel } from '../../models/async-username.model';
+import type { AsyncUsernameModel } from '../../models/async-username.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';

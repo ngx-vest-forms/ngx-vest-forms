@@ -2,23 +2,23 @@ import { Component, input, output, signal, viewChild } from '@angular/core';
 import {
   ControlWrapperComponent,
   createFormFeedbackSignals,
-  FormDirective,
+  type FormDirective,
   type NgxSubmitSettledEvent,
-  NgxValidationConfig,
+  type NgxValidationConfig,
   NgxVestForms,
-  NgxVestSuite,
+  type NgxVestSuite,
   provideFormContract,
   setValueAtPath,
 } from 'ngx-vest-forms';
 import {
   travelFormContract,
-  TravelFormModel,
+  type TravelFormModel,
 } from '../../models/travel-form.model';
 import { Card } from '../../ui/card/card.component';
 import { FormSectionComponent } from '../../ui/form-section/form-section.component';
 import {
   DateRangeAdapterComponent,
-  DateRangeValue,
+  type DateRangeValue,
 } from './date-range-adapter.component';
 
 export type TravelFormApproach = 'composite-adapter' | 'split-wrappers';

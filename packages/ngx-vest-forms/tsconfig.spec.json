@@ -3,7 +3,6 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "../../out-tsc/spec",
-    "module": "CommonJs",
     "types": ["vitest/globals", "@testing-library/jest-dom/vitest"]
   },
   "include": ["**/*.spec.ts", "**/*.d.ts"]

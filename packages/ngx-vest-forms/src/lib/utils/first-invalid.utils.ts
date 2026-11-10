@@ -199,3 +199,56 @@ export function resolveFirstInvalidFocusTarget(
     return null;
   }
 }
+
+/**
+ * @internal
+ * Finds the first invalid element inside `root`, scrolls it into view, and
+ * (unless `options.focus` is `false`) focuses it. The implementation of
+ * `FormDirective.focusFirstInvalidControl()`.
+ *
+ * @returns The focused element when a focusable target exists, otherwise the
+ *          first matched invalid element. Returns `null` when no invalid
+ *          element is found.
+ */
+export function focusFirstInvalidElement(
+  root: HTMLFormElement,
+  options: NgxFirstInvalidOptions = {}
+): HTMLElement | null {
+  const {
+    block = 'center',
+    inline = 'nearest',
+    focus = true,
+    preventScrollOnFocus = true,
+    openCollapsedParents = true,
+    invalidSelector = DEFAULT_INVALID_SELECTOR,
+    focusSelector = DEFAULT_FOCUS_SELECTOR,
+  } = options;
+  const behavior = resolveFirstInvalidScrollBehavior(options.behavior);
+
+  const firstInvalid = resolveFirstInvalidElement(
+    root,
+    invalidSelector,
+    openCollapsedParents
+  );
+  if (!firstInvalid) {
+    return null;
+  }
+
+  if (openCollapsedParents) {
+    openCollapsedDetailsAncestors(root, firstInvalid);
+  }
+
+  const focusTarget = resolveFirstInvalidFocusTarget(
+    firstInvalid,
+    focusSelector
+  );
+
+  const scrollTarget = focusTarget ?? firstInvalid;
+  scrollTarget.scrollIntoView({ behavior, block, inline });
+
+  if (focus && focusTarget) {
+    focusTarget.focus({ preventScroll: preventScrollOnFocus });
+  }
+
+  return focusTarget ?? firstInvalid;
+}

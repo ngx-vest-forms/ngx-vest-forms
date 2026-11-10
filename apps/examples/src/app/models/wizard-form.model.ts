@@ -1,4 +1,4 @@
-import { NgxDeepPartial, NgxDeepRequired } from 'ngx-vest-forms';
+import type { NgxDeepPartial, NgxDeepRequired } from 'ngx-vest-forms';
 
 /**
  * Step 1: Account Setup

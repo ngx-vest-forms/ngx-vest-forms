@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, type Locator, type Page, test } from '@playwright/test';
 import {
   fillAndBlur,
   getWarningElementFor,
@@ -38,8 +38,8 @@ test.describe('Password Warnings - Vest warn() Integration', () => {
    * Then waits for validation to settle before checking for warnings container.
    */
   async function fillPasswordAndWaitForWarnings(
-    page: import('@playwright/test').Page,
-    password: import('@playwright/test').Locator,
+    page: Page,
+    password: Locator,
     value: string
   ): Promise<void> {
     await password.fill(value);

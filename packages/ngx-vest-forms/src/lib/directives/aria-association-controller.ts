@@ -2,11 +2,11 @@ import {
   afterRenderEffect,
   DestroyRef,
   inject,
-  Signal,
+  type Signal,
   signal,
 } from '@angular/core';
 import {
-  AriaAssociationMode,
+  type AriaAssociationMode,
   mergeAriaDescribedBy,
   parseAriaIdTokens,
   resolveAssociationTargets,

@@ -1,5 +1,5 @@
 import {
-  AfterContentInit,
+  type AfterContentInit,
   computed,
   Directive,
   ElementRef,
@@ -9,9 +9,9 @@ import {
 } from '@angular/core';
 import { injectPendingLabel } from '../tokens/pending-label.token';
 import {
-  AriaAssociationMode,
+  type AriaAssociationMode,
   buildMessageDescribedBy,
-  MessageRegionIds,
+  type MessageRegionIds,
   messageRegionIdList,
 } from '../utils/aria-association.utils';
 import { NgxIdGenerator } from '../utils/id-generator';

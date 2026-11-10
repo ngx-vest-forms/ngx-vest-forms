@@ -7,17 +7,17 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import {
-  AsyncValidator,
+  type AsyncValidator,
   FormsModule,
   NG_ASYNC_VALIDATORS,
   NgForm,
-  ValidationErrors,
+  type ValidationErrors,
 } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import userEvent from '@testing-library/user-event';
-import { Observable, Subject, take } from 'rxjs';
+import { type Observable, Subject, take } from 'rxjs';
 import { create } from 'vest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NgxVestForms } from '../exports';

@@ -76,6 +76,18 @@ export default defineConfig({
     'unicorn/consistent-function-scoping': 'warn',
     'unicorn/no-array-sort': 'warn',
 
+    // With `verbatimModuleSyntax`, an import is kept exactly as written:
+    // a value import of something used only as a type stays a runtime
+    // import, and `import { type X }` leaves a side-effect `import {}`.
+    // Classes Angular needs at runtime (DI tokens, decorator metadata,
+    // `viewChild()` locators, `instanceof`) are value usages, so the rule
+    // keeps them as value imports.
+    'typescript/consistent-type-imports': [
+      'error',
+      { prefer: 'type-imports', fixStyle: 'inline-type-imports' },
+    ],
+    'typescript/no-import-type-side-effects': 'error',
+
     // Type-aware families: warn in production code (see header note).
     'typescript/no-unsafe-call': 'warn',
     'typescript/no-unsafe-member-access': 'warn',

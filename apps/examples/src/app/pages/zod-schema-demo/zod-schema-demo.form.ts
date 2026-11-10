@@ -3,11 +3,11 @@ import {
   createFormFeedbackSignals,
   FormDirective,
   NgxVestForms,
-  NgxVestSuite,
+  type NgxVestSuite,
 } from 'ngx-vest-forms';
 import {
   zodSchemaDemoContract,
-  ZodSchemaDemoModel,
+  type ZodSchemaDemoModel,
 } from '../../models/zod-schema-demo.model';
 import { Card } from '../../ui/card/card.component';
 import { FormSectionComponent } from '../../ui/form-section/form-section.component';

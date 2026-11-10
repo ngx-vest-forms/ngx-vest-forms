@@ -1,15 +1,15 @@
 import { Component, input, output, viewChild } from '@angular/core';
 import {
   createFormFeedbackSignals,
-  FormDirective,
+  type FormDirective,
   type NgxSubmitSettledEvent,
   NgxVestForms,
-  NgxVestSuite,
+  type NgxVestSuite,
   provideFormContract,
 } from 'ngx-vest-forms';
 import {
   customControlsContract,
-  CustomControlsModel,
+  type CustomControlsModel,
 } from '../../models/custom-controls.model';
 import { SegmentedControlComponent } from './segmented-control.component';
 import { StarRatingComponent } from './star-rating.component';

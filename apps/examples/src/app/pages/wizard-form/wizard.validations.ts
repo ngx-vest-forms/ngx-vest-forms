@@ -1,6 +1,6 @@
-import { type NgxVestSuite } from 'ngx-vest-forms';
+import type { NgxVestSuite } from 'ngx-vest-forms';
 import { create, enforce, omitWhen, optional, test } from 'vest';
-import {
+import type {
   WizardStep1Model,
   WizardStep2Model,
   WizardStep3Model,

@@ -1,16 +1,16 @@
 import { Component, input, output, viewChild } from '@angular/core';
 import {
   createFormFeedbackSignals,
-  FormDirective,
+  type FormDirective,
   FormErrorControlDirective,
   type NgxSubmitSettledEvent,
   NgxVestForms,
-  NgxVestSuite,
+  type NgxVestSuite,
   provideFormContract,
 } from 'ngx-vest-forms';
 import {
   accessibleWrapperContract,
-  AccessibleWrapperModel,
+  type AccessibleWrapperModel,
 } from '../../models/accessible-wrapper.model';
 
 @Component({

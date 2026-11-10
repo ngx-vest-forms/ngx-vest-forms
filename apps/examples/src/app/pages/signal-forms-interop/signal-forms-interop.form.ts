@@ -1,15 +1,15 @@
 import { Component, input, output, viewChild } from '@angular/core';
 import {
   createFormFeedbackSignals,
-  FormDirective,
+  type FormDirective,
   type NgxSubmitSettledEvent,
   NgxVestForms,
-  NgxVestSuite,
+  type NgxVestSuite,
   provideFormContract,
 } from 'ngx-vest-forms';
 import {
   signalFormsInteropContract,
-  SignalFormsInteropModel,
+  type SignalFormsInteropModel,
 } from '../../models/signal-forms-interop.model';
 import { ConsentSwitchComponent } from './consent-switch.component';
 import { SeatStepperComponent } from './seat-stepper.component';

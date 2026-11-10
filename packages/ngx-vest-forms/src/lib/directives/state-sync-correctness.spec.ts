@@ -12,7 +12,7 @@ import { create, enforce, test as vestTest } from 'vest';
 import { describe, expect, it } from 'vitest';
 import { ROOT_FORM } from '../constants';
 import { NgxVestForms } from '../exports';
-import { FormDirective } from './form.directive';
+import type { FormDirective } from './form.directive';
 
 /**
  * Acceptance tests for issue #106 — "State-sync correctness" bundle:

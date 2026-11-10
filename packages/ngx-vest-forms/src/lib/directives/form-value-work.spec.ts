@@ -14,7 +14,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { NgxVestForms } from '../exports';
 import { NGX_EQUALITY_FN } from '../tokens/equality.token';
 import { fastDeepEqual } from '../utils/equality';
-import { FormDirective } from './form.directive';
+import type { FormDirective } from './form.directive';
 
 /**
  * PERF-01: the work one keystroke costs in a large form.

@@ -1,14 +1,14 @@
 import {
   Component,
-  DebugElement,
+  type DebugElement,
   inject,
   input,
   model,
   output,
   signal,
 } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ControlValueAccessor, NgControl, NgModel } from '@angular/forms';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
+import { type ControlValueAccessor, NgControl, NgModel } from '@angular/forms';
 import type {
   FormCheckboxControl,
   FormValueControl,
@@ -18,7 +18,7 @@ import { create, enforce, test as vestTest } from 'vest';
 import { describe, expect, it, vi } from 'vitest';
 import { NgxVestForms } from '../exports';
 import { FormModelDirective } from './form-model.directive';
-import { FormDirective, NgxSubmitSettledEvent } from './form.directive';
+import { FormDirective, type NgxSubmitSettledEvent } from './form.directive';
 
 /**
  * Angular 22.2 binds `[ngModel]` on a Signal Forms custom control through

@@ -1,10 +1,10 @@
 import {
-  AbstractControl,
-  FormArray,
-  FormGroup,
+  type AbstractControl,
+  type FormArray,
+  type FormGroup,
   isFormArray,
   isFormGroup,
-  ValidationErrors,
+  type ValidationErrors,
 } from '@angular/forms';
 import { ROOT_FORM } from '../constants';
 import { isUnsafePathSegment, parseFieldPath } from './field-path.utils';

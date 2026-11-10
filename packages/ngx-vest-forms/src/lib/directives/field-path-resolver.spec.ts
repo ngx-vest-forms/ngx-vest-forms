@@ -2,9 +2,9 @@ import {
   FormArray,
   FormControl,
   FormGroup,
-  NgForm,
-  NgModel,
-  NgModelGroup,
+  type NgForm,
+  type NgModel,
+  type NgModelGroup,
 } from '@angular/forms';
 import { describe, expect, it } from 'vitest';
 import {

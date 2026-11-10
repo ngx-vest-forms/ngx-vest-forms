@@ -1,4 +1,4 @@
-import { NgxDeepPartial, StandardSchemaV1 } from 'ngx-vest-forms';
+import type { NgxDeepPartial, StandardSchemaV1 } from 'ngx-vest-forms';
 import { z } from 'zod';
 
 /**

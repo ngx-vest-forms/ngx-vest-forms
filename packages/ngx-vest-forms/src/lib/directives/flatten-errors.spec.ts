@@ -1,6 +1,6 @@
 import { ApplicationRef, Component, viewChild } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormsModule, NgModel } from '@angular/forms';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormsModule, type NgModel } from '@angular/forms';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { FormControlStateDirective } from './form-control-state.directive';
 

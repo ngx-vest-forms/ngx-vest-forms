@@ -3,8 +3,8 @@ import {
   createEmptyFormState,
   createFormFeedbackSignals,
   fieldWarningsToRecord,
-  NgxFormFeedbackSource,
-  NgxFormState,
+  type NgxFormFeedbackSource,
+  type NgxFormState,
 } from './form-state.utils';
 
 describe('form-state.utils', () => {

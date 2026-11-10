@@ -1,6 +1,6 @@
 import { Component, computed, signal, viewChild } from '@angular/core';
 import type { NgxSubmitSettledEvent } from 'ngx-vest-forms';
-import { StarterFormModel } from '../../models/starter-form.model';
+import type { StarterFormModel } from '../../models/starter-form.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';

@@ -1,9 +1,9 @@
-import { type NgxVestSuite } from 'ngx-vest-forms';
+import type { NgxVestSuite } from 'ngx-vest-forms';
 import { fromEvent, lastValueFrom, takeUntil } from 'rxjs';
 import { create, enforce, omitWhen, test } from 'vest';
 import { memo } from 'vest/memo';
-import { AsyncUsernameModel } from '../../models/async-username.model';
-import { UsernameAvailabilityService } from './username-availability.service';
+import type { AsyncUsernameModel } from '../../models/async-username.model';
+import type { UsernameAvailabilityService } from './username-availability.service';
 
 type AvailabilityCheck = Pick<UsernameAvailabilityService, 'isUsernameTaken'>;
 

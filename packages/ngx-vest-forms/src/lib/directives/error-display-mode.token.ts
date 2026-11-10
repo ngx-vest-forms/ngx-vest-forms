@@ -1,5 +1,5 @@
 import { InjectionToken } from '@angular/core';
-import {
+import type {
   NgxErrorDisplayMode,
   NgxWarningDisplayMode,
 } from './form-error-display.directive';

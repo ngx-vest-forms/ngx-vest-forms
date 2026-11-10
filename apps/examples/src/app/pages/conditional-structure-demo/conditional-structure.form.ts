@@ -1,15 +1,15 @@
 import { Component, input, output, viewChild } from '@angular/core';
 import {
   createFormFeedbackSignals,
-  FormDirective,
+  type FormDirective,
   type NgxSubmitSettledEvent,
   NgxVestForms,
-  NgxVestSuite,
+  type NgxVestSuite,
   provideFormContract,
 } from 'ngx-vest-forms';
 import {
   conditionalStructureContract,
-  ConditionalStructureModel,
+  type ConditionalStructureModel,
 } from '../../models/conditional-structure.model';
 
 @Component({

@@ -1,4 +1,4 @@
-import { DestroyRef } from '@angular/core';
+import type { DestroyRef } from '@angular/core';
 
 /**
  * Schedules a callback to run after a delay, automatically cancelling it if the

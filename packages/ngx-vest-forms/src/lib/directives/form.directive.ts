@@ -1,5 +1,4 @@
 import {
-  afterNextRender,
   booleanAttribute,
   ChangeDetectorRef,
   computed,
@@ -11,53 +10,30 @@ import {
   inject,
   Injector,
   input,
-  InputSignal,
+  type InputSignal,
   isDevMode,
   output,
   signal,
   untracked,
 } from '@angular/core';
+import { outputFromObservable, toSignal } from '@angular/core/rxjs-interop';
 import {
-  outputFromObservable,
-  takeUntilDestroyed,
-  toObservable,
-  toSignal,
-} from '@angular/core/rxjs-interop';
-import {
-  AbstractControl,
-  AsyncValidatorFn,
-  FormArray,
-  FormControlStatus,
-  FormGroup,
+  type AsyncValidatorFn,
   NgForm,
   PristineChangeEvent,
   StatusChangeEvent,
-  ValueChangeEvent,
 } from '@angular/forms';
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 import {
-  asapScheduler,
-  catchError,
   distinctUntilChanged,
   filter,
   map,
-  Observable,
-  observeOn,
   of,
   merge as rxMerge,
   scan,
-  share,
   startWith,
-  switchMap,
-  take,
-  tap,
 } from 'rxjs';
-import {
-  logDiagnostic,
-  logWarning,
-  NGX_VEST_FORMS_DIAGNOSTICS,
-  NGX_VEST_FORMS_ERRORS,
-} from '../errors/error-catalog';
+import { logWarning, NGX_VEST_FORMS_ERRORS } from '../errors/error-catalog';
 import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from '../tokens/debounce.token';
 import { NGX_EQUALITY_FN } from '../tokens/equality.token';
 import {
@@ -68,121 +44,47 @@ import {
 import { collectTouchedPaths } from '../utils/collect-touched-paths';
 import type { NgxDeepRequired } from '../utils/deep-required';
 import { scheduleMicrotask } from '../utils/destroy-scheduler';
-import { fastDeepEqual } from '../utils/equality';
-import type { ValidationConfigMap } from '../utils/field-path-types';
 import {
-  DEFAULT_FOCUS_SELECTOR,
-  DEFAULT_INVALID_SELECTOR,
+  focusFirstInvalidElement,
   type NgxFirstInvalidOptions,
-  openCollapsedDetailsAncestors,
-  resolveFirstInvalidElement,
-  resolveFirstInvalidFocusTarget,
-  resolveFirstInvalidScrollBehavior,
 } from '../utils/first-invalid.utils';
 import { validateFormContract } from '../utils/form-contract';
-import { NgxFormState } from '../utils/form-state.utils';
-import {
-  getAllFormErrors,
-  mergeValuesAndRawValues,
-  setValueAtPath,
-} from '../utils/form-utils';
-import {
-  createValidationConfigPipeline,
-  type ValidationConfigPipelineOptions,
-} from '../utils/validation-config-pipeline';
+import type { NgxFormState } from '../utils/form-state.utils';
+import { getAllFormErrors } from '../utils/form-utils';
 import type { NgxVestSuite } from '../utils/validation-suite';
-import {
-  extractFieldErrors,
-  extractFieldWarnings,
-  type NgxSuiteFocusSpec,
-  reportToErrorHandler,
-  runFieldValidation,
-} from '../utils/vest-runner';
-import {
-  readElementValueForBlur,
-  resolveFieldFromBlur,
-} from './field-path-resolver';
+import { fieldBlurEvent } from './field-blur-event';
+import { createFieldValidator, setFieldWarnings } from './field-validator';
+import type {
+  NgxFieldBlurEvent,
+  NgxSubmitSettledEvent,
+  NgxValidationConfig,
+  NgxValidationFocus,
+} from './form-directive.types';
 import {
   getFormSubmittedSignal,
-  runSubmitValidation,
   setAngularFormSubmittedState,
 } from './form-submitted-state';
-import { ValidationOptions } from './validation-options';
+import { formValueChanges } from './form-value-changes';
+import { FormValueSnapshot } from './form-value-snapshot';
+import { ModelFormSync } from './model-form-sync';
+import {
+  connectValidationConfig,
+  revalidateOnSuiteChange,
+} from './revalidation-triggers';
+import {
+  focusFirstInvalidAfterSubmit,
+  submitOutcomes,
+  touchAndValidateOnSubmit,
+} from './submit-pipeline';
+import type { ValidationOptions } from './validation-options';
 import { notifyValidationReset } from './validation-reset';
 
-/**
- * Timing options passed to the validation-config pipeline.
- * These are the concrete values for the named knobs defined in
- * {@link ValidationConfigPipelineOptions}.
- */
-const PIPELINE_OPTIONS = {
-  idleWaitTimeoutMs: 2000,
-  dependentExistenceTimeoutMs: 2000,
-  validationInProgressCooldownMs: 500,
-} as const satisfies Omit<
-  ValidationConfigPipelineOptions,
-  'configDebounceTime'
->;
-
-/**
- * Type for the `validationConfig` input: a typed {@link ValidationConfigMap}
- * (or `null` to disable cross-field revalidation).
- *
- * Since 3.0.0 the untyped `Record<string, string[]>` escape hatch is gone, so
- * typo'd field paths in a `[validationConfig]` binding fail to compile instead
- * of silently never triggering. Array items are addressed by index
- * (`'addresses.0.street'`, or `` `addresses.${i}.street` `` inline or
- * `as const`). Only path strings `FieldPath<T>` cannot express, such as
- * paths read from a server, need an explicit cast to `NgxValidationConfig<T>`.
- */
-export type NgxValidationConfig<T = unknown> = ValidationConfigMap<T> | null;
-
-export type NgxValidationFocus = NgxSuiteFocusSpec;
-
-/**
- * Payload emitted when a named control inside the form loses focus.
- *
- * This is intentionally low-level so app code can build workflows such as
- * draft auto-save, analytics, or blur-driven side effects without the form
- * library taking ownership of persistence behavior.
- *
- * It is not intended as a blur-time workaround for dependent field validation;
- * for that pattern, prefer `validationConfig` plus each target field's own
- * `errorDisplayMode`.
- *
- * The emitted `field` is the full dotted control path (e.g.
- * `passwords.confirm`, `businessHours.values.0.from`) regardless of whether
- * the surrounding groups use static `ngModelGroup="key"` or dynamic
- * `[ngModelGroup]="expr"` bindings, because the path is read from the live
- * `NgModel` directive registered with the form.
- *
- * @publicApi
- */
-export type NgxFieldBlurEvent<T = unknown> = {
-  field: string;
-  value: unknown;
-  formValue: T | null;
-  dirty: boolean;
-  touched: boolean;
-  valid: boolean;
-  pending: boolean;
-};
-
-/**
- * Payload of the `submitSettled` output: the outcome of one submit, read
- * after every validator (async Vest tests and submit-mode root validation
- * included) has finished.
- *
- * @publicApi
- */
-export type NgxSubmitSettledEvent<T = unknown> = {
-  /** `true` when the form was VALID once validation settled. */
-  valid: boolean;
-  /** The merged form value (disabled controls included) at that moment. */
-  value: T | null;
-  /** Blocking errors keyed by field path, as `errorsChange` reports them. */
-  errors: Record<string, string[]>;
-};
+export type {
+  NgxFieldBlurEvent,
+  NgxSubmitSettledEvent,
+  NgxValidationConfig,
+  NgxValidationFocus,
+} from './form-directive.types';
 
 /**
  * Main form directive for ngx-vest-forms that bridges Angular template-driven forms with Vest.js validation.
@@ -247,36 +149,12 @@ export class FormDirective<T extends Record<string, unknown>> {
   readonly #equal = inject(NGX_EQUALITY_FN);
 
   /**
-   * The last two pairs `#isEqual` compared, with their results. One value
-   * event makes `formValueChange`, `formState` and the sync effect compare
-   * the same two form snapshots (previous and current); this lets the first
-   * comparison answer the others. Cleared on every value event, so a result
-   * never outlives the change cycle that computed it.
+   * The merged form value as a signal, and the memoized `#equal` that
+   * compares snapshots and models. Created here, before any other
+   * subscription to `ngForm.form.events`, so its tick is current when the
+   * `formValueChange` pipeline reads the snapshot.
    */
-  #equalMemo: Array<{ a: unknown; b: unknown; equal: boolean }> = [];
-
-  /**
-   * `#equal` with two shortcuts: identical references are equal without a
-   * call, and a pair compared earlier in this change cycle (in either order)
-   * reuses that result. Form snapshots are never mutated after they are
-   * created, so a result stays true for the cycle.
-   */
-  #isEqual(a: unknown, b: unknown): boolean {
-    if (Object.is(a, b)) {
-      return true;
-    }
-    for (const entry of this.#equalMemo) {
-      if (
-        (entry.a === a && entry.b === b) ||
-        (entry.a === b && entry.b === a)
-      ) {
-        return entry.equal;
-      }
-    }
-    const equal = this.#equal(a, b);
-    this.#equalMemo = [{ a, b, equal }, ...this.#equalMemo.slice(0, 1)];
-    return equal;
-  }
+  readonly #snapshot = new FormValueSnapshot<T>(this.ngForm.form, this.#equal);
 
   /**
    * Public signal storing field warnings keyed by field path.
@@ -286,124 +164,21 @@ export class FormDirective<T extends Record<string, unknown>> {
    */
   readonly fieldWarnings = signal<Map<string, readonly string[]>>(new Map());
 
-  #lastSyncedFormValue: T | null = null;
-  #lastSyncedModelValue: T | null = null;
-  /**
-   * The last value `formValueChange` handed to the consumer. When the form
-   * still holds exactly this value, the consumer has seen the form's latest
-   * change, so a model write made in response to it is not a conflict.
-   */
-  #lastEmittedFormValue: T | null = null;
-  /** The `formValue` input as the sync effect last read it. */
-  #previousModelInput: T | null = null;
-  /** True while the sync effect writes the model into the form. */
-  #applyingModelValue = false;
+  /** What every field validator from `createAsyncValidator` shares. */
+  readonly #fieldValidatorContext = {
+    form: this.ngForm.form,
+    validationFocus: () => this.validationFocus(),
+    fieldWarnings: this.fieldWarnings,
+    cdr: this.#cdr,
+    destroyRef: this.#destroyRef,
+    errorHandler: this.#errorHandler,
+  };
 
   /**
-   * The root form's last `ValueChangeEvent`, with the root `value` object at
-   * that moment, until the next root event arrives.
+   * Two-way sync between the `formValue` input and the form controls (the
+   * "model wins" / "form wins" decisions and their baselines).
    */
-  #lastValueEvent: { source: unknown; rootValue: unknown } | null = null;
-
-  /**
-   * Whether a root form event can change the merged snapshot. Every value
-   * event and every status event can, except the status event Angular emits
-   * right after a value event in the same `updateValueAndValidity` call:
-   * nothing runs between the two but the value event's own subscribers. The
-   * root `value` object must also be the one the value event saw, because
-   * Angular replaces it on any change (even one made with `emitEvent: false`).
-   * The snapshot read for the value event (by `formValueChange`) then stays
-   * current for the status event instead of being copied a second time.
-   */
-  #changesFormSnapshot(event: unknown): boolean {
-    const lastValueEvent = this.#lastValueEvent;
-    this.#lastValueEvent = null;
-    if (event instanceof ValueChangeEvent) {
-      this.#lastValueEvent = {
-        source: event.source,
-        rootValue: this.ngForm.form.value,
-      };
-      return true;
-    }
-    if (event instanceof StatusChangeEvent) {
-      return !(
-        lastValueEvent &&
-        lastValueEvent.source === event.source &&
-        lastValueEvent.rootValue === this.ngForm.form.value
-      );
-    }
-    return false;
-  }
-
-  // Internal signal tracking changes that can affect the merged form snapshot.
-  // ValueChangeEvent keeps the cache fresh for blur-driven consumers like
-  // draft auto-save, even when a value update doesn't change form validity.
-  //
-  // This subscription is made in the constructor, before any consumer binds
-  // `formValueChange`, so the tick (and the cleared `#isEqual` memo) is
-  // already current when the `formValueChange` pipeline reads the snapshot.
-  readonly #formSnapshotTick = toSignal(
-    this.ngForm.form.events.pipe(
-      tap((event) => {
-        if (event instanceof ValueChangeEvent) {
-          this.#equalMemo = [];
-        }
-      }),
-      filter((event) => this.#changesFormSnapshot(event)),
-      scan((count) => count + 1, 0),
-      startWith(0)
-    ),
-    { initialValue: 0 }
-  );
-
-  /**
-   * The merged form value (including disabled controls), recomputed whenever
-   * a value or status event fires. `formValueChange`, `formState` and the
-   * sync effect all read this one snapshot, so each value event copies the
-   * form value once, and their comparisons of the same two snapshots share
-   * one `#isEqual` result.
-   */
-  readonly #formValueSignal = computed(() => {
-    // Track changes that affect the merged form snapshot.
-    this.#formSnapshotTick();
-    return this.#formValueOrNull();
-  });
-
-  /**
-   * Writes the model into the form controls. Events are emitted so async
-   * validators report their results, `formState` refreshes, and
-   * `validationConfig` revalidates dependent fields, the same as when
-   * NgModel applies the value itself. `formValueChange` skips these events.
-   *
-   * Root `patchValue` (not per-key `setValue`) supports nested objects and
-   * ignores keys without a control, which fits partial form models.
-   *
-   * Moves both sync baselines. The form baseline is the form's value after
-   * the write, not the model: a partial model leaves other controls as they
-   * were, and the model as baseline would make the next run see a form
-   * change, then a model change, and write again on every validation.
-   */
-  #applyModelValue(modelValue: T | null): void {
-    if (modelValue) {
-      this.#applyingModelValue = true;
-      try {
-        this.ngForm.form.patchValue(modelValue);
-      } finally {
-        this.#applyingModelValue = false;
-      }
-    }
-    this.#lastSyncedFormValue = this.#formValueOrNull();
-    this.#lastSyncedModelValue = modelValue;
-  }
-
-  #formValueOrNull(): T | null {
-    if (Object.keys(this.ngForm.form.controls).length === 0) {
-      // No controls remain (e.g. dynamic group removal): expose `null` so
-      // consumers don't see ghost data from a previous form contract.
-      return null;
-    }
-    return mergeValuesAndRawValues<T>(this.ngForm.form);
-  }
+  readonly #modelSync = new ModelFormSync<T>(this.ngForm.form, this.#snapshot);
 
   /**
    * Track the Angular form status as a signal for advanced status flags
@@ -469,7 +244,7 @@ export class FormDirective<T extends Record<string, unknown>> {
       return {
         valid: this.ngForm.form.valid,
         errors: getAllFormErrors(this.ngForm.form).errors,
-        value: this.#formValueSignal(),
+        value: this.#snapshot.value(),
       };
     },
     {
@@ -482,7 +257,7 @@ export class FormDirective<T extends Record<string, unknown>> {
         return (
           a.valid === b.valid &&
           this.#equal(a.errors, b.errors) &&
-          this.#isEqual(a.value, b.value)
+          this.#snapshot.isEqual(a.value, b.value)
         );
       },
     }
@@ -580,13 +355,8 @@ export class FormDirective<T extends Record<string, unknown>> {
    * `validationConfig` dependents. Shared and subscribed in the constructor,
    * so that runs once per submit whether or not `submitSettled` is bound.
    */
-  readonly #submitOutcome$ = this.ngForm.ngSubmit.pipe(
-    observeOn(asapScheduler),
-    switchMap(() => {
-      this.#revalidateConfigDependents();
-      return this.#settledStatus();
-    }),
-    share()
+  readonly #submitOutcome$ = submitOutcomes(this.ngForm, () =>
+    this.validationConfig()
   );
 
   /**
@@ -634,32 +404,7 @@ export class FormDirective<T extends Record<string, unknown>> {
    * `outputFromObservable` unsubscribes when the directive is destroyed.
    */
   readonly formValueChange = outputFromObservable(
-    this.ngForm.form.events.pipe(
-      filter((v) => v instanceof ValueChangeEvent),
-      // Merge before deduplicating: the event's own value leaves out disabled
-      // controls, so a programmatic setValue() on one would look unchanged.
-      // The merged snapshot is the one `formState` and the sync effect read;
-      // `#formSnapshotTick` has already counted this event. `untracked` keeps
-      // a consumer effect that writes the form from tracking the snapshot.
-      map(() => ({
-        value:
-          untracked(() => this.#formValueSignal()) ??
-          mergeValuesAndRawValues<T>(this.ngForm.form),
-        fromModel: this.#applyingModelValue,
-      })),
-      // Model writes pass through deduplication so they move its baseline:
-      // after a write of B, the user picking the earlier A again is a change.
-      distinctUntilChanged((prev, curr) =>
-        this.#isEqual(prev.value, curr.value)
-      ),
-      // A model write applied by the sync effect is not echoed back: the
-      // consumer already holds that value.
-      filter(({ fromModel }) => !fromModel),
-      map(({ value }) => value),
-      tap((value) => {
-        this.#lastEmittedFormValue = value;
-      })
-    )
+    formValueChanges(this.ngForm.form, this.#snapshot, this.#modelSync)
   );
 
   /**
@@ -735,7 +480,7 @@ export class FormDirective<T extends Record<string, unknown>> {
     this.#submitOutcome$.pipe(
       map((status) => ({
         valid: status === 'VALID',
-        value: this.#formValueOrNull(),
+        value: this.#snapshot.read(),
         errors: getAllFormErrors(this.ngForm.form).errors,
       }))
     )
@@ -772,84 +517,26 @@ export class FormDirective<T extends Record<string, unknown>> {
     }
 
     /**
-     * Mark all the fields as touched when the form is submitted
+     * Mark all the fields as touched when the form is submitted, and run the
+     * submit-mode root validation before the consumer's `(ngSubmit)` handler.
      */
-    this.ngForm.ngSubmit
-      .pipe(takeUntilDestroyed(this.#destroyRef))
-      .subscribe(() => {
-        this.ngForm.form.markAllAsTouched();
-        this.#blurTick.update((v) => v + 1);
-        // Run form-level validation (submit-mode `ngxValidateRootForm`) now.
-        // This subscription is made in the constructor, so it runs before
-        // the consumer's `(ngSubmit)` handler. That handler then sees the
-        // settled status for synchronous suites, or PENDING while async Vest
-        // tests run, instead of a stale VALID. Root-level only: field
-        // validators already ran on value changes.
-        if (this.ngForm.form.asyncValidator) {
-          runSubmitValidation(this.ngForm);
-        }
-      });
+    touchAndValidateOnSubmit(this.ngForm, this.#destroyRef, () => {
+      this.#blurTick.update((v) => v + 1);
+    });
 
     // Focus only once the submit has settled, dependents included: a field
     // that is still pending matches neither `ng-invalid` nor the wrapper.
-    this.#submitOutcome$
-      .pipe(takeUntilDestroyed(this.#destroyRef))
-      .subscribe(() => {
-        if (this.ngForm.form.valid || !this.focusFirstInvalidOnSubmit()) {
-          return;
-        }
-        // Wait for the render that follows the submit: wrapper `--invalid`
-        // classes and `aria-invalid` only appear then, and for a custom
-        // control they are the only way to find the failing field.
-        this.#cdr.markForCheck();
-        afterNextRender(
-          () => {
-            if (!this.ngForm.form.valid) {
-              this.focusFirstInvalidControl();
-            }
-          },
-          { injector: this.#injector }
-        );
-      });
-
-    /**
-     * Re-run validation on all registered controls when the `suite` input
-     * reference changes — including a lazily-supplied suite (`null` → suite,
-     * e.g. a lazy import or per-locale suite arriving asynchronously) and
-     * runtime suite swaps (wizard steps, mode switches).
-     *
-     * Without this, fields validated while the suite was absent (or against
-     * the previous suite) keep their stale verdict until the user edits them:
-     * `createAsyncValidator` reads `suite()` per validation run, but nothing
-     * re-triggers those runs. A root `updateValueAndValidity()` alone is not
-     * enough because Angular does not descend into child controls, so every
-     * control in the tree is updated individually (mirroring what
-     * `ValidateRootFormDirective` already does for ROOT_FORM).
-     */
-    // `undefined` sentinel = effect has not run yet (the input itself is
-    // `NgxVestSuite | null`, never `undefined`).
-    let previousSuite: NgxVestSuite<NoInfer<T>> | null | undefined;
-    effect(() => {
-      const suite = this.suite();
-      if (previousSuite === undefined) {
-        // Initial effect run: field validators already see the current
-        // suite when they register, nothing to re-run.
-        previousSuite = suite;
-        return;
-      }
-      if (suite === previousSuite) {
-        return;
-      }
-      previousSuite = suite;
-      untracked(() => {
-        // Defer to the next microtask so Angular has finished wiring up
-        // controls/groups (ngModel/ngModelGroup) for the current render pass.
-        scheduleMicrotask(
-          () => this.#revalidateAllControls(),
-          this.#destroyRef
-        );
-      });
+    focusFirstInvalidAfterSubmit(this.#submitOutcome$, this.ngForm.form, {
+      enabled: () => this.focusFirstInvalidOnSubmit(),
+      focus: () => this.focusFirstInvalidControl(),
+      cdr: this.#cdr,
+      injector: this.#injector,
+      destroyRef: this.#destroyRef,
     });
+
+    // Re-run every control's validators when the `suite` input changes
+    // (a lazily supplied suite or a runtime swap); see the helper for why.
+    revalidateOnSuiteChange(this.suite, this.ngForm.form, this.#destroyRef);
 
     /**
      * Single bidirectional synchronization effect.
@@ -857,222 +544,17 @@ export class FormDirective<T extends Record<string, unknown>> {
      * Note: formValue is read-only input(), so we emit changes via formValueChange output.
      */
     effect(() => {
-      const formValue = this.#formValueSignal();
-      const modelValue = this.formValue();
-      // Whether the consumer passed a new model since the last run. The
-      // `lastSynced` baselines can't tell: the form-wins branch moves them.
-      const modelInputChanged = !this.#isEqual(
-        modelValue,
-        this.#previousModelInput
-      );
-      this.#previousModelInput = modelValue;
-
-      // Skip if either is null
-      if (!formValue && !modelValue) return;
-
-      // Compute change flags first
-      const formChanged = !this.#isEqual(formValue, this.#lastSyncedFormValue);
-      const modelChanged = !this.#isEqual(
-        modelValue,
-        this.#lastSyncedModelValue
-      );
-
-      // Early return if nothing changed
-      if (!formChanged && !modelChanged) {
-        return;
-      }
-
-      if (formChanged && !modelChanged) {
-        // Form was modified by user -> form wins
-        // Note: We can't call this.formValue.set() since it's an input()
-        // The formValueChange output will emit the new value
-        // Use untracked() to avoid infinite loops - we're updating tracking state here
-        untracked(() => {
-          this.#lastSyncedFormValue = formValue;
-          this.#lastSyncedModelValue = formValue;
-        });
-      } else if (modelChanged && !formChanged) {
-        if (!modelInputChanged) {
-          // The consumer passed no new model; only the baseline moved. The
-          // form-wins branch records the form value as the model baseline,
-          // expecting the consumer to echo `formValueChange` back. With a
-          // one-way `[formValue]` binding that echo never comes, and treating
-          // the stale input as a model change would write it over the
-          // user's edits (or a reset) on the next status change.
-          untracked(() => {
-            this.#lastSyncedModelValue = modelValue;
-          });
-          return;
-        }
-        // Model was modified programmatically -> model wins
-        // Use untracked() to avoid infinite loops - we're updating tracking state here
-        untracked(() => {
-          this.#applyModelValue(modelValue);
-        });
-      } else if (formChanged && modelChanged) {
-        // Both form and model changed simultaneously
-        // Check if they changed to the same value (synchronized change) or different values (conflict)
-        const valuesEqual = this.#isEqual(formValue, modelValue);
-
-        if (valuesEqual) {
-          // Both changed to the same value - this is a synchronized change, not a conflict
-          // Just update tracking to acknowledge the change
-          untracked(() => {
-            this.#lastSyncedFormValue = formValue;
-            this.#lastSyncedModelValue = formValue;
-          });
-        } else if (!formValue) {
-          // The merged form snapshot is null (e.g. an empty form with no
-          // controls yet, or all controls removed) while the model changed.
-          // This is NOT a real divergence between two live values — there is
-          // no form value to conflict with — so let the model win and apply
-          // it, mirroring the `modelChanged && !formChanged` branch. This
-          // also prevents a false-positive conflict warning during the
-          // initial render of forms whose controls are not registered yet.
-          untracked(() => {
-            this.#applyModelValue(modelValue);
-          });
-        } else if (
-          modelInputChanged &&
-          this.#isEqual(formValue, this.#lastEmittedFormValue)
-        ) {
-          // The consumer already received this form value through
-          // `formValueChange` and wrote a different model in response, e.g.
-          // clearing fields that a switched section no longer shows. That is
-          // a follow-up write, not a conflict: the model wins.
-          untracked(() => {
-            this.#applyModelValue(modelValue);
-          });
-        } else if (this.ngForm.form.pristine) {
-          // If Angular still considers the form pristine, the divergent form
-          // snapshot was not produced by user input. This happens during
-          // programmatic signal updates and initial control registration, where
-          // a stale form snapshot can be observed in the same turn as the new
-          // model input. Let the model win instead of reporting a user-edit
-          // conflict.
-          //
-          // Unless the consumer passed no new model: then the model baseline
-          // differs only because a one-way `[formValue]` binding never echoed
-          // a form-wins sync (e.g. after `resetForm()`), and the form changed
-          // structurally (a control was removed). Keep the form.
-          untracked(() => {
-            if (modelInputChanged) {
-              this.#applyModelValue(modelValue);
-            } else {
-              this.#lastSyncedFormValue = formValue;
-              this.#lastSyncedModelValue = formValue;
-            }
-          });
-        } else {
-          // Both sides hold distinct, non-null live values - this is a true
-          // conflict. It is an edge case that should rarely happen in
-          // practice.
-          //
-          // We keep the form's current values (form wins, consistent with the
-          // `formChanged && !modelChanged` branch) but we MUST advance BOTH
-          // tracking baselines. Previously this branch did nothing, so
-          // `#lastSyncedFormValue`/`#lastSyncedModelValue` stayed stale and
-          // every subsequent effect run was re-classified as a conflict
-          // forever — permanently dropping later programmatic `formValue`
-          // updates. Advancing the baselines lets the next single-sided
-          // change synchronize correctly.
-          untracked(() => {
-            this.#lastSyncedFormValue = formValue;
-            this.#lastSyncedModelValue = formValue;
-          });
-
-          if (isDevMode()) {
-            logDiagnostic(NGX_VEST_FORMS_DIAGNOSTICS.SYNC_CONFLICT_DROPPED);
-          }
-        }
-      }
+      this.#modelSync.sync(this.#snapshot.value(), this.formValue());
     });
 
-    // Compose the validation-config pipeline.  Switching on every config change
-    // automatically tears down the previous pipeline instance (and its fresh
-    // validationInProgress Set) before creating the new one. A new config
-    // object with the same entries (e.g. from a `computed` that rebuilds it)
-    // keeps the running pipeline.
-    const form = this.ngForm.form;
-    toObservable(this.validationConfig)
-      .pipe(
-        distinctUntilChanged((a, b) => fastDeepEqual(a, b)),
-        switchMap((config) =>
-          createValidationConfigPipeline(
-            form,
-            config,
-            {
-              configDebounceTime: this.#configDebounceTime,
-              ...PIPELINE_OPTIONS,
-            },
-            this.#cdr,
-            this.#destroyRef,
-            this.#errorHandler
-          )
-        ),
-        takeUntilDestroyed(this.#destroyRef)
-      )
-      .subscribe();
-  }
-
-  /**
-   * Re-runs the validators of every `validationConfig` dependent, then of
-   * their ancestors, deepest first, so the root status includes a dependent
-   * that is still PENDING.
-   *
-   * Runs on every submit, from `#submitOutcome$`. The config pipeline
-   * debounces trigger changes and revalidates dependents with `onlySelf`, so
-   * a submit right after a trigger edit could otherwise settle on a
-   * dependent's stale verdict, such as a confirm-password field that still
-   * matches the old password. It runs after the `(ngSubmit)` handlers: they
-   * read the status synchronously, and a revalidation would turn it PENDING
-   * under them.
-   */
-  #revalidateConfigDependents(): void {
-    const config = this.validationConfig() as Record<
-      string,
-      string[] | undefined
-    > | null;
-    if (!config) {
-      return;
-    }
-    const form = this.ngForm.form;
-    const ancestors = new Set<AbstractControl>();
-    for (const path of new Set(Object.values(config).flat())) {
-      const control = path ? form.get(path) : null;
-      if (!control) {
-        continue;
-      }
-      control.updateValueAndValidity({ onlySelf: true, emitEvent: true });
-      for (let parent = control.parent; parent; parent = parent.parent) {
-        ancestors.add(parent);
-      }
-    }
-    const depth = (control: AbstractControl): number => {
-      let count = 0;
-      for (let parent = control.parent; parent; parent = parent.parent) {
-        count++;
-      }
-      return count;
-    };
-    for (const ancestor of [...ancestors].sort((a, b) => depth(b) - depth(a))) {
-      ancestor.updateValueAndValidity({ onlySelf: true, emitEvent: true });
-    }
-  }
-
-  /**
-   * The root status once it is no longer PENDING: emits right away when
-   * validation already settled, otherwise on the next settled status.
-   */
-  #settledStatus(): Observable<FormControlStatus> {
-    const form = this.ngForm.form;
-    if (form.status !== 'PENDING') {
-      return of(form.status);
-    }
-    return form.statusChanges.pipe(
-      filter((status) => status !== 'PENDING'),
-      take(1)
-    );
+    // Compose the validation-config pipeline, switched on every config
+    // change.
+    connectValidationConfig(this.ngForm.form, this.validationConfig, {
+      configDebounceTime: this.#configDebounceTime,
+      cdr: this.#cdr,
+      destroyRef: this.#destroyRef,
+      errorHandler: this.#errorHandler,
+    });
   }
 
   /**
@@ -1149,32 +631,6 @@ export class FormDirective<T extends Record<string, unknown>> {
       // Update all form controls validity which will trigger all form events
       this.ngForm.form.updateValueAndValidity({ emitEvent: true });
     }
-  }
-
-  /**
-   * Re-runs validation for every control in the form tree, depth-first.
-   *
-   * Angular's `updateValueAndValidity()` on a container only re-runs the
-   * container's own validators and recalculates ancestors — it never descends
-   * into children. When the Vest suite changes, every field-level async
-   * validator must re-run, so each control is updated individually
-   * (`onlySelf: true` avoids redundant ancestor recalculation per child; the
-   * container's own update afterwards aggregates the fresh child statuses).
-   */
-  #revalidateAllControls(): void {
-    const updateTree = (control: AbstractControl): void => {
-      if (control instanceof FormGroup) {
-        for (const child of Object.values(control.controls)) {
-          updateTree(child);
-        }
-      } else if (control instanceof FormArray) {
-        for (const child of control.controls) {
-          updateTree(child);
-        }
-      }
-      control.updateValueAndValidity({ onlySelf: true, emitEvent: true });
-    };
-    updateTree(this.ngForm.form);
   }
 
   /**
@@ -1282,44 +738,7 @@ export class FormDirective<T extends Record<string, unknown>> {
   focusFirstInvalidControl(
     options: NgxFirstInvalidOptions = {}
   ): HTMLElement | null {
-    const {
-      block = 'center',
-      inline = 'nearest',
-      focus = true,
-      preventScrollOnFocus = true,
-      openCollapsedParents = true,
-      invalidSelector = DEFAULT_INVALID_SELECTOR,
-      focusSelector = DEFAULT_FOCUS_SELECTOR,
-    } = options;
-    const behavior = resolveFirstInvalidScrollBehavior(options.behavior);
-
-    const root: HTMLFormElement = this.#elementRef.nativeElement;
-    const firstInvalid = resolveFirstInvalidElement(
-      root,
-      invalidSelector,
-      openCollapsedParents
-    );
-    if (!firstInvalid) {
-      return null;
-    }
-
-    if (openCollapsedParents) {
-      openCollapsedDetailsAncestors(root, firstInvalid);
-    }
-
-    const focusTarget = resolveFirstInvalidFocusTarget(
-      firstInvalid,
-      focusSelector
-    );
-
-    const scrollTarget = focusTarget ?? firstInvalid;
-    scrollTarget.scrollIntoView({ behavior, block, inline });
-
-    if (focus && focusTarget) {
-      focusTarget.focus({ preventScroll: preventScrollOnFocus });
-    }
-
-    return focusTarget ?? firstInvalid;
+    return focusFirstInvalidElement(this.#elementRef.nativeElement, options);
   }
 
   /**
@@ -1353,33 +772,10 @@ export class FormDirective<T extends Record<string, unknown>> {
   }
 
   #emitFieldBlurEvent(event: FocusEvent): void {
-    const resolved = resolveFieldFromBlur(this.ngForm, event.target);
-    if (!resolved) {
-      return;
+    const blurEvent = fieldBlurEvent<T>(this.ngForm, event.target);
+    if (blurEvent) {
+      this.fieldBlur.emit(blurEvent);
     }
-    const { field, control, element } = resolved;
-
-    // Read the latest value directly from the DOM element when it can be
-    // trusted. For radio groups Angular keeps the bound `control.value` in
-    // sync with the *selected* option, while a focused-but-unchecked radio
-    // would expose its own option value via the DOM — so radios must always
-    // fall back to `control.value`. For text/textarea/select we prefer the
-    // element value to avoid `ngModelOptions.updateOn: 'submit'` staleness.
-    const domValue = readElementValueForBlur(element);
-    const value = domValue !== undefined ? domValue : control.value;
-
-    const formValue = mergeValuesAndRawValues<T>(this.ngForm.form);
-    setValueAtPath(formValue as object, field, value);
-
-    this.fieldBlur.emit({
-      field,
-      value,
-      formValue,
-      dirty: control.dirty,
-      touched: control.touched,
-      valid: control.valid,
-      pending: control.pending,
-    });
   }
 
   /**
@@ -1460,8 +856,7 @@ export class FormDirective<T extends Record<string, unknown>> {
     // reset values instead of writing the old model back. If the consumer
     // does pass a new model (`formValue.set(...)` next to `resetForm()`), the
     // next run sees a model change and that model wins.
-    this.#lastSyncedFormValue = null;
-    this.#lastSyncedModelValue = untracked(this.formValue);
+    this.#modelSync.resetBaselines(untracked(this.formValue));
 
     // Mark the view for check so the zoneless scheduler re-renders the
     // ng-* host classes (ng-pristine, ng-valid, …) after NgForm.resetForm()
@@ -1512,7 +907,7 @@ export class FormDirective<T extends Record<string, unknown>> {
     this.suite()?.resetField(field);
 
     // Clear warnings for this field
-    this.#setFieldWarnings(field, undefined);
+    setFieldWarnings(this.fieldWarnings, field, undefined);
 
     // Reset Angular control validation state
     const control = this.ngForm.form.get(field);
@@ -1572,34 +967,7 @@ export class FormDirective<T extends Record<string, unknown>> {
     this.suite()?.remove(field);
 
     // Clear warnings for this field
-    this.#setFieldWarnings(field, undefined);
-  }
-
-  /**
-   * Stores (or clears, for an empty list) one field's warnings. Leaves the
-   * `fieldWarnings` map untouched when the warnings did not change, so
-   * readers are not notified on every validation run.
-   */
-  #setFieldWarnings(
-    field: string,
-    warnings: readonly string[] | undefined
-  ): void {
-    const current = untracked(this.fieldWarnings);
-    const previous = current.get(field);
-    if (!warnings?.length) {
-      if (previous === undefined) return;
-      const next = new Map(current);
-      next.delete(field);
-      this.fieldWarnings.set(next);
-      return;
-    }
-    if (
-      previous?.length === warnings.length &&
-      previous.every((warning, index) => warning === warnings[index])
-    ) {
-      return;
-    }
-    this.fieldWarnings.set(new Map(current).set(field, warnings));
+    setFieldWarnings(this.fieldWarnings, field, undefined);
   }
 
   /**
@@ -1624,65 +992,11 @@ export class FormDirective<T extends Record<string, unknown>> {
     const suite = this.suite();
     if (!suite) return () => of(null);
 
-    return (control: AbstractControl) => {
-      // A copy of its own, not the shared `#formValueSignal` snapshot: the
-      // validator runs inside the control's `updateValueAndValidity`, before
-      // the root form's value event, so that snapshot can still miss this
-      // change or a control registered since; the candidate value is written
-      // into the copy below; and the suite is consumer code that may mutate
-      // the model it is given.
-      // Targeted snapshot with candidate value injected at path
-      // mergeValuesAndRawValues already returns fresh plain objects and arrays,
-      // so we can modify it directly without affecting the form state.
-      const snapshot = mergeValuesAndRawValues<T>(this.ngForm.form);
-      setValueAtPath(snapshot as object, field, control.value);
-
-      const focus: NgxSuiteFocusSpec = {
-        ...this.validationFocus(),
-        only: field,
-      };
-
-      return runFieldValidation(
-        suite,
-        focus,
-        snapshot,
-        validationOptions,
-        this.#destroyRef
-      ).pipe(
-        map((result) => {
-          const warnings = extractFieldWarnings(result, field);
-
-          // Store warnings in the fieldWarnings signal for access by control wrappers.
-          // This is necessary because Angular marks a field as invalid when control.errors !== null.
-          // By storing warnings separately, fields can remain valid while still displaying warnings.
-          this.#setFieldWarnings(field, warnings);
-
-          const out = extractFieldErrors(result, field);
-
-          // Ensure DOM validity classes update after async validation sets new
-          // control errors. Angular's template-driven forms update
-          // `ng-valid`/`ng-invalid` host classes during change detection, and
-          // in a zoneless OnPush app no CD pass may be scheduled when the async
-          // validator resolves. markForCheck() is the zoneless-idiomatic way to
-          // request one: it marks the view dirty and notifies the scheduler
-          // without running CD synchronously inside Angular's validation
-          // pipeline (which detectChanges() would do, risking re-entrancy).
-          // Calling it on a destroyed view is a safe no-op.
-          this.#cdr.markForCheck();
-
-          return out;
-        }),
-        // `runFieldValidation` already applies `take(1)` and `takeUntilDestroyed`,
-        // so no additional terminal operators are needed here.
-        // A suite that throws (e.g. reading `model.a.b` while `a` is undefined)
-        // fails closed: the field gets a generic error so the form cannot
-        // submit, and the original error goes to Angular's ErrorHandler so it
-        // is logged with its stack (and reaches a custom handler, if any).
-        catchError((error: unknown) => {
-          reportToErrorHandler(this.#errorHandler, error);
-          return of({ vestInternalError: 'Validation failed' });
-        })
-      );
-    };
+    return createFieldValidator(
+      this.#fieldValidatorContext,
+      suite,
+      field,
+      validationOptions
+    );
   }
 }

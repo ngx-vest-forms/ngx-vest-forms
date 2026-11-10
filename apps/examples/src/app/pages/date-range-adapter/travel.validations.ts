@@ -1,6 +1,6 @@
-import { type NgxVestSuite } from 'ngx-vest-forms';
+import type { NgxVestSuite } from 'ngx-vest-forms';
 import { create, enforce, omitWhen, test, warn } from 'vest';
-import { TravelFormModel } from '../../models/travel-form.model';
+import type { TravelFormModel } from '../../models/travel-form.model';
 
 const MIN_DAYS_ADVANCE = 3;
 const MS_PER_DAY = 86_400_000;

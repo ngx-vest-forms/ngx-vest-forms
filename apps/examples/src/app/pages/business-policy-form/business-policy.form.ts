@@ -1,16 +1,16 @@
 import { Component, input, output, viewChild } from '@angular/core';
 import {
   createFormFeedbackSignals,
-  FormDirective,
+  type FormDirective,
   type NgxSubmitSettledEvent,
-  NgxValidationConfig,
+  type NgxValidationConfig,
   NgxVestForms,
-  NgxVestSuite,
+  type NgxVestSuite,
   provideFormContract,
 } from 'ngx-vest-forms';
 import {
   businessPolicyContract,
-  BusinessPolicyModel,
+  type BusinessPolicyModel,
 } from '../../models/business-policy.model';
 import { Card } from '../../ui/card/card.component';
 import { FormSectionComponent } from '../../ui/form-section/form-section.component';

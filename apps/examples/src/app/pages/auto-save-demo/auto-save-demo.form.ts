@@ -1,14 +1,14 @@
 import { Component, input, output, viewChild } from '@angular/core';
 import {
   createFormFeedbackSignals,
-  FormDirective,
-  NgxFieldBlurEvent,
+  type FormDirective,
+  type NgxFieldBlurEvent,
   type NgxSubmitSettledEvent,
-  NgxValidationConfig,
+  type NgxValidationConfig,
   NgxVestForms,
-  NgxVestSuite,
+  type NgxVestSuite,
 } from 'ngx-vest-forms';
-import { AutoSaveDemoModel } from '../../models/auto-save-demo.model';
+import type { AutoSaveDemoModel } from '../../models/auto-save-demo.model';
 import { Card } from '../../ui/card/card.component';
 import { FormSectionComponent } from '../../ui/form-section/form-section.component';
 

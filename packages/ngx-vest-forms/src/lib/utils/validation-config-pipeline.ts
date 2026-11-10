@@ -1,10 +1,10 @@
 import {
-  ChangeDetectorRef,
-  DestroyRef,
+  type ChangeDetectorRef,
+  type DestroyRef,
   ErrorHandler,
   isDevMode,
 } from '@angular/core';
-import { AbstractControl, FormGroup } from '@angular/forms';
+import type { AbstractControl, FormGroup } from '@angular/forms';
 import {
   debounceTime,
   defer,
@@ -13,7 +13,7 @@ import {
   filter,
   finalize,
   map,
-  Observable,
+  type Observable,
   of,
   race,
   merge as rxMerge,
@@ -30,6 +30,7 @@ import {
 } from '../errors/error-catalog';
 import { scheduleTimeout } from './destroy-scheduler';
 import type { ValidationConfigMap } from './field-path-types';
+import { settledStatus } from './settled-status';
 import { reportToErrorHandler } from './vest-runner';
 
 /**
@@ -281,14 +282,9 @@ function waitForFormIdle(
   control: AbstractControl,
   timeoutMs: number
 ): Observable<AbstractControl> {
-  if (form.status !== 'PENDING') {
-    return of(control);
-  }
-
-  const idle$ = form.statusChanges.pipe(
-    filter((s) => s !== 'PENDING'),
-    take(1)
-  );
+  // Emits synchronously when the form is not PENDING, so `race` never
+  // starts the timeout then.
+  const idle$ = settledStatus(form);
 
   const timeout$ = timer(timeoutMs).pipe(
     tap(() => {

@@ -1,16 +1,16 @@
 import {
   Component,
-  DebugElement,
+  type DebugElement,
   inject,
   input,
   model,
   output,
   signal,
 } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import {
-  AbstractControl,
-  ControlValueAccessor,
+  type AbstractControl,
+  type ControlValueAccessor,
   NgControl,
   NgForm,
   NgModel,
@@ -21,7 +21,7 @@ import { create, enforce, test as vestTest } from 'vest';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { NgxVestForms } from '../exports';
 import { FormModelDirective } from './form-model.directive';
-import { FormDirective, NgxValidationConfig } from './form.directive';
+import { FormDirective, type NgxValidationConfig } from './form.directive';
 
 /**
  * Lifecycle edge cases of the Signal Forms custom-control support in

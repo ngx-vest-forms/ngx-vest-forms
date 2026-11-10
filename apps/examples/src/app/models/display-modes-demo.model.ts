@@ -1,4 +1,4 @@
-import { NgxDeepPartial, NgxDeepRequired } from 'ngx-vest-forms';
+import type { NgxDeepPartial, NgxDeepRequired } from 'ngx-vest-forms';
 
 export type DisplayModesDemoModel = NgxDeepPartial<{
   tokenDefaultError: string;

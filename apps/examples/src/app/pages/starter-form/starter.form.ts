@@ -1,14 +1,14 @@
 import { Component, input, output, viewChild } from '@angular/core';
 import {
   createFormFeedbackSignals,
-  FormDirective,
+  type FormDirective,
   type NgxSubmitSettledEvent,
   NgxVestForms,
-  NgxVestSuite,
+  type NgxVestSuite,
   provideFormContract,
 } from 'ngx-vest-forms';
 import {
-  StarterFormModel,
+  type StarterFormModel,
   starterFormShape,
 } from '../../models/starter-form.model';
 

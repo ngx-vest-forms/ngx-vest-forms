@@ -1,9 +1,9 @@
 import {
-  AbstractControl,
-  AsyncValidatorFn,
+  type AbstractControl,
+  type AsyncValidatorFn,
   FormControl,
   FormGroup,
-  ValidationErrors,
+  type ValidationErrors,
 } from '@angular/forms';
 import { firstValueFrom, Observable, of } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

@@ -1,4 +1,4 @@
-import { NgxDeepPartial } from 'ngx-vest-forms';
+import type { NgxDeepPartial } from 'ngx-vest-forms';
 
 export type AutoSaveDemoModel = NgxDeepPartial<{
   projectName: string;

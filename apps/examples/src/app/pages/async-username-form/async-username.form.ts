@@ -2,17 +2,17 @@ import { Component, computed, input, output, viewChild } from '@angular/core';
 import {
   createDebouncedPendingState,
   createFormFeedbackSignals,
-  FormDirective,
+  type FormDirective,
   NGX_PENDING_LABEL,
   NGX_VALIDATION_DEBOUNCE_PRESETS,
-  NgxSubmitSettledEvent,
+  type NgxSubmitSettledEvent,
   NgxVestForms,
-  NgxVestSuite,
+  type NgxVestSuite,
   provideFormContract,
-  ValidationOptions,
+  type ValidationOptions,
 } from 'ngx-vest-forms';
 import {
-  AsyncUsernameModel,
+  type AsyncUsernameModel,
   asyncUsernameShape,
 } from '../../models/async-username.model';
 

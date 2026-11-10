@@ -8,7 +8,7 @@ import { create, enforce, test as vestTest } from 'vest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NgxVestForms } from '../exports';
 import { FormModelGroupDirective } from './form-model-group.directive';
-import { FormDirective } from './form.directive';
+import type { FormDirective } from './form.directive';
 
 type AddressFormModel = {
   address: {

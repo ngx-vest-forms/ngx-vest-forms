@@ -1,12 +1,12 @@
-import { Injector, isDevMode } from '@angular/core';
+import { type Injector, isDevMode } from '@angular/core';
 import {
   AbstractControl,
-  AsyncValidatorFn,
+  type AsyncValidatorFn,
   NG_ASYNC_VALIDATORS,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
-  NgModel,
-  ValidatorFn,
+  type NgModel,
+  type ValidatorFn,
 } from '@angular/forms';
 import {
   logDiagnostic,

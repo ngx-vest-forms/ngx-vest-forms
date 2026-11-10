@@ -1,6 +1,6 @@
 import { ApplicationRef, Component, signal, viewChild } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormsModule, NgForm } from '@angular/forms';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormsModule, type NgForm } from '@angular/forms';
 import { waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { create, enforce, test as vestTest, warn } from 'vest';

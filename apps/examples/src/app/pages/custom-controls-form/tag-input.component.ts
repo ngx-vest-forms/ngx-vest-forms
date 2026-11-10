@@ -1,11 +1,11 @@
 import {
   Component,
-  ElementRef,
+  type ElementRef,
   forwardRef,
   signal,
   viewChild,
 } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { type ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { RemovalFeedback } from '../../shared/removal-feedback';
 
 let nextId = 0;

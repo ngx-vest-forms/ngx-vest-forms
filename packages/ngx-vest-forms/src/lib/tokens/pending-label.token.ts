@@ -3,7 +3,7 @@ import {
   inject,
   InjectionToken,
   isSignal,
-  Signal,
+  type Signal,
 } from '@angular/core';
 
 /**

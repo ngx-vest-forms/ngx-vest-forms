@@ -6,7 +6,11 @@
  * TestBed component fixture, keeping them fast and focused on the pipeline
  * logic itself.
  */
-import { ChangeDetectorRef, DestroyRef, ErrorHandler } from '@angular/core';
+import type {
+  ChangeDetectorRef,
+  DestroyRef,
+  ErrorHandler,
+} from '@angular/core';
 import { type AbstractControl, FormControl, FormGroup } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
