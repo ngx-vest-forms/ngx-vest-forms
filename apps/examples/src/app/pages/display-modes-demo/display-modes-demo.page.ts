@@ -50,7 +50,9 @@ export class DisplayModesDemoPageComponent {
 
   protected readonly outcome = signal<'success' | 'invalid' | null>(null);
 
-  protected onSubmit(event: NgxSubmitSettledEvent<DisplayModesDemoModel>): void {
+  protected onSubmit(
+    event: NgxSubmitSettledEvent<DisplayModesDemoModel>
+  ): void {
     this.outcome.set(event.valid ? 'success' : 'invalid');
   }
 }

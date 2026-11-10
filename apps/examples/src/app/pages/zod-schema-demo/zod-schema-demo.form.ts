@@ -32,7 +32,9 @@ export class ZodSchemaDemoFormBody {
 
   readonly feedback = createFormFeedbackSignals(this.vestForm);
 
-  protected onSubmitSettled(event: NgxSubmitSettledEvent<ZodSchemaDemoModel>): void {
+  protected onSubmitSettled(
+    event: NgxSubmitSettledEvent<ZodSchemaDemoModel>
+  ): void {
     this.submitted.emit(event);
   }
 }

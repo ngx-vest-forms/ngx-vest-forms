@@ -63,6 +63,21 @@ test.describe('Display Modes Demo Form', () => {
     await expect(page.getByText('Form submitted')).toHaveCount(0);
   });
 
+  test('should show success feedback once the four required fields are filled', async ({
+    page,
+  }) => {
+    // Warnings never block the submit; only the four error fields gate it.
+    await page.locator('#tokenDefaultError').fill('ada');
+    await page.locator('#alwaysError').fill('ada');
+    await page.locator('#dirtyError').fill('ada');
+    await page.locator('#submitError').fill('ada');
+
+    await page.getByRole('button', { name: /^submit$/i }).click();
+
+    await expect(page.getByText('Form submitted')).toBeVisible();
+    await expect(page.getByText('Form not submitted')).toHaveCount(0);
+  });
+
   test('should show on-dirty error after typing in dirty error field', async ({
     page,
   }) => {

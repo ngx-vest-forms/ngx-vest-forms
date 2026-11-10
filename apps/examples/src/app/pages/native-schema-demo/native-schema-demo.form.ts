@@ -32,7 +32,9 @@ export class NativeSchemaDemoFormBody {
 
   readonly feedback = createFormFeedbackSignals(this.vestForm);
 
-  protected onSubmitSettled(event: NgxSubmitSettledEvent<NativeSchemaDemoModel>): void {
+  protected onSubmitSettled(
+    event: NgxSubmitSettledEvent<NativeSchemaDemoModel>
+  ): void {
     this.submitted.emit(event);
   }
 }

@@ -35,7 +35,9 @@ export class NativeSchemaDemoPageComponent {
 
   protected readonly outcome = signal<'success' | 'invalid' | null>(null);
 
-  protected onSubmit(event: NgxSubmitSettledEvent<NativeSchemaDemoModel>): void {
+  protected onSubmit(
+    event: NgxSubmitSettledEvent<NativeSchemaDemoModel>
+  ): void {
     this.outcome.set(event.valid ? 'success' : 'invalid');
   }
 }

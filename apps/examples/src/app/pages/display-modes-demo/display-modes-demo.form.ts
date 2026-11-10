@@ -51,7 +51,9 @@ export class DisplayModesDemoFormBody {
     form.triggerFormValidation();
   }
 
-  protected onSubmitSettled(event: NgxSubmitSettledEvent<DisplayModesDemoModel>): void {
+  protected onSubmitSettled(
+    event: NgxSubmitSettledEvent<DisplayModesDemoModel>
+  ): void {
     this.submitted.emit(event);
   }
 }

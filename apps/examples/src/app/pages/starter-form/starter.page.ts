@@ -48,7 +48,7 @@ export class StarterPageComponent {
   protected readonly feedback = computed(() => this.formBody()?.feedback);
 
   protected onSubmit(event: NgxSubmitSettledEvent<StarterFormModel>): void {
-    if (!event.valid) {
+    if (!event.valid || !event.value) {
       // The directive focuses the first invalid control on submit by default
       // (`focusFirstInvalidOnSubmit`), so no manual focus handling is needed.
       this.submittedValue.set(null);
