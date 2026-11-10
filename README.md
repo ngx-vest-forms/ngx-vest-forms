@@ -625,8 +625,10 @@ The `[formShape]` input on `<form ngxVestForm>` is replaced by `[formContract]`,
 <!-- v3: legacy shape fallback still works -->
 <form ngxVestForm [suite]="suite" [formContract]="shape"></form>
 
-<!-- v3: explicit conversion to StandardSchemaV1 -->
-<form ngxVestForm [suite]="suite" [formContract]="toFormContract(shape)"></form>
+<!-- v3: explicit conversion to StandardSchemaV1. A template cannot call
+     toFormContract itself; convert once in the component:
+     protected readonly contract = toFormContract(shape); -->
+<form ngxVestForm [suite]="suite" [formContract]="contract"></form>
 
 <!-- v3: real Standard Schema (recommended for new code) -->
 <form ngxVestForm [suite]="suite" [formContract]="zodSchema"></form>
