@@ -46,8 +46,16 @@ function folderHash(skillDir) {
 }
 
 function isInternal(skillFile) {
-  const frontmatter = readFileSync(skillFile, 'utf8').split(/^---\s*$/m)[1] ?? '';
-  return /^metadata:\s*\n(?:[ \t]+.*\n)*?[ \t]+internal:\s*["']?(true|1)["']?\s*$/m.test(`${frontmatter}\n`);
+  // Line by line: one pattern over the whole block backtracks exponentially.
+  const lines = (readFileSync(skillFile, 'utf8').split(/^---[ \t]*$/m)[1] ?? '').split('\n');
+  const start = lines.findIndex((line) => /^metadata:[ \t]*$/.test(line));
+  if (start === -1) return false;
+  for (const line of lines.slice(start + 1)) {
+    if (line.trim() === '') continue;
+    if (!/^[ \t]/.test(line)) break;
+    if (/^[ \t]+internal:[ \t]*["']?(?:true|1)["']?[ \t]*$/.test(line)) return true;
+  }
+  return false;
 }
 
 const skillNames = readdirSync(skillsDir, { withFileTypes: true })
