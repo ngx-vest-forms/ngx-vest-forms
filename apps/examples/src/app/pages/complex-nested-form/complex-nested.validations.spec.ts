@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { TeamMemberModel } from '../../models/complex-nested.model';
+import type { TeamMemberModel } from './complex-nested.model';
 import { complexNestedSuite } from './complex-nested.validations';
 
 const valid: TeamMemberModel = {

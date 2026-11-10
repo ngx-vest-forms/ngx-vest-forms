@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { SEAT_LIMITS } from '../../models/signal-forms-interop.model';
+import { SEAT_LIMITS } from './signal-forms-interop.model';
 import { signalFormsInteropSuite } from './signal-forms-interop.validations';
 
 describe('Signal Forms Interop Validations', () => {

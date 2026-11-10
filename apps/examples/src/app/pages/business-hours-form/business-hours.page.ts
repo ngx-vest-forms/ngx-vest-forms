@@ -1,9 +1,5 @@
 import { Component, computed, signal, viewChild } from '@angular/core';
 import { createValidationConfig, ROOT_FORM } from 'ngx-vest-forms';
-import {
-  type BusinessHoursFormModel,
-  initialBusinessHoursFormValue,
-} from '../../models/business-hours-form.model';
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
@@ -12,6 +8,10 @@ import {
   IntroSectionComponent,
 } from '../../ui/intro-section';
 import { PageTitle } from '../../ui/page-title/page-title.component';
+import {
+  type BusinessHoursFormModel,
+  initialBusinessHoursFormValue,
+} from './business-hours-form.model';
 import { businessHoursContent } from './business-hours.content';
 import { BusinessHoursFormBody } from './business-hours.form';
 import { businessHoursSuite } from './business-hours.validations';

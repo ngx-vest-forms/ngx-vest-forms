@@ -1,7 +1,7 @@
 import type { NgxVestSuite } from 'ngx-vest-forms';
 import { create, enforce, test } from 'vest';
-import type { ZodSchemaDemoModel } from '../../models/zod-schema-demo.model';
 import { EMAIL_PATTERN } from '../../shared/validations/email.validations';
+import type { ZodSchemaDemoModel } from './zod-schema-demo.model';
 
 /**
  * Vest suite for the Zod demo.

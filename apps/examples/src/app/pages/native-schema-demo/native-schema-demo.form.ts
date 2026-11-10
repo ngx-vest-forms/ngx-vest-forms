@@ -6,12 +6,12 @@ import {
   NgxVestForms,
   type NgxVestSuite,
 } from 'ngx-vest-forms';
+import { Card } from '../../ui/card/card.component';
+import { FormSectionComponent } from '../../ui/form-section/form-section.component';
 import {
   nativeSchemaDemoContract,
   type NativeSchemaDemoModel,
-} from '../../models/native-schema-demo.model';
-import { Card } from '../../ui/card/card.component';
-import { FormSectionComponent } from '../../ui/form-section/form-section.component';
+} from './native-schema-demo.model';
 
 @Component({
   selector: 'ngx-native-schema-demo-form-body',

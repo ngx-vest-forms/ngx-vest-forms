@@ -9,12 +9,6 @@ import {
   viewChild,
 } from '@angular/core';
 import { createValidationConfig } from 'ngx-vest-forms';
-import type {
-  WizardStep,
-  WizardStep1Model,
-  WizardStep2Model,
-  WizardStep3Model,
-} from '../../models/wizard-form.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
@@ -27,6 +21,12 @@ import { PageTitle } from '../../ui/page-title/page-title.component';
 import { StatusBadge } from '../../ui/status-badge/status-badge.component';
 import { type WizardStepConfig, WizardStepsComponent } from '../../ui/wizard';
 import { wizardContent } from './wizard-form.content';
+import type {
+  WizardStep,
+  WizardStep1Model,
+  WizardStep2Model,
+  WizardStep3Model,
+} from './wizard-form.model';
 import { WizardFormBodyComponent } from './wizard.form';
 import {
   wizardStep1Suite,

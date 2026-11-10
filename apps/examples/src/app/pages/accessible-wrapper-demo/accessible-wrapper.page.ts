@@ -1,6 +1,5 @@
 import { Component, computed, signal, viewChild } from '@angular/core';
 import type { NgxSubmitSettledEvent } from 'ngx-vest-forms';
-import type { AccessibleWrapperModel } from '../../models/accessible-wrapper.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
@@ -12,6 +11,7 @@ import {
 import { PageTitle } from '../../ui/page-title/page-title.component';
 import { accessibleWrapperContent } from './accessible-wrapper.content';
 import { AccessibleWrapperFormBody } from './accessible-wrapper.form';
+import type { AccessibleWrapperModel } from './accessible-wrapper.model';
 import { accessibleWrapperSuite } from './accessible-wrapper.validations';
 
 @Component({

@@ -1,9 +1,5 @@
 import { Component, signal, viewChild } from '@angular/core';
 import { type NgxSubmitSettledEvent, objectToArray } from 'ngx-vest-forms';
-import {
-  type ComplexNestedModel,
-  initialComplexNestedValue,
-} from '../../models/complex-nested.model';
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
@@ -15,6 +11,10 @@ import { JsonPreviewComponent } from '../../ui/json-preview/json-preview.compone
 import { PageTitle } from '../../ui/page-title/page-title.component';
 import { complexNestedContent } from './complex-nested.content';
 import { ComplexNestedFormBody } from './complex-nested.form';
+import {
+  type ComplexNestedModel,
+  initialComplexNestedValue,
+} from './complex-nested.model';
 import { complexNestedSuite } from './complex-nested.validations';
 
 /**

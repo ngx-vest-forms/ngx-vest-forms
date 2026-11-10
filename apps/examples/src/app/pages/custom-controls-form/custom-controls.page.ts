@@ -1,6 +1,5 @@
 import { Component, computed, signal, viewChild } from '@angular/core';
 import type { NgxSubmitSettledEvent } from 'ngx-vest-forms';
-import type { CustomControlsModel } from '../../models/custom-controls.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
@@ -12,6 +11,7 @@ import {
 import { PageTitle } from '../../ui/page-title/page-title.component';
 import { customControlsContent } from './custom-controls.content';
 import { CustomControlsFormBody } from './custom-controls.form';
+import type { CustomControlsModel } from './custom-controls.model';
 import { customControlsSuite } from './custom-controls.validations';
 
 /**

@@ -7,11 +7,11 @@ import {
   type NgxVestSuite,
   provideFormContract,
 } from 'ngx-vest-forms';
+import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import {
   businessHoursFormContract,
   type BusinessHoursFormModel,
-} from '../../models/business-hours-form.model';
-import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
+} from './business-hours-form.model';
 import {
   BusinessHoursComponent,
   type BusinessHoursMap,

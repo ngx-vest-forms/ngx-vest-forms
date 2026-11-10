@@ -1,7 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import type { NgxSubmitSettledEvent } from 'ngx-vest-forms';
-import type { ZodSchemaDemoModel } from '../../models/zod-schema-demo.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
@@ -12,6 +11,7 @@ import {
 import { PageTitle } from '../../ui/page-title/page-title.component';
 import { zodSchemaContent } from './zod-schema-demo.content';
 import { ZodSchemaDemoFormBody } from './zod-schema-demo.form';
+import type { ZodSchemaDemoModel } from './zod-schema-demo.model';
 import { zodSchemaDemoSuite } from './zod-schema-demo.validations';
 
 @Component({

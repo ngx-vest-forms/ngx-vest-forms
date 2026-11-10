@@ -6,12 +6,12 @@ import {
   NgxVestForms,
   type NgxVestSuite,
 } from 'ngx-vest-forms';
+import { Card } from '../../ui/card/card.component';
+import { FormSectionComponent } from '../../ui/form-section/form-section.component';
 import {
   zodSchemaDemoContract,
   type ZodSchemaDemoModel,
-} from '../../models/zod-schema-demo.model';
-import { Card } from '../../ui/card/card.component';
-import { FormSectionComponent } from '../../ui/form-section/form-section.component';
+} from './zod-schema-demo.model';
 
 @Component({
   selector: 'ngx-zod-schema-demo-form-body',

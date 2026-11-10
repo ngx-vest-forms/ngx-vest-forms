@@ -7,12 +7,12 @@ import {
   type NgxVestSuite,
   provideFormContract,
 } from 'ngx-vest-forms';
+import { ConsentSwitchComponent } from './consent-switch.component';
+import { SeatStepperComponent } from './seat-stepper.component';
 import {
   signalFormsInteropContract,
   type SignalFormsInteropModel,
-} from '../../models/signal-forms-interop.model';
-import { ConsentSwitchComponent } from './consent-switch.component';
-import { SeatStepperComponent } from './seat-stepper.component';
+} from './signal-forms-interop.model';
 
 @Component({
   selector: 'ngx-signal-forms-interop-form-body',

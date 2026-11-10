@@ -13,9 +13,9 @@ import {
   NgxVestForms,
   type NgxVestSuite,
 } from 'ngx-vest-forms';
-import type { DisplayModesDemoModel } from '../../models/display-modes-demo.model';
 import { Card } from '../../ui/card/card.component';
 import { FormSectionComponent } from '../../ui/form-section/form-section.component';
+import type { DisplayModesDemoModel } from './display-modes-demo.model';
 
 @Component({
   selector: 'ngx-display-modes-demo-form-body',

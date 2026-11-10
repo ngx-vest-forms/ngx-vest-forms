@@ -25,17 +25,17 @@ import {
   type ValidationOptions,
 } from 'ngx-vest-forms';
 import { z } from 'zod';
-import {
-  initialPurchaseFormValue,
-  purchaseFormContract,
-  type PurchaseFormModel,
-} from '../../models/purchase-form.model';
 import { AddressComponent } from '../../ui/address/address.component';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { FormSectionComponent } from '../../ui/form-section/form-section.component';
 import { PhoneNumbersComponent } from '../../ui/phonenumbers/phonenumbers.component';
 import { ProductService } from './product.service';
 import type { Product } from './product.type';
+import {
+  initialPurchaseFormValue,
+  purchaseFormContract,
+  type PurchaseFormModel,
+} from './purchase-form.model';
 import { createPurchaseValidationSuite } from './purchase.validations';
 import { SwapiService } from './swapi.service';
 

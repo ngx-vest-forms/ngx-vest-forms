@@ -1,5 +1,5 @@
 import type { NgxVestSuite } from 'ngx-vest-forms';
-import type { NativeSchemaDemoModel } from '../../models/native-schema-demo.model';
+import type { NativeSchemaDemoModel } from './native-schema-demo.model';
 import { nativeSchemaDemoSuite } from './native-schema-demo.validations';
 
 describe('nativeSchemaDemoSuite (schema-typed)', () => {

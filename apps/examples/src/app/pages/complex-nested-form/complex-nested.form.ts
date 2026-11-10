@@ -15,15 +15,15 @@ import {
   type NgxVestSuite,
   provideFormContract,
 } from 'ngx-vest-forms';
-import {
-  complexNestedContract,
-  type ComplexNestedModel,
-  type TeamMemberModel,
-} from '../../models/complex-nested.model';
 import { RemovalFeedback } from '../../shared/removal-feedback';
 import { AddressComponent } from '../../ui/address/address.component';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { FormSectionComponent } from '../../ui/form-section/form-section.component';
+import {
+  complexNestedContract,
+  type ComplexNestedModel,
+  type TeamMemberModel,
+} from './complex-nested.model';
 import { TeamMemberComponent } from './team-member.component';
 
 const emptyMember: TeamMemberModel = { fullName: '', email: '', role: '' };

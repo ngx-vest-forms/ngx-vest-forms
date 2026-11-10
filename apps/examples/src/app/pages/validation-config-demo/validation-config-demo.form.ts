@@ -8,12 +8,12 @@ import {
   type NgxVestSuite,
   provideFormContract,
 } from 'ngx-vest-forms';
+import { Card } from '../../ui/card/card.component';
+import { FormSectionComponent } from '../../ui/form-section/form-section.component';
 import {
   validationDemoContract,
   type ValidationDemoModel,
-} from '../../models/validation-demo.model';
-import { Card } from '../../ui/card/card.component';
-import { FormSectionComponent } from '../../ui/form-section/form-section.component';
+} from './validation-demo.model';
 
 @Component({
   selector: 'ngx-validation-config-demo-form-body',

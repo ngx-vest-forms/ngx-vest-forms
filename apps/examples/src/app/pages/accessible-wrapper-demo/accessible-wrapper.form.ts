@@ -11,7 +11,7 @@ import {
 import {
   accessibleWrapperContract,
   type AccessibleWrapperModel,
-} from '../../models/accessible-wrapper.model';
+} from './accessible-wrapper.model';
 
 @Component({
   selector: 'ngx-accessible-wrapper-form-body',

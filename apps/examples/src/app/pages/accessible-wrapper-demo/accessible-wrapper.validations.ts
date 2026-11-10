@@ -1,6 +1,6 @@
 import type { NgxVestSuite } from 'ngx-vest-forms';
 import { create, enforce, omitWhen, test } from 'vest';
-import type { AccessibleWrapperModel } from '../../models/accessible-wrapper.model';
+import type { AccessibleWrapperModel } from './accessible-wrapper.model';
 
 export const accessibleWrapperSuite: NgxVestSuite<AccessibleWrapperModel> =
   create((model: AccessibleWrapperModel) => {

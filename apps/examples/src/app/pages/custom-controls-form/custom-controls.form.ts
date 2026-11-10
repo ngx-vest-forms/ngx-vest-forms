@@ -10,7 +10,7 @@ import {
 import {
   customControlsContract,
   type CustomControlsModel,
-} from '../../models/custom-controls.model';
+} from './custom-controls.model';
 import { SegmentedControlComponent } from './segmented-control.component';
 import { StarRatingComponent } from './star-rating.component';
 import { TagInputComponent } from './tag-input.component';

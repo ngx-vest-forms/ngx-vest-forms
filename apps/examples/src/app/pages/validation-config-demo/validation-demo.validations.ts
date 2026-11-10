@@ -1,6 +1,6 @@
 import type { NgxVestSuite } from 'ngx-vest-forms';
 import { create, enforce, omitWhen, test, warn } from 'vest';
-import type { ValidationDemoModel } from '../../models/validation-demo.model';
+import type { ValidationDemoModel } from './validation-demo.model';
 
 export const validationDemoSuite: NgxVestSuite<ValidationDemoModel> = create(
   (model: ValidationDemoModel) => {

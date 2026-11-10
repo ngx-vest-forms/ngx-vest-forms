@@ -1,8 +1,8 @@
 import { type NgxVestSuite, ROOT_FORM } from 'ngx-vest-forms';
 import { create, each, enforce, test, warn } from 'vest';
-import type { ComplexNestedModel } from '../../models/complex-nested.model';
 import { addressValidations } from '../../shared/validations/address.validations';
 import { EMAIL_PATTERN } from '../../shared/validations/email.validations';
+import type { ComplexNestedModel } from './complex-nested.model';
 
 /**
  * Vest suite for the team-registration form.

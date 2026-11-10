@@ -1,6 +1,6 @@
 import { Service } from '@angular/core';
 import { delay, type Observable, of, throwError } from 'rxjs';
-import type { AutoSaveDemoModel } from '../../models/auto-save-demo.model';
+import type { AutoSaveDemoModel } from './auto-save-demo.model';
 
 /**
  * What triggered a save: the blurred control's path, which

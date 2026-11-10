@@ -1,7 +1,7 @@
 import { Component, booleanAttribute, input } from '@angular/core';
 import { NgxMaskDirective } from 'ngx-mask';
 import { NgxVestForms, vestFormsViewProviders } from 'ngx-vest-forms';
-import type { BusinessHourFormModel } from '../../../../models/business-hours-form.model';
+import type { BusinessHourFormModel } from '../../business-hours-form.model';
 
 @Component({
   selector: 'ngx-business-hour',

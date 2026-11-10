@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Service, inject } from '@angular/core';
 import type { Observable } from 'rxjs';
-import type { SubmissionPatternsModel } from '../../models/submission-patterns.model';
+import type { SubmissionPatternsModel } from './submission-patterns.model';
 
 /** Options accepted by {@link AccountService.createAccount}. */
 export type CreateAccountOptions = {
