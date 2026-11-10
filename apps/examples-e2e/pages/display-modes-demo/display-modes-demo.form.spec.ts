@@ -63,6 +63,17 @@ test.describe('Display Modes Demo Form', () => {
     await expect(page.getByText('Form submitted')).toHaveCount(0);
   });
 
+  test('should show invalid submit feedback from the programmatic submit', async ({
+    page,
+  }) => {
+    await page
+      .getByRole('button', { name: /programmatically submit demo form/i })
+      .click();
+
+    await expect(page.getByText('Form not submitted')).toBeVisible();
+    await expect(page.getByText('Form submitted')).toHaveCount(0);
+  });
+
   test('should show success feedback once the four required fields are filled', async ({
     page,
   }) => {
