@@ -27,8 +27,14 @@ Say explicitly when the user's rule is field-owned and route it to [`../validati
 4. Submit handling: submit-mode root validation has already run when `(ngSubmit)` fires, so a synchronous `ROOT_FORM` failure already makes the form `INVALID` there. With async `ROOT_FORM` tests decide in `(submitSettled)`, whose `errors` include `ROOT_FORM`. `clearSubmittedState()` clears submit-mode `ROOT_FORM` errors.
 
 ```ts
-import { ROOT_FORM, type NgxVestSuite } from 'ngx-vest-forms';
+import {
+  ROOT_FORM,
+  type NgxDeepPartial,
+  type NgxVestSuite,
+} from 'ngx-vest-forms';
 import { create, enforce, test } from 'vest';
+
+type Contact = NgxDeepPartial<{ email: string; phone: string }>;
 
 export const contactSuite: NgxVestSuite<Contact> = create((model) => {
   test(ROOT_FORM, 'Give an email address or a phone number', () => {

@@ -78,6 +78,11 @@ jobs:
           fi
       - name: Check workflow actions are SHA-pinned
         run: bash .github/scripts/check-action-pins.sh
+      - name: Check agent skills
+        # Angular and Nx skills match their locks (no local edits), maintainer
+        # skills stay hidden from `npx skills add`, and the TypeScript examples
+        # of the published skills compile against the library source.
+        run: pnpm check:skills
       - name: Get Playwright version
         id: playwright-version
         run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"

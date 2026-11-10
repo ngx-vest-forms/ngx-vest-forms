@@ -18,6 +18,10 @@
     "dist",
     ".angular",
     ".github",
+    ".agents/skills/angular-developer",
+    ".agents/skills/link-workspace-packages",
+    ".agents/skills/monitor-ci",
+    ".agents/skills/nx-*",
     ".husky",
     ".vscode"
   ],

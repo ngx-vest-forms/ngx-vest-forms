@@ -17,7 +17,7 @@ Run it in the background. Without `--watch=false` the dev server builds and then
 
 ## Drive
 
-Use the Playwright MCP (`browser_run_code_unsafe`) for scripted sweeps. Routes come from `apps/examples/src/app/shared/routes.metadata.ts`.
+Use the browser automation tool that the session has for scripted sweeps; the repo configures none. Routes come from `apps/examples/src/app/shared/routes.metadata.ts`.
 
 Flows worth driving:
 
@@ -36,5 +36,14 @@ The sidebar's "Form Value" panel (`h2` "Form Value" + next sibling) is the quick
 
 - A Playwright `click()` adds enough delay to hide same-tick races. To probe submit timing, set values and call `button.click()` in one `page.evaluate`, as `fillAndSubmitInOneTick` in `apps/examples-e2e/helpers/form-helpers.ts` does.
 - Custom controls (`custom-controls`) are only found through the wrapper's invalid class, which renders after the submit, so check focus on the _first_ submit, not a repeat.
-- Browser targets need the `browser-tests` wrapper outside the sandbox: `browser-tests examples-e2e e2e -- <spec> --project=chromium`.
 - Stop the server and close the browser when done; `.playwright-mcp/` is gitignored.
+
+## E2E tests
+
+```bash
+pnpm nx run examples-e2e:e2e -- <spec> --project=chromium
+```
+
+A browser cannot start inside the Claude Code sandbox, so run this command, and `pnpm nx run ngx-vest-forms:test-browser`, outside it.
+
+The run starts its own server, `examples:serve-static` (`vite preview` of a development build), on port 4400. Locally it reuses any server that already listens there, so a server left from an earlier run serves the old build. Before a run that must see new code, stop that server: `lsof -ti :4400` prints its process id.

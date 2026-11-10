@@ -37,8 +37,14 @@ When stale cross-field errors are the bug, a missing `validationConfig` is the m
 5. Bind it: `<form ngxVestForm … [validationConfig]="validationConfig">`.
 
 ```ts
-import { createValidationConfig, type NgxVestSuite } from 'ngx-vest-forms';
+import {
+  createValidationConfig,
+  type NgxDeepPartial,
+  type NgxVestSuite,
+} from 'ngx-vest-forms';
 import { create, enforce, omitWhen, test } from 'vest';
+
+type Signup = NgxDeepPartial<{ password: string; confirmPassword: string }>;
 
 export const signupSuite: NgxVestSuite<Signup> = create((model) => {
   test('password', 'Password is required', () => {
@@ -51,10 +57,11 @@ export const signupSuite: NgxVestSuite<Signup> = create((model) => {
   });
 });
 
-// in the component
-protected readonly validationConfig = createValidationConfig<Signup>()
-  .bidirectional('password', 'confirmPassword')
-  .build();
+export class SignupFormComponent {
+  protected readonly validationConfig = createValidationConfig<Signup>()
+    .bidirectional('password', 'confirmPassword')
+    .build();
+}
 ```
 
 A raw object works too when it is clearer; annotate it as `NgxValidationConfig<Model>` so the paths are checked. Array items are addressed by index, one per array level: `'addresses.0.street'`, the form the runtime registers controls under. The index-free `'addresses.street'` and the bracket form `'addresses[0].street'` are not `FieldPath`s; the index-free form never matches a control. A runtime index type-checks inline (`` `addresses.${i}.street` ``) or in a variable declared with `as const`; a plain `const key = ...` widens to `string`. Only paths `FieldPath<T>` cannot express at all, such as strings read from a server, need an explicit cast of the built object.

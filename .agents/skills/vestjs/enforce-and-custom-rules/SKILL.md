@@ -1,99 +1,110 @@
 ---
 name: enforce-and-custom-rules
-description: Helps developers design reusable Vest.js 6 `enforce` rules and custom validators. Use this whenever the user mentions `enforce.condition`, `enforce.extend`, `compose`, custom matchers, reusable domain rules, schema-like validation, `create(..., schema)`, `enforce.shape`, `enforce.record`, `enforce.lazy`, `enforce.tuple`, `enforce.context()`, or asks how to type custom `enforce` rules in TypeScript.
+description: Schemas and reusable `enforce` rules in Vest 6. Read it for `create(..., schema)`, `enforce.shape`, `enforce.loose`, `enforce.isArrayOf`, `enforce.record`, `enforce.lazy`, `enforce.tuple`, parser chains, `enforce.condition`, `enforce.extend`, `compose`, `enforce.context()`, or typing custom rules.
 ---
 
-# Vest.js 6 enforce and custom-rule guidance
+# Vest 6 enforce rules and schemas
 
-Use this skill when the question is about **reusable rule design**, not just individual `test(...)` blocks.
+The invariants live in the router, [`../SKILL.md`](../SKILL.md).
 
-## First choose the right level of reuse
+## Decide the level of reuse
 
-Ask yourself:
+| Need                                               | Use                                                  |
+| -------------------------------------------------- | ---------------------------------------------------- |
+| the structure and types of the whole input         | a schema: `create(callback, enforce.shape({ ... }))` |
+| custom logic in one test                           | `enforce(value).condition((value) => ...)`           |
+| a named rule used across fields or suites          | `enforce.extend({ ruleName })`                       |
+| several existing rules that always travel together | `compose(ruleA, ruleB)`                              |
 
-- Should the suite use native Vest schema validation and type inference? Use `create((data) => { ... }, enforce.shape(...))` before inventing a separate external schema layer.
-- Is the logic only needed once inside a single test? Use `enforce.condition(...)` inline.
-- Is the logic reusable across many fields or suites? Use `enforce.extend(...)`.
-- Are several existing rules usually applied together? Use `compose(...)` from `n4s` (`import { compose } from 'n4s';` — the `vest/enforce/compose` subpath does not exist in Vest 6.3).
+Start at the lowest row that fits. A rule used once stays a `condition`.
 
-Do not jump straight to a globally extended custom rule when a one-off `condition(...)` would be clearer.
+## Schema suites
 
-## Core patterns
+```ts
+import { create, enforce, test } from 'vest';
 
-### Schema-aware `create(..., schema)`
+const userSchema = enforce.shape({
+  username: enforce.isString(),
+  age: enforce.isNumeric().toNumber(),
+  tags: enforce.isArrayOf(enforce.isString()),
+});
 
-Use a schema-aware suite when the structure of the input should be validated before tests run and the suite should infer its types from native n4s rules.
+export const userSuite = create((data) => {
+  test('age', 'You must be 18 or older', () => {
+    enforce(data.age).greaterThanOrEquals(18);
+  });
+}, userSchema);
 
-- Start with `enforce.shape(...)` for the common object case.
-- Use `enforce.record(...)`, `enforce.lazy(...)`, or `enforce.tuple(...)` only when the schema truly needs dynamic keys, recursive or lazy resolution, or tuple semantics.
-- Focused runs automatically subset the schema for the focused fields, so `suite.only(field).run(model)` still works with partial payloads.
+const result = userSuite.run({ username: 'alice', age: '30', tags: [] });
+```
 
-### `enforce.condition(...)`
+- The schema runs before the tests, and its field names type `test`, `only`, `focus` and the selectors.
+- A parser such as `.toNumber()` or `.trim()` gives the field two types: `suite.run(...)` takes the input type (`string | number` for `age`), and the callback and `result.value` use the output type (`number`).
+- When the schema fails, the tests still run and the callback gets the raw input: `data.age` can be `'abc'` in spite of its `number` type. Keep each test safe for a value of the wrong type.
+- A focused run validates and parses only the focused part of the schema, so `suite.only('age').run({ age: '30' })` accepts a partial input, and its `result.value` holds only `age`. Decide a submit, and read the complete `result.value`, from a full `suite.run(data)`.
+- In Vest 6.3.4 a schema violation fails its field without a message: `hasErrors(field)` is `true` and `getErrors(field)` is empty. A message for the user comes from a `test`.
+- `enforce.shape` rejects unknown keys; `enforce.loose` allows them. `enforce.record`, `enforce.lazy` and `enforce.tuple` are for dynamic keys, recursive structures and fixed-length arrays.
 
-Use for small, local custom logic.
+## `condition` and `extend`
 
-- Good for one-off checks inside a single suite.
-- Can return either a boolean or a `{ pass, message }` object.
-- Prefer it when the rule does not deserve a reusable name yet.
+A custom rule returns a boolean, or `{ pass, message }` where `message` is a string or a function that returns one. Write the message for the person who reads it.
 
-### `enforce.extend(...)`
+```ts
+enforce(data.email).condition((value) => ({
+  pass: typeof value === 'string' && value.endsWith('@example.com'),
+  message: 'Use your company email address',
+}));
+```
 
-Use for reusable domain rules.
+`enforce.extend({ ... })` registers named rules. Each rule receives the enforced value first, then the arguments of the call.
 
-- Rules receive the enforced value first, followed by any matcher arguments.
-- A custom rule can return either a boolean or an object with `pass` and `message`.
-- Keep rule names domain-meaningful, like `isBusinessEmail` or `matchesField`, not implementation trivia.
+Type the rules by merging into the global `n4s.EnforceMatchers` interface, in the file that registers them:
 
-### `compose(...)`
+```ts
+import { enforce } from 'vest';
 
-Use when a set of existing `enforce` rules travels together.
+const customRules = {
+  isCompanyEmail: (value: string) => value.endsWith('@example.com'),
+  isWithinRange: (value: number, min: number, max: number) =>
+    value >= min && value <= max,
+};
 
-- Best for reusable schemas or shared object fragments.
-- Especially useful with `enforce.shape(...)`, `enforce.loose(...)`, and nested entity rules.
-- If composed rules contain `shape` fragments that extend one another, prefer `loose(...)` where extension is expected.
+enforce.extend(customRules);
 
-## `enforce.context()` guidance
+declare global {
+  namespace n4s {
+    interface EnforceMatchers {
+      isCompanyEmail: (value: string) => boolean;
+      isWithinRange: (value: number, min: number, max: number) => boolean;
+    }
+  }
+}
+```
 
-Use `enforce.context()` only when a custom rule genuinely needs surrounding object context.
+## `compose`
 
-- It can read parent values and metadata.
-- It is powerful, but makes rules more coupled to object shape.
-- Prefer explicit arguments first; use context when that would be awkward or impossible.
+```ts
+import { compose } from 'n4s';
+import { enforce } from 'vest';
 
-## TypeScript guidance
+export const isValidAge = compose(
+  enforce.isNumber().greaterThanOrEquals(18),
+  enforce.isNumber().lessThan(120)
+);
 
-If the user wants typed custom matchers, add declaration merging in a `.d.ts` file.
+export const personSchema = enforce.shape({ age: isValidAge });
+```
 
-- Extend the `n4s` matcher interface with the new rule names.
-- Keep signatures value-first so they align with `enforce.extend(...)`.
-- Show both runtime registration and type declaration together when possible.
+Each argument is a rule chain that starts from a type rule such as `enforce.isNumber()`; a bare `enforce.greaterThanOrEquals(18)`, as the docs sample has it, does not exist in Vest 6.3.4. `isValidAge.run(20).pass` is `true`.
 
-## Pitfalls to fix immediately
+Vest 6.3.4 exports `compose` from `n4s`, its `enforce` package, and from no `vest` entry point. `n4s` is a transitive dependency, so add it to the project's dependencies at the version Vest uses (`npm ls n4s` prints it); a strict package manager such as pnpm fails the import otherwise. When composed `shape` rules extend one another, use `enforce.loose` for the parts that must accept extra keys.
 
-- overusing `enforce.extend(...)` for logic that belongs in one local test
-- returning inconsistent message shapes from custom rules
-- hiding heavy object traversal inside context-aware custom matchers without documenting it
-- composing rigid `shape(...)` rules where `loose(...)` is required for extension
-- adding custom rules without TypeScript declarations when the project relies on matcher autocomplete
-- treating advanced schema helpers as default examples when a small `enforce.shape(...)` schema is enough
+## `enforce.context()`
 
-## Output style
+Inside a custom rule, `enforce.context()` reads the surrounding schema value, for example a sibling field through `context?.parent()?.value`. It couples the rule to the shape of the object, so pass the other value as a rule argument when the call site has it.
 
-When answering:
+## Answer shape
 
-- start with the reuse decision: `condition`, `extend`, or `compose`
-- show the runtime rule and the TypeScript typing together when relevant
-- keep custom rule names business-readable
+Name the reuse level first, then show the rule with its TypeScript declaration when the project uses TypeScript.
 
-## Reference file
-
-Start with `references/design-guide.md` when the user is unsure whether to build a one-off check, a custom matcher, or a composed validator.
-
-## References to consult when needed
-
-- `references/design-guide.md`
-- [`../SKILL.md`](../SKILL.md) for the Vest 6 invariants
-- `https://vestjs.dev/docs/writing_your_suite/schema_validation`
-- `https://vestjs.dev/docs/enforce/composing_enforce_rules`
-- `https://vestjs.dev/docs/enforce/creating_custom_rules`
-- `https://vestjs.dev/docs/typescript_support`
+The docs for these rules are in the "Enforce (Assertions)" section of [`https://vestjs.dev/llms.txt`](https://vestjs.dev/llms.txt); the guide `typed-schemas` under `https://vestjs.dev/docs/guides/` shows a full schema flow.
