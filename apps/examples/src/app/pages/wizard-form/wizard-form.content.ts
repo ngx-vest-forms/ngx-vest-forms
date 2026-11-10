@@ -11,7 +11,8 @@ export const wizardContent = defineExampleContent({
       'Step 1 bidirectional validation: email ↔ confirmEmail and password ↔ confirmPassword.',
       'Step 2 conditional validation: newsletterFrequency is only required when subscribeNewsletter is on (config rebuilt reactively via computed).',
       'Step 3 optional field: comments is optional() but must pass length validation when provided.',
-      'Each step exposes isValid()/validatedFields()/pending() so the parent can drive navigation and focus.',
+      'Each step exposes its FormDirective; the page calls valid(), markAllAsTouched() and focusFirstInvalidControl() on the rendered step and reads its errors and pending state through createFormFeedbackSignals().',
+      'Step data and validity flow back to the page through model() inputs ([(step1Data)], [(step1Valid)]).',
       'Page-owned invalid-submit focus: each step opts out of the built-in focus via [focusFirstInvalidOnSubmit]="false" because the wizard routes to the first invalid step before focusing, with custom NgxFirstInvalidOptions on Step 2.',
       'Step data and validity persist while navigating back and forth.',
     ],
@@ -22,7 +23,7 @@ export const wizardContent = defineExampleContent({
       {
         title: 'Coordinating multiple forms',
         points: [
-          'Keep one suite + model per step and lift validity/error signals to the page.',
+          'Keep one suite + model per step and lift data and validity to the page with model() inputs.',
           'Compute overall readiness (allFormsValid) from per-step validity signals.',
           'Persist step state in the parent so navigation never loses entered data.',
         ],
