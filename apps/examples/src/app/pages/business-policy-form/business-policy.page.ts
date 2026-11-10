@@ -4,7 +4,6 @@ import {
   type NgxSubmitSettledEvent,
   ROOT_FORM,
 } from 'ngx-vest-forms';
-import type { BusinessPolicyModel } from '../../models/business-policy.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
@@ -15,6 +14,7 @@ import {
 import { PageTitle } from '../../ui/page-title/page-title.component';
 import { businessPolicyContent } from './business-policy.content';
 import { BusinessPolicyFormBody } from './business-policy.form';
+import type { BusinessPolicyModel } from './business-policy.model';
 import {
   businessPolicyErrorRulesByField,
   businessPolicySuite,

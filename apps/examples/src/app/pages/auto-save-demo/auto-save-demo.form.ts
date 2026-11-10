@@ -8,9 +8,9 @@ import {
   NgxVestForms,
   type NgxVestSuite,
 } from 'ngx-vest-forms';
-import type { AutoSaveDemoModel } from '../../models/auto-save-demo.model';
 import { Card } from '../../ui/card/card.component';
 import { FormSectionComponent } from '../../ui/form-section/form-section.component';
+import type { AutoSaveDemoModel } from './auto-save-demo.model';
 
 @Component({
   selector: 'ngx-auto-save-demo-form-body',

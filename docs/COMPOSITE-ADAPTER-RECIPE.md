@@ -52,7 +52,7 @@ export const travelFormContract: NgxDeepRequired<TravelFormModel> = {
 ```ts
 import type { NgxVestSuite } from 'ngx-vest-forms';
 import { create, enforce, omitWhen, test, warn } from 'vest';
-import { TravelFormModel } from '../../models/travel-form.model';
+import { TravelFormModel } from './travel-form.model';
 
 export const travelValidationSuite: NgxVestSuite<TravelFormModel> = create(
   (model: TravelFormModel) => {

@@ -3,7 +3,6 @@ import {
   createValidationConfig,
   type NgxSubmitSettledEvent,
 } from 'ngx-vest-forms';
-import type { TravelFormModel } from '../../models/travel-form.model';
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
@@ -12,6 +11,7 @@ import {
   IntroSectionComponent,
 } from '../../ui/intro-section';
 import { PageTitle } from '../../ui/page-title/page-title.component';
+import type { TravelFormModel } from './travel-form.model';
 import { travelContent } from './travel.content';
 import { type TravelFormApproach, TravelFormBody } from './travel.form';
 import { travelValidationSuite } from './travel.validations';

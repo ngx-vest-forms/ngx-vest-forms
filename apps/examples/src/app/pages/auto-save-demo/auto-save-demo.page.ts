@@ -14,10 +14,6 @@ import {
   Subject,
   tap,
 } from 'rxjs';
-import {
-  type AutoSaveDemoModel,
-  initialAutoSaveDemoValue,
-} from '../../models/auto-save-demo.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
@@ -29,6 +25,10 @@ import {
 import { PageTitle } from '../../ui/page-title/page-title.component';
 import { autoSaveContent } from './auto-save-demo.content';
 import { AutoSaveDemoFormBody } from './auto-save-demo.form';
+import {
+  type AutoSaveDemoModel,
+  initialAutoSaveDemoValue,
+} from './auto-save-demo.model';
 import {
   AutoSaveDemoService,
   type AutoSaveDraftResult,

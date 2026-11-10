@@ -4,11 +4,6 @@ import {
   keepFieldsWhen,
   type NgxSubmitSettledEvent,
 } from 'ngx-vest-forms';
-import {
-  type ConditionalStructureModel,
-  type DeliveryMode,
-  initialConditionalStructureValue,
-} from '../../models/conditional-structure.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
@@ -21,6 +16,11 @@ import { JsonPreviewComponent } from '../../ui/json-preview/json-preview.compone
 import { PageTitle } from '../../ui/page-title/page-title.component';
 import { conditionalStructureContent } from './conditional-structure.content';
 import { ConditionalStructureFormBody } from './conditional-structure.form';
+import {
+  type ConditionalStructureModel,
+  type DeliveryMode,
+  initialConditionalStructureValue,
+} from './conditional-structure.model';
 import { conditionalStructureSuite } from './conditional-structure.validations';
 
 /** Keeps only the fields the current delivery mode actually uses. */

@@ -16,7 +16,7 @@ import type {
   WizardStep1Model,
   WizardStep2Model,
   WizardStep3Model,
-} from '../../models/wizard-form.model';
+} from './wizard-form.model';
 import { WizardStep1FormComponent } from './wizard-step1.form';
 import { WizardStep2FormComponent } from './wizard-step2.form';
 import { WizardStep3FormComponent } from './wizard-step3.form';

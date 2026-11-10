@@ -13,10 +13,6 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, EMPTY, finalize } from 'rxjs';
-import {
-  type SubmissionPatternsModel,
-  submissionPatternsShape,
-} from '../../models/submission-patterns.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
@@ -26,6 +22,10 @@ import {
   IntroSectionComponent,
 } from '../../ui/intro-section';
 import { PageTitle } from '../../ui/page-title/page-title.component';
+import {
+  type SubmissionPatternsModel,
+  submissionPatternsShape,
+} from './submission-patterns.model';
 
 import {
   type FormFieldName,

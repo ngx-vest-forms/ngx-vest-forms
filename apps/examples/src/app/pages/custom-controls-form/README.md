@@ -57,7 +57,7 @@ control.
 | `segmented-control.component.ts` | Custom single-select CVA control |
 | `tag-input.component.ts` | Custom `string[]` CVA control |
 | `custom-controls.validations.ts` | Vest suite (testable in isolation) |
-| `../../models/custom-controls.model.ts` | Model + contract |
+| `custom-controls.model.ts` | Model + contract |
 | `custom-controls.content.ts` | "What this demonstrates / learn" cards |
 
 ## Behavior

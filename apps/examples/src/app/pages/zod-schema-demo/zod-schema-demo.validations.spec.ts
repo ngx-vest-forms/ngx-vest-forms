@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { ZodSchemaDemoModel } from '../../models/zod-schema-demo.model';
+import type { ZodSchemaDemoModel } from './zod-schema-demo.model';
 import { zodSchemaDemoSuite } from './zod-schema-demo.validations';
 
 const validModel: ZodSchemaDemoModel = {

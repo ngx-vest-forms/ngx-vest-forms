@@ -3,7 +3,7 @@ import { create, enforce, omitWhen, test } from 'vest';
 import {
   SEAT_LIMITS,
   type SignalFormsInteropModel,
-} from '../../models/signal-forms-interop.model';
+} from './signal-forms-interop.model';
 
 /**
  * Vest suite for the Signal Forms interop demo. A plain Vest spec: it does not

@@ -49,14 +49,14 @@ from `vest`.
 
 ## Key files
 
-| File                                   | Responsibility                            |
-| -------------------------------------- | ----------------------------------------- |
-| `complex-nested.page.ts` / `.html`     | Page: owns formValue + add/remove + suite |
-| `complex-nested.form.ts` / `.html`     | Form body: form tree + repeatable rows    |
-| `team-member.component.ts` / `.html`   | One member's fields (reusable child)      |
-| `complex-nested.validations.ts`        | Vest suite (testable in isolation)        |
-| `../../models/complex-nested.model.ts` | Model + contract                          |
-| `complex-nested.content.ts`            | "What this demonstrates / learn" cards    |
+| File                                 | Responsibility                            |
+| ------------------------------------ | ----------------------------------------- |
+| `complex-nested.page.ts` / `.html`   | Page: owns formValue + add/remove + suite |
+| `complex-nested.form.ts` / `.html`   | Form body: form tree + repeatable rows    |
+| `team-member.component.ts` / `.html` | One member's fields (reusable child)      |
+| `complex-nested.validations.ts`      | Vest suite (testable in isolation)        |
+| `complex-nested.model.ts`            | Model + contract                          |
+| `complex-nested.content.ts`          | "What this demonstrates / learn" cards    |
 
 ## Behavior
 

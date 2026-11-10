@@ -1,11 +1,11 @@
 import type { NgxVestSuite } from 'ngx-vest-forms';
 import { create, enforce, omitWhen, optional, test } from 'vest';
+import { EMAIL_PATTERN } from '../../shared/validations/email.validations';
 import type {
   WizardStep1Model,
   WizardStep2Model,
   WizardStep3Model,
-} from '../../models/wizard-form.model';
-import { EMAIL_PATTERN } from '../../shared/validations/email.validations';
+} from './wizard-form.model';
 
 /**
  * Step 1: Account Setup Validation

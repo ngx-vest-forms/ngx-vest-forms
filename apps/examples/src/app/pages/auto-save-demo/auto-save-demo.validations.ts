@@ -1,7 +1,7 @@
 import type { FormFieldName, NgxVestSuite } from 'ngx-vest-forms';
 import { create, enforce, omitWhen, test, warn } from 'vest';
-import type { AutoSaveDemoModel } from '../../models/auto-save-demo.model';
 import { EMAIL_PATTERN } from '../../shared/validations/email.validations';
+import type { AutoSaveDemoModel } from './auto-save-demo.model';
 
 type RulesByField = Partial<Record<FormFieldName<AutoSaveDemoModel>, string[]>>;
 

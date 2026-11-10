@@ -10,16 +10,13 @@ import {
   provideFormContract,
   setValueAtPath,
 } from 'ngx-vest-forms';
-import {
-  travelFormContract,
-  type TravelFormModel,
-} from '../../models/travel-form.model';
 import { Card } from '../../ui/card/card.component';
 import { FormSectionComponent } from '../../ui/form-section/form-section.component';
 import {
   DateRangeAdapterComponent,
   type DateRangeValue,
 } from './date-range-adapter.component';
+import { travelFormContract, type TravelFormModel } from './travel-form.model';
 
 export type TravelFormApproach = 'composite-adapter' | 'split-wrappers';
 

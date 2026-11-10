@@ -1,12 +1,12 @@
 import type { NgxVestSuite } from 'ngx-vest-forms';
 import { create, enforce, test } from 'vest';
-import type { ZodSchemaDemoModel } from '../../models/zod-schema-demo.model';
 import { EMAIL_PATTERN } from '../../shared/validations/email.validations';
+import type { ZodSchemaDemoModel } from './zod-schema-demo.model';
 
 /**
  * Vest suite for the Zod demo.
  *
- * The Zod schema in `models/zod-schema-demo.model.ts` is the form contract:
+ * The Zod schema in `zod-schema-demo.model.ts` is the form contract:
  * it is bound through `[formContract]` and checks the model's shape. This
  * suite holds the field-level rules the UI shows, and ngx-vest-forms runs it
  * per field with `suite.only(field).run(model)`.

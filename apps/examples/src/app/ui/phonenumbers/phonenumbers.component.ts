@@ -12,8 +12,8 @@ import {
   NgxVestForms,
   vestFormsViewProviders,
 } from 'ngx-vest-forms';
-import type { PhoneNumberMap } from '../../models/phonenumber.model';
 import { byNumericKey } from '../../shared/by-numeric-key';
+import type { PhoneNumberMap } from '../../shared/models/phonenumber.model';
 import { RemovalFeedback } from '../../shared/removal-feedback';
 
 /**

@@ -4,7 +4,6 @@ import {
   NGX_WARNING_DISPLAY_MODE_TOKEN,
   type NgxSubmitSettledEvent,
 } from 'ngx-vest-forms';
-import type { DisplayModesDemoModel } from '../../models/display-modes-demo.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
@@ -15,6 +14,7 @@ import {
 import { PageTitle } from '../../ui/page-title/page-title.component';
 import { displayModesContent } from './display-modes-demo.content';
 import { DisplayModesDemoFormBody } from './display-modes-demo.form';
+import type { DisplayModesDemoModel } from './display-modes-demo.model';
 import { displayModesDemoSuite } from './display-modes-demo.validations';
 
 @Component({

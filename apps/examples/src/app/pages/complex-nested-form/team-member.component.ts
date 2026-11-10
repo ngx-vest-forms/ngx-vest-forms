@@ -1,6 +1,6 @@
 import { Component, computed, input } from '@angular/core';
 import { NgxVestForms, vestFormsViewProviders } from 'ngx-vest-forms';
-import type { TeamMemberModel } from '../../models/complex-nested.model';
+import type { TeamMemberModel } from './complex-nested.model';
 
 /**
  * One team member's fields.

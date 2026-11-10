@@ -6,9 +6,9 @@ import {
 import { fromEvent, lastValueFrom, takeUntil } from 'rxjs';
 import { create, enforce, omitWhen, test, warn } from 'vest';
 import { memo } from 'vest/memo';
-import type { PurchaseFormModel } from '../../models/purchase-form.model';
 import { addressValidations } from '../../shared/validations/address.validations';
 import { phonenumberValidations } from '../../shared/validations/phonenumber.validations';
+import type { PurchaseFormModel } from './purchase-form.model';
 import type { SwapiService } from './swapi.service';
 
 type PurchaseValidationSwapi = Pick<SwapiService, 'userIdExists'>;

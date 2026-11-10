@@ -1,6 +1,6 @@
 import type { NgxVestSuite } from 'ngx-vest-forms';
 import { create, enforce, test, warn } from 'vest';
-import type { DisplayModesDemoModel } from '../../models/display-modes-demo.model';
+import type { DisplayModesDemoModel } from './display-modes-demo.model';
 
 export const displayModesDemoSuite: NgxVestSuite<DisplayModesDemoModel> =
   create((model: DisplayModesDemoModel) => {

@@ -3,7 +3,7 @@ import { create, each, enforce, omitWhen, test } from 'vest';
 import type {
   BusinessHourFormModel,
   BusinessHoursFormModel,
-} from '../../models/business-hours-form.model';
+} from './business-hours-form.model';
 
 export const businessHoursSuite: NgxVestSuite<BusinessHoursFormModel> = create(
   (model: BusinessHoursFormModel) => {

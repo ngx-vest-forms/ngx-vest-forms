@@ -49,7 +49,7 @@ first, the network last, every stale request cancelled.
 | `async-username.page.ts` / `.html` | Self-contained page + form |
 | `async-username.validations.ts` | Suite factory (testable in isolation) |
 | `username-availability.service.ts` | HttpClient wrapper → `Observable<boolean>` |
-| `../../models/async-username.model.ts` | Model + contract |
+| `async-username.model.ts` | Model + contract |
 | `async-username.content.ts` | "What this demonstrates / learn" cards |
 
 ## Behavior

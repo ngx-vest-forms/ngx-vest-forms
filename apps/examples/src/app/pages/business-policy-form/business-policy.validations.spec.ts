@@ -1,6 +1,6 @@
 import { ROOT_FORM } from 'ngx-vest-forms';
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { BusinessPolicyModel } from '../../models/business-policy.model';
+import type { BusinessPolicyModel } from './business-policy.model';
 import {
   businessPolicyErrorRulesByField,
   businessPolicySuite,

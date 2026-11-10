@@ -69,4 +69,4 @@ A form carrying only warnings still submits successfully — the page checks
   `@if`
 - `business-policy.validations.ts` — the Vest suite plus the error/warning
   rule maps
-- `../../models/business-policy.model.ts` — model and contract
+- `business-policy.model.ts` — model and contract

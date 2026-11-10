@@ -1,6 +1,5 @@
 import { Component, signal } from '@angular/core';
 import type { NgxSubmitSettledEvent } from 'ngx-vest-forms';
-import type { NativeSchemaDemoModel } from '../../models/native-schema-demo.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
@@ -11,6 +10,7 @@ import {
 import { PageTitle } from '../../ui/page-title/page-title.component';
 import { nativeSchemaContent } from './native-schema-demo.content';
 import { NativeSchemaDemoFormBody } from './native-schema-demo.form';
+import type { NativeSchemaDemoModel } from './native-schema-demo.model';
 import { nativeSchemaDemoSuite } from './native-schema-demo.validations';
 
 @Component({

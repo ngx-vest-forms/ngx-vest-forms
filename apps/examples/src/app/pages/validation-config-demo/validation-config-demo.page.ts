@@ -5,7 +5,6 @@ import {
   type NgxFormErrorsByPath,
   type NgxSubmitSettledEvent,
 } from 'ngx-vest-forms';
-import type { ValidationDemoModel } from '../../models/validation-demo.model';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
 import {
@@ -15,6 +14,7 @@ import {
 import { PageTitle } from '../../ui/page-title/page-title.component';
 import { validationConfigDemoContent } from './validation-config-demo.content';
 import { ValidationConfigDemoFormBody } from './validation-config-demo.form';
+import type { ValidationDemoModel } from './validation-demo.model';
 import { validationDemoSuite } from './validation-demo.validations';
 
 @Component({

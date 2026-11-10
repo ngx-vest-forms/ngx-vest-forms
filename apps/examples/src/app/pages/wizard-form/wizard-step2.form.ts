@@ -6,11 +6,11 @@ import {
   type NgxVestSuite,
   provideFormContract,
 } from 'ngx-vest-forms';
+import { WizardNavigationComponent } from '../../ui/wizard';
 import {
   wizardStep2Contract,
   type WizardStep2Model,
-} from '../../models/wizard-form.model';
-import { WizardNavigationComponent } from '../../ui/wizard';
+} from './wizard-form.model';
 
 @Component({
   selector: 'ngx-wizard-step2-form',

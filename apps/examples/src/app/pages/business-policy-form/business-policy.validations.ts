@@ -4,7 +4,7 @@ import {
   ROOT_FORM,
 } from 'ngx-vest-forms';
 import { create, enforce, omitWhen, test, warn } from 'vest';
-import type { BusinessPolicyModel } from '../../models/business-policy.model';
+import type { BusinessPolicyModel } from './business-policy.model';
 
 type RulesByField = Partial<
   Record<FormFieldName<BusinessPolicyModel>, string[]>

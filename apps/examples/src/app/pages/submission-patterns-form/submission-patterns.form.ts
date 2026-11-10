@@ -20,7 +20,7 @@ import {
 import {
   type SubmissionPatternsModel,
   submissionPatternsShape,
-} from '../../models/submission-patterns.model';
+} from './submission-patterns.model';
 
 @Component({
   selector: 'ngx-submission-patterns-form-body',

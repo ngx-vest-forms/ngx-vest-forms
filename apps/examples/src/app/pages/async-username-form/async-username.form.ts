@@ -14,7 +14,7 @@ import {
 import {
   type AsyncUsernameModel,
   asyncUsernameShape,
-} from '../../models/async-username.model';
+} from './async-username.model';
 
 @Component({
   selector: 'ngx-async-username-form-body',

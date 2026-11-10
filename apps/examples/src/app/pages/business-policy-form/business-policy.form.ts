@@ -8,12 +8,12 @@ import {
   type NgxVestSuite,
   provideFormContract,
 } from 'ngx-vest-forms';
+import { Card } from '../../ui/card/card.component';
+import { FormSectionComponent } from '../../ui/form-section/form-section.component';
 import {
   businessPolicyContract,
   type BusinessPolicyModel,
-} from '../../models/business-policy.model';
-import { Card } from '../../ui/card/card.component';
-import { FormSectionComponent } from '../../ui/form-section/form-section.component';
+} from './business-policy.model';
 import { EU_COUNTRIES } from './business-policy.validations';
 
 /**

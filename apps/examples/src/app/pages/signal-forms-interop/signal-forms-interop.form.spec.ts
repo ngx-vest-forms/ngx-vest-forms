@@ -4,10 +4,10 @@ import { NgModel } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import type { NgxSubmitSettledEvent } from 'ngx-vest-forms';
 import { vi } from 'vitest';
-import type { SignalFormsInteropModel } from '../../models/signal-forms-interop.model';
 import { ConsentSwitchComponent } from './consent-switch.component';
 import { SeatStepperComponent } from './seat-stepper.component';
 import { SignalFormsInteropFormBody } from './signal-forms-interop.form';
+import type { SignalFormsInteropModel } from './signal-forms-interop.model';
 import { signalFormsInteropSuite } from './signal-forms-interop.validations';
 
 @Component({

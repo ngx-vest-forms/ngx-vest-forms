@@ -10,7 +10,7 @@ import {
 import {
   conditionalStructureContract,
   type ConditionalStructureModel,
-} from '../../models/conditional-structure.model';
+} from './conditional-structure.model';
 
 @Component({
   selector: 'ngx-conditional-structure-form-body',
