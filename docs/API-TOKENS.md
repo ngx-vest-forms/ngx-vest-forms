@@ -225,6 +225,8 @@ export class CheckoutFormComponent {
 }
 ```
 
+The factory is lazy. It runs in an injection context the first time `NGX_FORM_CONTRACT` is resolved (in practice when the first form under that provider is created), once per injector that provides it. Later injections reuse the returned value. Use it when the contract depends on other injected services or has to be built lazily. A contract that is a constant, even one that covers every branch of a conditional form, belongs in `provideFormContract(...)`. No example in the examples app uses the factory, because all their contracts are constants.
+
 #### Interaction with `[formContract]`
 
 - If `[formContract]` is omitted, the directive falls back to `NGX_FORM_CONTRACT`
@@ -238,6 +240,31 @@ The provider path has the same behavior as `[formContract]`:
 - runs structural checks only in development mode
 - logs schema/shape mismatch warnings without affecting form validity
 - supports either a `StandardSchemaV1<T>` contract or a legacy `NgxDeepRequired<T>` shape
+
+#### `toFormContract()`
+
+`[formContract]` and the providers accept a `NgxDeepRequired<T>` shape as is and wrap it internally. Call `toFormContract(shape)` yourself only when you need the shape as a `StandardSchemaV1<NgxDeepPartial<T>>` value, for example to pass it to code that takes a schema:
+
+```typescript
+import {
+  toFormContract,
+  type NgxDeepPartial,
+  type NgxDeepRequired,
+  type StandardSchemaV1,
+} from 'ngx-vest-forms';
+
+type ProfileModel = NgxDeepPartial<{ name: string; profile: { age: number } }>;
+
+const profileShape: NgxDeepRequired<ProfileModel> = {
+  name: '',
+  profile: { age: 0 },
+};
+
+const profileContract: StandardSchemaV1<ProfileModel> =
+  toFormContract<ProfileModel>(profileShape);
+```
+
+The wrapper always reports success, so it never affects validity. No example in the examples app calls it: the Zod and native schema demos already hold a Standard Schema, and the other demos pass a shape directly.
 
 ## Error Display Configuration
 
@@ -544,7 +571,7 @@ Customizes the deep-equality function the library uses internally for change det
 - **Tests**: stub with reference equality (`(a, b) => a === b`) to assert how often the directive emits.
 - **Domain rules**: project requires custom equality (e.g., ignore certain keys, treat unrelated objects as equal).
 
-This is purely additive — if you don't provide the token, behavior is unchanged.
+This is purely additive — if you don't provide the token, behavior is unchanged. No example in the examples app overrides it, because the default is right for every example.
 
 #### Usage
 

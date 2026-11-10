@@ -4,31 +4,40 @@
   <ngx-intro-section title="Why this matters">
     <ngx-intro-item>
       <strong class="text-gray-900 dark:text-white"
-        >Zod as external schema</strong
+        >Zod describes the structure.</strong
       >
-      — Keep a Zod schema as a structural contract separate from Vest's
-      field-level business rules
+      The Zod schema is the Form Contract. In development it checks the Form
+      Model's structure and logs a warning for a mismatch. It never changes
+      whether a field is valid.
     </ngx-intro-item>
     <ngx-intro-item>
       <strong class="text-gray-900 dark:text-white"
-        >Per-field Vest rules</strong
+        >Vest owns the rules.</strong
       >
-      — Use enforce callbacks for field-level custom validation; Vest focuses on
-      user-facing messages
+      Required fields, the email format and the age range 18 to 120 live in the
+      Suite, because only the Suite produces Errors. A rule written in Zod would
+      reach the console, not the field. The schema also marks every field
+      optional, because the Form Model is partial while the user types.
     </ngx-intro-item>
     <ngx-intro-item>
       <strong class="text-gray-900 dark:text-white"
-        >Full vs. focused runs</strong
+        >Full vs. focused runs.</strong
       >
-      — suite.run(model) validates everything; suite.only(field).run(model) runs
-      only that field's tests
+      suite.run(model) validates everything; suite.only(field).run(model) runs
+      only that field's tests.
     </ngx-intro-item>
     <ngx-intro-item>
       <strong class="text-gray-900 dark:text-white"
-        >Native Vest schemas or Zod</strong
+        >Schema inside the Suite.</strong
       >
-      — Choose between enforce.shape() (native to Vest) or keep external Zod
-      schemas separate
+      To validate structure in the Suite itself, pass enforce.shape(...) as the
+      second argument of create(). The
+      <a
+        routerLink="/native-schema-demo"
+        class="text-primary-700 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 font-medium underline"
+        >Native Vest Schema demo</a
+      >
+      shows that.
     </ngx-intro-item>
   </ngx-intro-section>
 

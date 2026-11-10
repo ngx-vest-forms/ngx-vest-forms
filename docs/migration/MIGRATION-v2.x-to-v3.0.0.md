@@ -32,12 +32,10 @@ If you already have a schema, pass it directly and let that remain your structur
 <!-- v3: raw NgxDeepRequired<T> shape still accepted (migration/fallback) -->
 <form ngxVestForm [suite]="suite" [formContract]="myContract"></form>
 
-<!-- v3: explicit conversion from legacy shape to Standard Schema -->
-<form
-  ngxVestForm
-  [suite]="suite"
-  [formContract]="toFormContract(myContract)"
-></form>
+<!-- v3: explicit conversion from legacy shape to Standard Schema.
+     A template cannot call toFormContract itself; convert once in the component:
+     protected readonly contract = toFormContract(myContract); -->
+<form ngxVestForm [suite]="suite" [formContract]="contract"></form>
 
 <!-- v3: real Standard Schema (preferred when your app already has one) -->
 <form ngxVestForm [suite]="suite" [formContract]="zodSchema"></form>

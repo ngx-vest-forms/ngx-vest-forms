@@ -760,6 +760,17 @@ For working with field paths at runtime, see:
   - Use it to display or log a schema issue's path; to match a library-reported path, join the segments with `.` instead
   - Useful for dynamic field path manipulation
   - Works with the types defined in this guide
+  - No example in the examples app calls it; it is for code that reads Standard Schema issue paths
+- **`deepArrayToObject()` from `ngx-vest-forms`** - Turns a nested array (arrays inside objects inside arrays) into numeric-keyed objects at every level, so a template-driven form can bind it with `ngModelGroup`. `arrayToObject()` converts one level only; see the [utils README](../packages/ngx-vest-forms/src/lib/utils/README.md#deeparraytoobject)
+  - Use it when you load a backend payload with nested arrays; the paths it produces (`0.phones.1` in the snippet below) use the dot form described above
+  - No example in the examples app calls it, because no example has nested arrays; the phone numbers example uses the one-level `arrayToObject()`, and the complex nested example builds its keyed record directly
+
+```typescript
+import { deepArrayToObject } from 'ngx-vest-forms';
+
+deepArrayToObject([{ street: 'Main St', phones: ['111', '222'] }]);
+// { 0: { street: 'Main St', phones: { 0: '111', 1: '222' } } }
+```
 
 ### Other Guides
 
