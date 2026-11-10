@@ -11,7 +11,7 @@
     </ngx-intro-item>
     <ngx-intro-item>
       <strong class="text-gray-900 dark:text-white">Public API only.</strong>
-      Every line here is safe to copy into your app.
+      Copy `starter.form.ts` and `starter.validations.ts` into your app.
     </ngx-intro-item>
     <ngx-intro-item>
       <strong class="text-gray-900 dark:text-white"
@@ -23,7 +23,7 @@
       <strong class="text-gray-900 dark:text-white"
         >The form value is a signal</strong
       >
-      the page owns—single source of truth, reactive by default.
+      the form component owns—single source of truth, reactive by default.
     </ngx-intro-item>
   </ngx-intro-section>
 
@@ -36,26 +36,11 @@
 
     <!-- Right: Contact form card -->
     <div>
-      @if (submittedValue(); as submitted) {
-        <ngx-alert-panel tone="success" title="Message sent">
-          <p>
-            Thanks {{ submitted.name }} — we'll reply to
-            <strong>{{ submitted.email }}</strong> shortly.
-          </p>
-        </ngx-alert-panel>
-      }
-
       <ngx-card
         title="Contact us"
         subtitle="All fields are required. Try submitting empty to see validation."
       >
-        <ngx-starter-form-body
-          [formValue]="formValue()"
-          [suite]="suite"
-          (formValueChange)="formValue.set($event)"
-          (submitted)="onSubmit($event)"
-          (resetRequested)="reset()"
-        />
+        <ngx-starter-form />
       </ngx-card>
     </div>
   </div>

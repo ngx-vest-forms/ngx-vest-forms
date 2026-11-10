@@ -1,46 +1,133 @@
-import { Component, input, output, viewChild } from '@angular/core';
+import { Component, signal, viewChild } from '@angular/core';
 import {
   createFormFeedbackSignals,
   type FormDirective,
+  type NgxDeepRequired,
   type NgxSubmitSettledEvent,
   NgxVestForms,
-  type NgxVestSuite,
   provideFormContract,
 } from 'ngx-vest-forms';
-import {
-  type StarterFormModel,
-  starterFormShape,
-} from '../../models/starter-form.model';
+import { type StarterFormModel, starterFormSuite } from './starter.validations';
 
+/** The form contract: lets the directive warn in dev about drifting `name`s. */
+const starterFormShape: NgxDeepRequired<StarterFormModel> = {
+  name: '',
+  email: '',
+  subject: '',
+  message: '',
+};
+
+/**
+ * The starter: one component that owns its state, template and submit
+ * handler. Copy this file and `starter.validations.ts` into your app.
+ * The classes (`input-field`, `btn`, `label-text`, ...) are cosmetic only.
+ */
 @Component({
-  selector: 'ngx-starter-form-body',
+  selector: 'ngx-starter-form',
   imports: [NgxVestForms],
-  templateUrl: './starter.form.html',
+  template: `
+    @if (submittedValue(); as sent) {
+      <p role="status" class="mb-6 rounded-lg border p-4 text-sm">
+        <strong>Message sent.</strong> Thanks {{ sent.name }}, we'll reply to
+        {{ sent.email }} shortly.
+      </p>
+    }
+
+    <form
+      ngxVestForm
+      #vestForm="ngxVestForm"
+      [suite]="suite"
+      [formValue]="formValue()"
+      (formValueChange)="formValue.set($event)"
+      (submitSettled)="onSubmit($event)"
+      class="space-y-6"
+    >
+      <ngx-control-wrapper class="form-field" ariaRequired>
+        <label for="name" class="label-text label-required">Name</label>
+        <input
+          class="input-field"
+          type="text"
+          id="name"
+          name="name"
+          [ngModel]="formValue().name"
+          placeholder="Ada Lovelace"
+          autocomplete="name"
+        />
+      </ngx-control-wrapper>
+
+      <ngx-control-wrapper class="form-field" ariaRequired>
+        <label for="email" class="label-text label-required">Email</label>
+        <input
+          class="input-field"
+          type="email"
+          id="email"
+          name="email"
+          [ngModel]="formValue().email"
+          placeholder="ada@example.com"
+          autocomplete="email"
+          inputmode="email"
+        />
+      </ngx-control-wrapper>
+
+      <ngx-control-wrapper class="form-field" ariaRequired>
+        <label for="subject" class="label-text label-required">Subject</label>
+        <input
+          class="input-field"
+          type="text"
+          id="subject"
+          name="subject"
+          [ngModel]="formValue().subject"
+          placeholder="How can we help?"
+        />
+      </ngx-control-wrapper>
+
+      <ngx-control-wrapper class="form-field" ariaRequired>
+        <label for="message" class="label-text label-required">Message</label>
+        <textarea
+          class="input-field"
+          id="message"
+          name="message"
+          rows="4"
+          [ngModel]="formValue().message"
+          placeholder="Tell us a little about what you need…"
+        ></textarea>
+      </ngx-control-wrapper>
+
+      <div class="flex justify-end gap-3 pt-2">
+        <button type="button" class="btn btn-secondary" (click)="reset()">
+          Reset
+        </button>
+        <button type="submit" class="btn btn-primary">Send message</button>
+      </div>
+    </form>
+  `,
   providers: [provideFormContract(starterFormShape)],
 })
-export class StarterFormBody {
-  readonly formValue = input.required<StarterFormModel>();
-  readonly suite = input.required<NgxVestSuite<StarterFormModel>>();
+export class StarterFormComponent {
+  protected readonly suite = starterFormSuite;
 
-  readonly formValueChange = output<StarterFormModel>();
-  readonly submitted = output<NgxSubmitSettledEvent<StarterFormModel>>();
-  readonly resetRequested = output();
+  /** The single source of truth for the form. */
+  protected readonly formValue = signal<StarterFormModel>({});
+  protected readonly submittedValue = signal<StarterFormModel | null>(null);
 
   private readonly vestForm =
     viewChild<FormDirective<StarterFormModel>>('vestForm');
+
+  /** Packaged form state; the page reads it for the form-state card. */
   readonly feedback = createFormFeedbackSignals(this.vestForm);
 
-  protected onSubmitSettled(
-    event: NgxSubmitSettledEvent<StarterFormModel>
-  ): void {
-    this.submitted.emit(event);
+  protected onSubmit(event: NgxSubmitSettledEvent<StarterFormModel>): void {
+    if (!event.valid || !event.value) {
+      // The directive focuses the first invalid control on submit.
+      this.submittedValue.set(null);
+      return;
+    }
+    this.submittedValue.set(event.value);
   }
 
-  protected onReset(): void {
-    this.resetRequested.emit();
-  }
-
-  resetFormState(value: StarterFormModel): void {
-    this.vestForm()?.resetForm(value);
+  protected reset(): void {
+    this.submittedValue.set(null);
+    this.vestForm()?.resetForm({});
+    this.formValue.set({});
   }
 }
