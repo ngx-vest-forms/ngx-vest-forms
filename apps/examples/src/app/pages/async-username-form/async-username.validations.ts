@@ -1,6 +1,6 @@
 import type { NgxVestSuite } from 'ngx-vest-forms';
 import { fromEvent, lastValueFrom, takeUntil } from 'rxjs';
-import { create, enforce, omitWhen, test } from 'vest';
+import { create, enforce, omitWhen, skipWhen, test } from 'vest';
 import { memo } from 'vest/memo';
 import type { AsyncUsernameModel } from '../../models/async-username.model';
 import type { UsernameAvailabilityService } from './username-availability.service';
@@ -16,9 +16,9 @@ const USERNAME_PATTERN = /^[a-z0-9_]+$/;
  * calling `createAsyncUsernameSuite(fakeService).run(model)` directly (or
  * `.only('username').run(model)` to focus one field).
  *
- * Synchronous rules (required / length / pattern) run first and gate the
- * async availability check via `omitWhen`, so the network is only hit once
- * the username is structurally valid. The async test is wrapped in `memo`
+ * Synchronous rules (required / length / pattern) run first. The async
+ * availability check sits in `skipWhen`, so the network is only hit once
+ * the username has no sync errors. The async test is wrapped in `memo`
  * keyed on the username so it does not re-run while other fields change, and
  * it aborts the in-flight request when the username changes by listening to
  * the Vest-provided `signal`'s `abort` event.
@@ -48,11 +48,11 @@ export const createAsyncUsernameSuite = (
         );
       });
 
-      // Only contact the remote endpoint once the username passes the cheap
-      // synchronous rules above. `omitWhen` short-circuits the async test
-      // while the value is blank / too short / malformed.
-      omitWhen(
-        !username || username.length < 3 || !USERNAME_PATTERN.test(username),
+      // Only contact the remote endpoint while the synchronous username rules
+      // above pass. `skipWhen` reads the result so far, so this does not repeat
+      // those rules.
+      skipWhen(
+        (res) => res.hasErrors('username'),
         () => {
           memo(() => {
             test(

@@ -190,4 +190,35 @@ describe('Async Username Validations', () => {
       expect(result.isPending('username')).toBe(false);
     });
   });
+
+  // The async test sits in `skipWhen((res) => res.hasErrors('username'))`, so
+  // the result so far must not hold the previous run's outcome against it.
+  describe('skipWhen gating across runs', () => {
+    it('checks again after a taken username is replaced by a free one', async () => {
+      const first = suite.only('username').run({ username: 'admin' });
+      service.respond('admin', true);
+      await waitForSuiteResult(first);
+
+      const second = suite.only('username').run({ username: 'alice' });
+      expect(service.callsFor('alice')).toBe(1);
+      service.respond('alice', false);
+      const { result } = await waitForSuiteResult(second);
+
+      expect(result.hasErrors('username')).toBe(false);
+      expect(result.isValid('username')).toBe(true);
+    });
+
+    it('stops calling the service once the username fails a sync rule again', async () => {
+      const first = suite.only('username').run({ username: 'alice' });
+      service.respond('alice', false);
+      await waitForSuiteResult(first);
+
+      const { result } = await waitForSuiteResult(
+        suite.only('username').run({ username: 'al' })
+      );
+
+      expect(service.requests).toHaveLength(1);
+      expect(result.isValid('username')).toBe(false);
+    });
+  });
 });

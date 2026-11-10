@@ -21,8 +21,8 @@ import { UsernameAvailabilityService } from './username-availability.service';
  *
  * It mirrors the canonical starter wiring (page-owned state + focused form
  * markup in `async-username.form.html`) and layers the async validation
- * pattern from the purchase demo on top: cheap synchronous rules gate an
- * `omitWhen`-wrapped, `memo`-keyed async test that aborts in-flight requests
+ * pattern from the purchase demo on top: cheap synchronous rules gate a
+ * `skipWhen`-wrapped, `memo`-keyed async test that aborts in-flight requests
  * when the username changes. Pending and submission state are kept separate
  * so the UI stays calm while the network call is in flight.
  */

@@ -6,7 +6,7 @@ export const asyncUsernameContent = defineExampleContent({
     title: 'What this demonstrates',
     points: [
       'An async Vest test that validates a username against a remote endpoint',
-      'Cheap synchronous rules (required, length, pattern) gating the network call via omitWhen',
+      'Cheap synchronous rules (required, length, pattern) gating the network call via skipWhen',
       'vest/memo keying the async test on the username so it only re-runs when the value changes',
       'Aborting the in-flight request through the Vest-provided AbortSignal when the user keeps typing',
       'Pending state surfaced calmly inline and kept separate from submission state',
@@ -19,7 +19,7 @@ export const asyncUsernameContent = defineExampleContent({
       {
         title: 'The async validation pattern',
         points: [
-          'How omitWhen short-circuits the remote check until the value is structurally valid',
+          'How skipWhen with res.hasErrors() skips the remote check while a sync rule fails, without repeating the rules',
           'Why memo([username]) prevents redundant requests as other fields change',
           'How takeUntil(fromEvent(signal, "abort")) cancels a stale request on new input',
         ],
