@@ -44,7 +44,8 @@ type SubmissionState = 'editing' | 'submitting' | 'server-error' | 'success';
 
 /**
  * Error maps are keyed by plain strings, so this narrows a key to a field of
- * this form before the summary hands it to `focusField`.
+ * this form before the summary hands it to `focusField`. The summary itself
+ * stays string-keyed like the library's error maps, so it lists every error.
  */
 function isSubmissionPatternsField(
   path: string
@@ -105,10 +106,7 @@ export class SubmissionPatternsPageComponent {
    * fields; the inline errors stay live.
    */
   protected readonly blockedSubmitErrors = signal<
-    ReadonlyArray<{
-      field: FormFieldName<SubmissionPatternsModel>;
-      message: string;
-    }>
+    ReadonlyArray<{ field: string; message: string }>
   >([]);
   protected readonly scenarios: ReadonlyArray<{
     label: string;
@@ -154,9 +152,7 @@ export class SubmissionPatternsPageComponent {
       const errors = this.formBody()?.errorSnapshot().errors ?? {};
       this.blockedSubmitErrors.set(
         Object.entries(errors).flatMap(([field, messages]) =>
-          isSubmissionPatternsField(field)
-            ? messages.map((message) => ({ field, message }))
-            : []
+          messages.map((message) => ({ field, message }))
         )
       );
       // Focus after the render that shows the errors, the same timing the
@@ -227,8 +223,10 @@ export class SubmissionPatternsPageComponent {
       });
   }
 
-  protected focusField(field: FormFieldName<SubmissionPatternsModel>): void {
-    this.formBody()?.focusField(field);
+  protected focusField(field: string): void {
+    if (isSubmissionPatternsField(field)) {
+      this.formBody()?.focusField(field);
+    }
   }
 
   /** Retry re-submits the exact same value through the same path. */
