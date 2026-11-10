@@ -251,7 +251,7 @@ export class AutoSaveDemoPageComponent {
       return;
     }
 
-    const draft = structuredClone(event.value);
+    const draft = event.value;
     const key = this.#createDraftKey(draft);
     if (key === this.lastSavedDraftKey() || key === this.lastQueuedDraftKey()) {
       return;

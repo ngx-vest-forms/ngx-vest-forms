@@ -36,6 +36,12 @@ export class ZodSchemaDemoPageComponent {
 
   protected readonly outcome = signal<'success' | 'invalid' | null>(null);
 
+  protected onFormValueChange(value: ZodSchemaDemoModel): void {
+    this.formValue.set(value);
+    // The outcome describes the value that was submitted; an edit makes it stale.
+    this.outcome.set(null);
+  }
+
   protected onSubmit(event: NgxSubmitSettledEvent<ZodSchemaDemoModel>): void {
     this.outcome.set(event.valid ? 'success' : 'invalid');
   }

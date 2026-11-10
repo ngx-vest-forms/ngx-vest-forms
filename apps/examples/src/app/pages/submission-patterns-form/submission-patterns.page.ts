@@ -230,6 +230,7 @@ export class SubmissionPatternsPageComponent {
     this.createdId.set(null);
     this.submitCycleActive.set(false);
     this.blockedSubmitErrors.set([]);
+    this.lastSubmitted = null;
     this.formBody()?.resetFormState({});
     this.formValue.set({});
   }

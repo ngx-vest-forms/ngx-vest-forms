@@ -50,6 +50,12 @@ export class DisplayModesDemoPageComponent {
 
   protected readonly outcome = signal<'success' | 'invalid' | null>(null);
 
+  protected onFormValueChange(value: DisplayModesDemoModel): void {
+    this.formValue.set(value);
+    // The outcome describes the value that was submitted; an edit makes it stale.
+    this.outcome.set(null);
+  }
+
   protected onSubmit(
     event: NgxSubmitSettledEvent<DisplayModesDemoModel>
   ): void {

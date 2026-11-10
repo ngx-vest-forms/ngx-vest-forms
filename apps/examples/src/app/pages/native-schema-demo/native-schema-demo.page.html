@@ -53,7 +53,7 @@
         #formBody
         [formValue]="formValue()"
         [suite]="suite"
-        (formValueChange)="formValue.set($event)"
+        (formValueChange)="onFormValueChange($event)"
         (submitted)="onSubmit($event)"
       />
     </div>

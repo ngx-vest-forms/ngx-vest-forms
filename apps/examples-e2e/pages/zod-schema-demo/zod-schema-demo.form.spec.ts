@@ -116,6 +116,10 @@ test.describe('Zod Schema Demo Form', () => {
         await expect(page.getByText('Form submitted')).toBeVisible();
         await expect(page.getByText('Form not submitted')).toHaveCount(0);
 
+        // Editing the submitted value makes the outcome stale, so it goes away.
+        await fillAndBlur(page.getByLabel(/first name/i), 'Franck');
+        await expect(page.getByText('Form submitted')).toHaveCount(0);
+
         // The sidebar form state should also reflect a valid submitted form.
         await expect(
           page.locator('ngx-form-state-card').getByLabel('Valid')
