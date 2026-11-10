@@ -1,4 +1,5 @@
 import { Component, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import type { NgxSubmitSettledEvent } from 'ngx-vest-forms';
 import type { ZodSchemaDemoModel } from '../../models/zod-schema-demo.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
@@ -22,6 +23,7 @@ import { zodSchemaDemoSuite } from './zod-schema-demo.validations';
     PageTitle,
     IntroSectionComponent,
     IntroItemComponent,
+    RouterLink,
     ZodSchemaDemoFormBody,
   ],
   templateUrl: './zod-schema-demo.page.html',
