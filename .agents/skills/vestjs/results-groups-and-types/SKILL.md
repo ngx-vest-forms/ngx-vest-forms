@@ -11,6 +11,8 @@ The invariants live in the router, [`../SKILL.md`](../SKILL.md).
 
 The same state is available from three places: the value `suite.run(data)` returns, `suite.get()`, and the selector methods on the suite itself. Use one of them per example.
 
+The value that `suite.run(data)` returns is a snapshot of the synchronous pass: it stays pending after the async tests settle. For the settled state, `await` the run, or read `suite.get()` in an `afterEach` callback.
+
 | Question                                   | Selector                                                      |
 | ------------------------------------------ | ------------------------------------------------------------- |
 | does this field, or the suite, have errors | `hasErrors(field?)`                                           |
@@ -58,7 +60,7 @@ Name a group only when something focuses or queries it by that name.
 
 ## Dynamic lists
 
-`each(list, (item) => { ... })` declares tests per item. Give every test in it a stable key as the last argument, taken from the item's identity:
+`each(list, (item) => { ... })` declares tests per item. Give every test in it its own stable key as the last argument: the item's identity plus the rule, because Vest throws when two tests share a key.
 
 ```ts
 each(data.travelers, (traveler) => {
@@ -68,7 +70,7 @@ each(data.travelers, (traveler) => {
     () => {
       enforce(traveler.name).isNotBlank();
     },
-    traveler.id
+    `${traveler.id}:name`
   );
 });
 ```
@@ -88,7 +90,7 @@ Pick the lightest form that gives the names you need:
 
 `const { test, group, include, optional } = suite;` gives helpers that carry the suite's field and group names.
 
-A schema suite adds typed output: `suite.run(...)` takes the schema's input type, the callback and `result.value` use its output type, and `result.value` exists only when `result.valid === true`. A failed result carries `result.issues`, a list of `{ message, path }`.
+A schema suite adds typed output: `suite.run(...)` takes the schema's input type, the callback and `result.value` use its output type, and `result.value` exists only when `result.valid === true`. After a focused run, `result.value` holds only the focused fields, so read the complete output from a full `suite.run(data)`. A failed result carries `result.issues`, a list of `{ message, path }`.
 
 The exported types are `Suite`, `SuiteResult`, `SuiteSummary` and `SuiteConfig`.
 

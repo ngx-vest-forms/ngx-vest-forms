@@ -52,7 +52,7 @@
     {
       "id": 9,
       "prompt": "My Vest 6 suite has optional('nickname') and a test that the nickname has at least 3 characters. The form model is a partial object, so a new form is just {}. The suite is invalid before the user types anything. Why?",
-      "expected_output": "Routes to conditional control flow guidance, explains that optional reads the value from the data argument and that in Vest 6.3.4 an absent key is not treated as empty, and recommends the function form optional({ nickname: () => !data.nickname }) or an explicit empty value.",
+      "expected_output": "Routes to conditional control flow guidance, explains that optional reads the value from the data argument and that in Vest 6.3.4 an absent key is not treated as empty, and recommends the function form with an explicit empty check, optional({ nickname: () => data.nickname == null || data.nickname === '' }), or an explicit empty value in the model.",
       "files": []
     },
     {

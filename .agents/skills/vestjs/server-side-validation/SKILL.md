@@ -57,8 +57,8 @@ import { SuiteSerializer } from 'vest/SuiteSerializer';
 import { signupSuite } from './signup.suite';
 
 // server: the string travels to the client with the response
-export function serializeSignup(body: unknown): string {
-  return SuiteSerializer.serialize(signupSuite.runStatic(body));
+export async function serializeSignup(body: unknown): Promise<string> {
+  return SuiteSerializer.serialize(await signupSuite.runStatic(body));
 }
 
 // client: the suite continues from the server's result

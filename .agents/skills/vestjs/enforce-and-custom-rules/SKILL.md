@@ -40,7 +40,8 @@ const result = userSuite.run({ username: 'alice', age: '30', tags: [] });
 
 - The schema runs before the tests, and its field names type `test`, `only`, `focus` and the selectors.
 - A parser such as `.toNumber()` or `.trim()` gives the field two types: `suite.run(...)` takes the input type (`string | number` for `age`), and the callback and `result.value` use the output type (`number`).
-- A focused run validates only the focused part of the schema, so `suite.only('age').run({ age: '30' })` accepts a partial input. Decide a submit from a full `suite.run(data)`.
+- When the schema fails, the tests still run and the callback gets the raw input: `data.age` can be `'abc'` in spite of its `number` type. Keep each test safe for a value of the wrong type.
+- A focused run validates and parses only the focused part of the schema, so `suite.only('age').run({ age: '30' })` accepts a partial input, and its `result.value` holds only `age`. Decide a submit, and read the complete `result.value`, from a full `suite.run(data)`.
 - In Vest 6.3.4 a schema violation fails its field without a message: `hasErrors(field)` is `true` and `getErrors(field)` is empty. A message for the user comes from a `test`.
 - `enforce.shape` rejects unknown keys; `enforce.loose` allows them. `enforce.record`, `enforce.lazy` and `enforce.tuple` are for dynamic keys, recursive structures and fixed-length arrays.
 

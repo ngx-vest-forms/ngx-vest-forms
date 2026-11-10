@@ -44,7 +44,8 @@ Tests of one field run in order, and by default the field stops at its first fai
 | Caller                                      | Call                                                            |
 | ------------------------------------------- | --------------------------------------------------------------- |
 | the user edited one field                   | `suite.only('email').run(data)`                                 |
-| several fields, or a named group            | `suite.focus({ only: ['email', 'username'] }).run(data)`        |
+| several fields                              | `suite.only(['email', 'username']).run(data)`                   |
+| one named group, such as a form step        | `suite.focus({ onlyGroup: 'account' }).run(data)`               |
 | submit                                      | `const result = await suite.run(data)`, then `result.isValid()` |
 | server request, script, unit test of a rule | `suite.runStatic(data)`                                         |
 | the form is reset                           | `suite.reset()`                                                 |

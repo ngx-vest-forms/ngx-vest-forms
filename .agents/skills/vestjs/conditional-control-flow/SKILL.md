@@ -81,7 +81,9 @@ export const orderSuite = create((data: Order) => {
 
 `optional('field')` and `optional(['a', 'b'])` treat an empty value as valid. Vest reads the value from the suite's data argument: `undefined`, `null`, `''` and a blank string are empty. In Vest 6.3.4 a key that is absent from the data object is not empty, so the field's tests fail the suite. For data that can lack the key, such as a partial form model, use the function form.
 
-`optional({ field: () => !data.field })` makes the field optional while your own condition is true, in place of the empty check.
+`optional({ field: () => data.field == null || data.field === '' })` makes the field optional while your own condition is true, in place of the empty check. Write the condition for the exact empty values: `!data.field` also makes `0` and `false` optional.
+
+An optional field that no run has tested counts as valid, whatever its value. A focused run on another field therefore accepts a prefilled, invalid optional field; the full run on submit tests it.
 
 ## Answer shape
 

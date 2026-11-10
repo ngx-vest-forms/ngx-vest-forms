@@ -14,21 +14,24 @@ Vest validates with a suite of named tests and keeps the result of every field b
 
 Before writing code, read the `version` field of `node_modules/vest/package.json`. When dependencies are not installed yet, use the `vest` range in the project's `package.json`. The step is done when you know which branch applies.
 
-| Installed            | Branch                                                                                                                                                                                                                                                |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `6.x`                | Continue with this skill.                                                                                                                                                                                                                             |
-| `5.x`                | Answer from the Vest 5 docs; every page lives under `https://vestjs.dev/docs/5.x/`. Vest 5 code is `staticSuite(...)`, a callable suite (`suite(data, field)`) and result `.done(cb)`. Say that the code targets Vest 5, and offer the upgrade below. |
-| user asks to upgrade | Apply the replacements below, then check the code against the invariants. The full list is the [upgrade guide](https://vestjs.dev/docs/upgrade_guide).                                                                                                |
+| Installed            | Branch                                                                                                                                                                                                                                                                                                                               |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `6.3` or later       | Continue with this skill.                                                                                                                                                                                                                                                                                                            |
+| `6.0` to `6.2`       | The behaviour in this skill is verified on 6.3.4, and an earlier 6.x release can differ, for example in a focused run of a schema suite. Recommend the update to 6.3.4 or later; until then, test a behaviour on the installed package before you rely on it.                                                                        |
+| `5.x`                | Answer from the Vest 5 docs; every page lives under `https://vestjs.dev/docs/5.x/`. A Vest 5 suite is callable (`suite(data, field)`): `create(...)` makes the stateful suite for a form, `staticSuite(...)` the stateless one, and completion is result `.done(cb)`. Say that the code targets Vest 5, and offer the upgrade below. |
+| user asks to upgrade | Apply the replacements below, then check the code against the invariants. The full list is the [upgrade guide](https://vestjs.dev/docs/upgrade_guide).                                                                                                                                                                               |
 
-| Vest 5                             | Vest 6                                                                               |
-| ---------------------------------- | ------------------------------------------------------------------------------------ |
-| `suite(data)`                      | `suite.run(data)`                                                                    |
-| `staticSuite(cb)` + `suite(data)`  | `create(cb)` + `suite.runStatic(data)`                                               |
-| `promisify(suite)(data)`           | `await suite.run(data)`                                                              |
-| `result.done(cb)`                  | `suite.afterEach(cb).run(data)`, or `await suite.run(data)`                          |
-| `result.done('field', cb)`         | `suite.afterField('field', cb).run(data)`                                            |
-| `test.memo(name, msg, fn, deps)`   | `memo(() => { test(name, msg, fn); }, deps)` with `import { memo } from 'vest/memo'` |
-| `only(field)` driven by a UI event | `suite.only(field).run(data)`                                                        |
+| Vest 5                             | Vest 6                                                                                           |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `suite(data)`                      | `suite.run(data)`                                                                                |
+| `staticSuite(cb)` + `suite(data)`  | `create(cb)` + `suite.runStatic(data)`                                                           |
+| `promisify(suite)(data)`           | `await suite.run(data)`                                                                          |
+| `result.done(cb)`                  | `const result = await suite.run(data)`, then the body of `cb`                                    |
+| `result.done('field', cb)`         | `suite.afterField('field', () => { if (!suite.isPending('field')) cb(suite.get()); }).run(data)` |
+| `test.memo(name, msg, fn, deps)`   | `memo(() => { test(name, msg, fn); }, deps)` with `import { memo } from 'vest/memo'`             |
+| `only(field)` driven by a UI event | `suite.only(field).run(data)`                                                                    |
+
+`suite.afterEach(cb)` and `suite.afterField(field, cb)` are the Vest 6 hooks, but they are no drop-in for `done`: the callback gets no result (read `suite.get()`), and it also runs after the synchronous pass, while async tests are still pending.
 
 ## 2. Use the installed API
 
@@ -47,7 +50,7 @@ Every answer and code sample follows these. When the user's code breaks one, cor
 5. **Declarative conditions.** `skipWhen`, `omitWhen`, `include(...).when(...)` and `optional` replace `if` branches around tests. `omitWhen` is the one that stops an inactive section from counting toward validity.
 6. **Cancellable async tests.** The test takes `{ signal }` and passes it to the request. Vest aborts that signal when the same test runs again. Completion is `await suite.run(data)`, `suite.afterEach(cb)` or `suite.afterField(field, cb)`.
 7. **Warnings.** A warning leaves its field valid. Call `warn()` before the first `await` in the test body; for a severity decided after an `await`, take the setter from `useWarn()` first.
-8. **Schema suites.** `create((data) => { ... }, enforce.shape({ ... }))` validates and parses the input before the tests run. A focused run validates only the focused part of the schema, so decide a submit from a full `suite.run(data)`.
+8. **Schema suites.** `create((data) => { ... }, enforce.shape({ ... }))` validates and parses the input before the tests run. When the schema fails, the tests still run and the callback gets the raw input, so a test must tolerate a value of the wrong type. A focused run validates and parses only the focused part of the schema, so decide a submit, and read `result.value`, from a full `suite.run(data)`.
 
 ## 4. Route to the workflow
 
