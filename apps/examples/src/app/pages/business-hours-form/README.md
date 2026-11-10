@@ -42,7 +42,7 @@ validate a list whose shape changes at runtime".
 - `business-hours.form.ts` / `.html` — the form body component
 - `business-hours.validations.ts` — the suite, time parsing, and overlap logic
 - `ui/business-hours/business-hours.component.ts` — the add/remove UI
-- `../../models/business-hours-form.model.ts` — model, contract, initial value
+- `business-hours-form.model.ts` — model, contract, initial value
 
 ## Behaviour notes
 

@@ -51,7 +51,7 @@ the reference for "how do all of these pieces fit together in a real form".
 - `purchase.validations.ts` — the Vest suite and error/warning rule maps
 - `purchase.validations.spec.ts` — suite unit tests
 - `swapi.service.ts`, `product.service.ts` — mock data sources
-- `../../models/purchase-form.model.ts` — model, contract, initial value
+- `purchase-form.model.ts` — model, contract, initial value
 
 ## Behaviour notes
 

@@ -46,7 +46,7 @@ separately), **warnings**, **validated fields**, and **pending**.
   `validationConfig` definition, plus error/info partitioning
 - `validation-config-demo.form.ts` / `.html` — the form body component
 - `validation-demo.validations.ts` — the Vest suite
-- `../../models/validation-demo.model.ts` — model and contract
+- `validation-demo.model.ts` — model and contract
 
 ## Behaviour notes
 

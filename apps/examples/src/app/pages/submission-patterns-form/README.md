@@ -61,10 +61,10 @@ error (`?errorScenario=network-error`).
 
 ## Key files
 
-| File                                        | Responsibility                         |
-| ------------------------------------------- | -------------------------------------- |
-| `submission-patterns.page.ts` / `.html`     | Page + four-state machine              |
-| `account.service.ts`                        | `POST /api/account` HTTP client        |
-| `submission-patterns.validations.ts`        | Vest suite (testable in isolation)     |
-| `../../models/submission-patterns.model.ts` | Model + contract                       |
-| `submission-patterns.content.ts`            | "What this demonstrates / learn" cards |
+| File                                    | Responsibility                         |
+| --------------------------------------- | -------------------------------------- |
+| `submission-patterns.page.ts` / `.html` | Page + four-state machine              |
+| `account.service.ts`                    | `POST /api/account` HTTP client        |
+| `submission-patterns.validations.ts`    | Vest suite (testable in isolation)     |
+| `submission-patterns.model.ts`          | Model + contract                       |
+| `submission-patterns.content.ts`        | "What this demonstrates / learn" cards |
