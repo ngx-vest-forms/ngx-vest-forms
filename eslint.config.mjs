@@ -73,7 +73,10 @@ export default defineConfig([
       globals: vitest.environments.env.globals,
     },
     rules: {
-      'vitest/expect-expect': 'warn',
+      'vitest/expect-expect': [
+        'warn',
+        { assertFunctionNames: ['expect', 'assert', 'expectTypeOf'] },
+      ],
       'vitest/no-disabled-tests': 'warn',
       'vitest/no-focused-tests': 'error',
       'vitest/no-identical-title': 'error',

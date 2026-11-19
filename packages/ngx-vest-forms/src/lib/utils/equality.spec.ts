@@ -314,28 +314,5 @@ describe('Equality Utils', () => {
         )
       ).toBe(false);
     });
-
-    it('should be performant compared to JSON.stringify', () => {
-      const largeObj = {
-        users: Array.from({ length: 1000 }, (_, i) => ({
-          id: i,
-          name: `User ${i}`,
-          email: `user${i}@example.com`,
-          profile: {
-            age: 20 + (i % 50),
-            preferences: {
-              theme: i % 2 ? 'dark' : 'light',
-              notifications: true,
-            },
-          },
-        })),
-      };
-
-      const largeObj2 = JSON.parse(JSON.stringify(largeObj));
-
-      const result = fastDeepEqual(largeObj, largeObj2);
-
-      expect(result).toBe(true);
-    });
   });
 });

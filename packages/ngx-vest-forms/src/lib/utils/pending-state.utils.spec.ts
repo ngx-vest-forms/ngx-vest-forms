@@ -32,47 +32,20 @@ describe('pending-state.utils', () => {
       expect(result.showPendingMessage()).toBe(true);
     });
 
-    it('should create debounced pending state with default options', () => {
+    it('shows the Pending message after the default 200 ms delay', () => {
       TestBed.runInInjectionContext(() => {
         const isPending = signal(false);
-        const result = createDebouncedPendingState(isPending);
+        const { showPendingMessage } = createDebouncedPendingState(isPending);
+        expect(showPendingMessage()).toBe(false);
 
-        expect(result.showPendingMessage).toBeDefined();
-        expect(result.cleanup).toBeDefined();
-        expect(typeof result.cleanup).toBe('function');
-        expect(result.showPendingMessage()).toBe(false);
-      });
-    });
-
-    it('should not show pending message immediately when validation starts', () => {
-      TestBed.runInInjectionContext(() => {
-        const isPending = signal(false);
-        const result = createDebouncedPendingState(isPending);
-
-        // Start validation
         isPending.set(true);
+        TestBed.tick();
 
-        // Should not show immediately
-        expect(result.showPendingMessage()).toBe(false);
-      });
-    });
-
-    it('should show pending message after showAfter delay (default 200ms)', () => {
-      TestBed.runInInjectionContext(() => {
-        const isPending = signal(false);
-        const result = createDebouncedPendingState(isPending);
-
-        // Start validation
-        isPending.set(true);
-        expect(result.showPendingMessage()).toBe(false);
-
-        // Advance time by 199ms (just before threshold)
         vi.advanceTimersByTime(199);
-        expect(result.showPendingMessage()).toBe(false);
+        expect(showPendingMessage()).toBe(false);
 
-        // Advance to 200ms (at threshold)
         vi.advanceTimersByTime(1);
-        expect(result.showPendingMessage()).toBe(true);
+        expect(showPendingMessage()).toBe(true);
       });
     });
 

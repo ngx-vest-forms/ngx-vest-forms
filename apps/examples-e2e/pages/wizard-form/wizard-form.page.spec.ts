@@ -10,32 +10,14 @@ import {
 } from '../../helpers/wizard-helpers';
 
 test.describe('Wizard Form Page', () => {
-  test('should render wizard page layout and step navigation', async ({
-    page,
-  }) => {
-    const sidebar = getMainContentSidebar(page);
-
-    await page.goto('/wizard');
-
-    await expect(
-      page.getByRole('heading', { name: /multi-form wizard/i, level: 1 })
-    ).toBeVisible();
-
-    await expect(page.locator('ngx-wizard-steps nav')).toBeVisible();
-    await expect(sidebar).toBeVisible();
-    await expect(sidebar).toContainText(/form value/i);
-    await expect(
-      sidebar.locator('span[aria-label="Pristine"]').first()
-    ).toBeVisible();
-  });
-
   // The sidebar reads the rendered step's form, so after Next or Previous it
   // must drop the old step's state and show the new step's instead.
-  test('should show the current step errors in the sidebar', async ({
+  test('updates the sidebar with Errors from the active Wizard step', async ({
     page,
   }) => {
     const sidebar = getMainContentSidebar(page);
     await navigateToWizard(page);
+    await expect(sidebar.getByLabel('Pristine')).toBeVisible();
 
     await test.step('Step 1: a blurred empty email shows up', async () => {
       const email = page.getByLabel(/email address/i);

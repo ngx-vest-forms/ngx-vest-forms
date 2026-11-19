@@ -1,193 +1,52 @@
-import { expectTypeOf, vi } from 'vitest';
-import type { NgxDeepPartial } from './deep-partial';
-import type { NgxDeepRequired } from './deep-required';
+import type { NgxDeepPartial, NgxDeepRequired } from 'ngx-vest-forms';
+import { describe, expectTypeOf, it } from 'vitest';
 
 describe('NgxDeepRequired', () => {
-  it('should make all properties required in flat structure', () => {
+  it('requires Form Contract properties at each depth and preserves leaf types', () => {
     type Model = {
-      a?: string;
-      b?: number;
-      c?: boolean;
-    };
-    const value: NgxDeepRequired<Model> = {
-      a: '',
-      b: 1,
-      c: false,
-    };
-    expect(value.a).toBeDefined();
-    expect(value.b).toBeDefined();
-    expect(value.c).toBeDefined();
-  });
-
-  it('should recursively make nested object properties required', () => {
-    type Model = {
-      a?: string;
-      b?: number;
-      c?: { d?: boolean; e?: string[] };
-    };
-    const value: NgxDeepRequired<Model> = {
-      a: '',
-      b: 1,
-      c: { d: false, e: [] },
-    };
-    expect(value.a).toBeDefined();
-    expect(value.c.d).toBeDefined();
-    expect(value.c.e).toBeDefined();
-  });
-
-  it('should treat Date as a leaf type (not recurse into Date methods)', () => {
-    type Model = {
-      createdAt?: Date;
-      profile?: { updatedAt?: Date };
-    };
-    const value: NgxDeepRequired<Model> = {
-      createdAt: new Date(),
-      profile: { updatedAt: new Date() },
-    };
-    expect(value.createdAt instanceof Date).toBe(true);
-    expect(value.profile.updatedAt instanceof Date).toBe(true);
-  });
-
-  it('should treat Function as a leaf type (not recurse into Function methods)', () => {
-    type Model = {
-      callback?: () => void;
-      handler?: { onClick?: (e: Event) => void };
-    };
-    const onClick = vi.fn();
-    const callback = vi.fn();
-    const value: NgxDeepRequired<Model> = {
-      callback,
-      handler: { onClick },
-    };
-    expect(typeof value.callback).toBe('function');
-    expect(typeof value.handler.onClick).toBe('function');
-  });
-
-  it('should recursively process array element types', () => {
-    type Model = {
-      items?: Array<{ name?: string; value?: number }>;
-    };
-    const value: NgxDeepRequired<Model> = {
-      items: [
-        { name: 'test', value: 1 },
-        { name: 'test2', value: 2 },
-      ],
-    };
-    expect(Array.isArray(value.items)).toBe(true);
-    expect(value.items[0]?.name).toBeDefined();
-    expect(value.items[0]?.value).toBeDefined();
-  });
-
-  it('should recursively process readonly array element types', () => {
-    type Model = {
-      readonly tags?: ReadonlyArray<{ label?: string }>;
-    };
-    const value: NgxDeepRequired<Model> = {
-      tags: [{ label: 'important' }],
-    };
-    expect(Array.isArray(value.tags)).toBe(true);
-    expect(value.tags[0]?.label).toBeDefined();
-  });
-
-  it('should handle deeply nested structures with arrays', () => {
-    type Model = {
-      users?: Array<{
-        name?: string;
+      title?: string;
+      date?: Date;
+      nested?: {
+        active?: boolean;
+        onChange?: (event: Event) => void;
         tags?: string[];
-      }>;
+      };
     };
-    const value: NgxDeepRequired<Model> = {
-      users: [
-        {
-          name: 'John',
-          tags: ['admin', 'user'],
-        },
-        {
-          name: 'Jane',
-          tags: ['user'],
-        },
-      ],
-    };
-    expect(value.users.length).toBe(2);
-    expect(value.users[0]?.name).toBe('John');
-    expect(value.users[0]?.tags).toEqual(['admin', 'user']);
-    expect(value.users[1]?.name).toBe('Jane');
+
+    expectTypeOf<NgxDeepRequired<Model>>().toEqualTypeOf<{
+      title: string;
+      date: Date;
+      nested: {
+        active: boolean;
+        onChange: (event: Event) => void;
+        tags: string[];
+      };
+    }>();
   });
 
-  it('should handle mixed types correctly', () => {
+  it('requires array item properties and keeps readonly arrays readonly', () => {
     type Model = {
-      id?: number;
-      name?: string;
-      isActive?: boolean;
-      createdAt?: Date;
-      tags?: string[];
-      metadata?: { key?: string; value?: any };
-      callback?: () => void;
+      items?: { name?: string; value?: number }[];
+      readonly tags?: readonly { label?: string }[];
     };
-    const callback = vi.fn();
-    const value: NgxDeepRequired<Model> = {
-      id: 1,
-      name: 'test',
-      isActive: true,
-      createdAt: new Date(),
-      tags: ['tag1', 'tag2'],
-      metadata: { key: 'test', value: 123 },
-      callback,
-    };
-    expect(value.id).toBe(1);
-    expect(value.name).toBe('test');
-    expect(value.isActive).toBe(true);
-    expect(value.createdAt instanceof Date).toBe(true);
-    expect(Array.isArray(value.tags)).toBe(true);
-    expect(value.metadata.key).toBeDefined();
-    expect(typeof value.callback).toBe('function');
+
+    expectTypeOf<NgxDeepRequired<Model>>().toEqualTypeOf<{
+      items: { name: string; value: number }[];
+      readonly tags: readonly { label: string }[];
+    }>();
   });
 
-  it('should handle primitive array types', () => {
-    type Model = {
-      numbers?: number[];
-      strings?: string[];
-      booleans?: boolean[];
-    };
-    const value: NgxDeepRequired<Model> = {
-      numbers: [1, 2, 3],
-      strings: ['a', 'b', 'c'],
-      booleans: [true, false],
-    };
-    expect(value.numbers.length).toBe(3);
-    expect(value.strings.length).toBe(3);
-    expect(value.booleans.length).toBe(2);
-  });
-
-  it('should strip the explicit undefined that NgxDeepPartial adds', () => {
-    // Under `exactOptionalPropertyTypes`, `-?` alone keeps a spelled-out
-    // `?: X | undefined`; NgxDeepRequired must still yield the plain type.
+  it('removes the explicit undefined that NgxDeepPartial adds to optional properties', () => {
     type Model = { name: string; address: { street: string } };
 
     expectTypeOf<
       NgxDeepRequired<NgxDeepPartial<Model>>
     >().toEqualTypeOf<Model>();
-
-    const contract: NgxDeepRequired<NgxDeepPartial<Model>> = {
-      name: '',
-      address: { street: '' },
-    };
-    const bad: NgxDeepRequired<NgxDeepPartial<Model>> = {
-      // @ts-expect-error a contract field cannot be undefined
-      name: undefined,
-      address: { street: '' },
-    };
-
-    expect([contract, bad]).toHaveLength(2);
   });
 
-  it('should keep undefined on a required property that declares it', () => {
-    type Model = { maybe: number | undefined };
+  it('keeps undefined on a required property that declares it', () => {
+    type Model = { value: number | undefined };
 
-    expectTypeOf<NgxDeepRequired<Model>['maybe']>().toEqualTypeOf<
-      number | undefined
-    >();
-    const value: NgxDeepRequired<Model> = { maybe: undefined };
-    expect(value.maybe).toBeUndefined();
+    expectTypeOf<NgxDeepRequired<Model>>().toEqualTypeOf<Model>();
   });
 });

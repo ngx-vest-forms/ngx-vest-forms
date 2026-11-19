@@ -46,8 +46,8 @@ export function setAngularFormSubmittedState(
   // NgForm's `submitted` getter is read-only; its state lives in the private
   // `submittedReactive` signal. If a later Angular renames it, skip the
   // write instead of throwing: callers also update the shared signal, so
-  // error display stays reactive. The contract spec flags the rename on
-  // upgrade.
+  // error display stays reactive. The clearSubmittedState test also checks
+  // Angular's submitted flag.
   (
     ngForm as unknown as { submittedReactive?: WritableSignal<boolean> }
   ).submittedReactive?.set(submitted);

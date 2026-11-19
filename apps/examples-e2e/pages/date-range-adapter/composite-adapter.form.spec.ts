@@ -79,26 +79,16 @@ test.describe('Composite Adapter - Form Behavior', () => {
     );
   });
 
-  test('should update form model when departure date is entered', async ({
-    page,
-  }) => {
+  test('shows both dates in the Form Model after edits', async ({ page }) => {
     const sidebar = getMainContentSidebar(page);
     const departure = page.getByLabel(/departure date/i);
-    await setAdapterDate(departure, '2026-07-01');
-    await waitForValidationToSettle(page);
-
-    await expect(sidebar).toContainText('2026-07-01');
-  });
-
-  test('should update form model when return date is entered', async ({
-    page,
-  }) => {
-    const sidebar = getMainContentSidebar(page);
     const returnDate = page.getByLabel(/return date/i);
-    await setAdapterDate(returnDate, '2026-07-15');
-    await waitForValidationToSettle(page);
 
-    await expect(sidebar).toContainText('2026-07-15');
+    await setAdapterDate(departure, '2026-07-01');
+    await setAdapterDate(returnDate, '2026-07-15');
+
+    await expect(sidebar).toContainText('"departureDate": "2026-07-01"');
+    await expect(sidebar).toContainText('"returnDate": "2026-07-15"');
   });
 
   test('should clear errors when dates are corrected', async ({ page }) => {
