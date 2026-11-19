@@ -162,7 +162,7 @@ type NgxErrorDisplayMode =
 | `'on-blur'` | Show after the control is touched or the form is submitted (behaves identically to `'on-blur-or-submit'`; prefer `'on-blur-or-submit'` in new code). |
 | `'on-submit'` | Show only after a form submission attempt. |
 | `'on-dirty'` | Show as soon as the value changes, or after touch/submit. |
-| `'always'` | Show immediately, including on pristine fields. |
+| `'always'` | Show immediately, including on pristine fields (except when the control uses `updateOn: 'submit'`, which still waits for a form submission attempt). |
 
 ```ts
 import { NGX_ERROR_DISPLAY_MODE_TOKEN } from 'ngx-vest-forms';

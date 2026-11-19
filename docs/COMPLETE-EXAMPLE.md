@@ -216,6 +216,9 @@ export class UserFormWithSummaryComponent {
 If you only need a single derived signal, a plain `computed()` is simpler:
 
 ```ts
+import { computed } from '@angular/core';
+import { createEmptyFormState } from 'ngx-vest-forms';
+
 protected readonly formState = computed(
   () => this.vestForm()?.formState() ?? createEmptyFormState<UserFormModel>()
 );

@@ -29,9 +29,10 @@ piece independently understandable and testable.
 - **Stable keys.** A row keeps its id for as long as it exists, so its
   `ngModelGroup` name, touched state and errors stay with it when an earlier
   row is removed. The Vest 6 suite keeps state between runs and uses `each()`
-  with a unique key per row, while `removeMember()` calls `removeField()` so a
-  removed row's history is purged. Ids are numeric strings so the form
-  contract's single `'0'` entry covers every row.
+  with a unique key per row; `removeMember()` emits the filtered `teamMembers`
+  object without the removed row and calls `removal.removed()` to announce the
+  removal and move focus. Ids are numeric strings so the form contract's
+  single `'0'` entry covers every row.
 - **Round-trip on submit.** The page converts `teamMembers` back to a real
   array with `objectToArray(value, ['teamMembers'])` — the JSON shape you'd
   POST to a backend — and shows it in a payload card.

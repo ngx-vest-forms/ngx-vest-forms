@@ -52,7 +52,7 @@ const cleaned = clearFields(value, ['temporaryData', 'draftNotes']);
 
 ### `keepFieldsWhen(currentState, conditions)`
 
-Allowlist helper: keeps listed top-level keys whose condition is `true` and sets listed keys whose condition is `false` to `undefined`.
+Allowlist helper: returns a new object containing only the listed top-level keys whose condition is `true` and that exist on `currentState`. Keys whose condition is `false`, and any keys not listed in `conditions`, are omitted from the returned object.
 
 ```ts
 function keepFieldsWhen<T extends Record<string, unknown>>(
@@ -78,20 +78,22 @@ Always apply field clearing inside your `(formValueChange)` handler rather than 
 Also call `vestForm().removeField(path)` for unmounted fields so Vest 6's stateful suite drops their validation history and cancels any pending async checks, and call `vestForm().triggerFormValidation()` when switching from inputs to static content.
 
 ```ts
-import { ChangeDetectionStrategy, Component, signal, viewChild } from '@angular/core';
-import {
-  clearFieldsWhen,
-  FormDirective,
-  NgxVestForms,
-  type NgxDeepPartial,
-} from 'ngx-vest-forms';
-import { procedureSuite } from './procedure.validations';
+// procedure.model.ts
+import type { NgxDeepPartial } from 'ngx-vest-forms';
 
 export type ProcedureFormModel = NgxDeepPartial<{
   procedureType: 'typeA' | 'typeB' | 'typeC';
   fieldA: string;
   fieldB: string;
 }>;
+```
+
+```ts
+// procedure-form.component.ts
+import { ChangeDetectionStrategy, Component, signal, viewChild } from '@angular/core';
+import { clearFieldsWhen, FormDirective, NgxVestForms } from 'ngx-vest-forms';
+import type { ProcedureFormModel } from './procedure.model';
+import { procedureSuite } from './procedure.validations';
 
 @Component({
   selector: 'app-procedure-form',

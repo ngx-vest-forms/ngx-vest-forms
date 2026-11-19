@@ -65,17 +65,25 @@ export class CheckoutComponent {
 
 ### Programmatic multi-form submit
 
-When one external button submits several synchronous child forms:
+When one external button submits several child forms, wait for each form's `submitSettled` output before checking validity and calling `clearSubmittedState()`. Submit-time dependent revalidation (`validationConfig`), submit-mode `ROOT_FORM` checks, and async Vest validators settle asynchronously after `onSubmit()`, so reading `form.formState().valid` synchronously right after `onSubmit()` can observe stale validity:
 
 ```ts
-submitAll(): void {
+import { outputToObservable } from '@angular/core/rxjs-interop';
+import { firstValueFrom, take } from 'rxjs';
+
+async submitAll(): Promise<void> {
   const forms = this.submitForms();
+
+  const settled = forms.map((form) =>
+    firstValueFrom(outputToObservable(form.submitSettled).pipe(take(1)))
+  );
 
   for (const form of forms) {
     form.ngForm.onSubmit(new Event('submit'));
   }
 
-  if (!forms.every((form) => form.formState().valid)) {
+  const outcomes = await Promise.all(settled);
+  if (!outcomes.every((outcome) => outcome.valid)) {
     return;
   }
 
@@ -84,5 +92,3 @@ submitAll(): void {
   }
 }
 ```
-
-If any of those forms runs async Vest validators, `formState().valid` is `false` while the form is `PENDING`. In that case, wait for each form's `(submitSettled)` event before checking validity and calling `clearSubmittedState()`.

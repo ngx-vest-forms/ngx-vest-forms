@@ -143,27 +143,27 @@ import {
   template: `
     <ng-content />
 
-    @if (errorDisplay.shouldShowErrors()) {
-      <div class="mat-error" role="status" aria-live="polite" aria-atomic="true">
+    <div class="mat-error" role="status" aria-live="polite" aria-atomic="true">
+      @if (errorDisplay.shouldShowErrors()) {
         @for (error of errorDisplay.errors(); track error) {
           <span>{{ error }}</span>
         }
-      </div>
-    }
+      }
+    </div>
 
-    @if (errorDisplay.shouldShowWarnings() && !errorDisplay.shouldShowErrors()) {
-      <div class="mat-warn" role="status" aria-live="polite" aria-atomic="true">
+    <div class="mat-warn" role="status" aria-live="polite" aria-atomic="true">
+      @if (errorDisplay.shouldShowWarnings() && !errorDisplay.shouldShowErrors()) {
         @for (warning of errorDisplay.warnings(); track warning) {
           <span>{{ warning }}</span>
         }
-      </div>
-    }
+      }
+    </div>
 
-    @if (showPendingMessage()) {
-      <div class="mat-hint" role="status" aria-live="polite" aria-atomic="true">
-        Validating…
-      </div>
-    }
+    <div class="mat-hint" role="status" aria-live="polite" aria-atomic="true">
+      @if (showPendingMessage()) {
+        <span>Validating…</span>
+      }
+    </div>
   `,
 })
 export class MatFieldWrapperComponent {

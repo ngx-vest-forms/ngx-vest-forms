@@ -62,15 +62,17 @@ type ContactFormModel = NgxDeepPartial<{
 
 // Vest 6 suite: the callback receives only the model.
 // ngx-vest-forms runs focused checks via suite.only(field).run(model).
-const contactSuite: NgxVestSuite<ContactFormModel> = create((model) => {
-  test('email', 'Email is required', () => {
-    enforce(model.email).isNotBlank();
-  });
+const contactSuite: NgxVestSuite<ContactFormModel> = create(
+  (model: ContactFormModel) => {
+    test('email', 'Email is required', () => {
+      enforce(model.email).isNotBlank();
+    });
 
-  test('name', 'Name is required', () => {
-    enforce(model.name).isNotBlank();
-  });
-});
+    test('name', 'Name is required', () => {
+      enforce(model.name).isNotBlank();
+    });
+  }
+);
 
 @Component({
   selector: 'app-contact-form',
@@ -135,7 +137,7 @@ Theme the built-in wrappers with CSS custom properties, or build your own wrappe
 
 ### Submitting with async validation
 
-`(ngSubmit)` fires immediately, while async Vest rules may still be `PENDING`. Listen to `(submitSettled)` instead. It emits one `NgxSubmitSettledEvent<T>` (`{ valid, value, errors }`) per submit after dependent revalidation, `ROOT_FORM` rules, and async validators finish. On an invalid submit, the form focuses the first invalid control automatically (`[focusFirstInvalidOnSubmit]="false"` disables this).
+`(ngSubmit)` fires immediately, while async Vest rules may still be `PENDING`. Listen to `(submitSettled)` instead. It emits one `NgxSubmitSettledEvent<T>` (`{ valid, value, errors }`) per submit after dependent revalidation, `ROOT_FORM` rules, and async validators finish. If the user submits again while an earlier submit is still pending, the newer submit replaces the earlier one so only the latest emits. On an invalid submit, the form focuses the first invalid control automatically (`[focusFirstInvalidOnSubmit]="false"` disables this).
 
 ### Cross-field and root-form rules
 

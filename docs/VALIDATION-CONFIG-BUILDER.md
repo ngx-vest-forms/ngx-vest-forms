@@ -156,6 +156,7 @@ protected readonly validationConfig = computed(() => {
 
   ```ts
   // App-level debounce configuration
+  import type { ApplicationConfig } from '@angular/core';
   import {
     NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
     NGX_VALIDATION_DEBOUNCE_PRESETS,
@@ -171,7 +172,7 @@ protected readonly validationConfig = computed(() => {
   };
   ```
 
-- **Submit safety:** When the user submits the form, `FormDirective` revalidates `validationConfig` dependents before emitting `(submitSettled)` and `(errorsChange)`. Submitting immediately after editing a trigger field cannot slip past a pending debounce window.
+- **Submit safety:** When the user submits the form, `FormDirective` revalidates `validationConfig` dependents before emitting `(submitSettled)` (and its corresponding post-submit `(errorsChange)` update; during ordinary edits, `(errorsChange)` still emits on every non-`PENDING` status change). Submitting immediately after editing a trigger field cannot slip past a pending debounce window.
 - **Quiet dependent errors:** `validationConfig` updates the dependent control's validity immediately, while `<ngx-control-wrapper>` still obeys its own `errorDisplayMode` (so an untouched dependent field does not flash errors prematurely).
 
 ## Troubleshooting

@@ -2,7 +2,7 @@
 
 Compile-time TypeScript utilities for dot-notation field paths in `ngx-vest-forms`. All types are erased at compile time with zero runtime cost.
 
-## Core types
+## Basic usage
 
 ### `FieldPath<T>`
 
@@ -119,6 +119,10 @@ export const suite = create((model: FormModel) => {
 
 Note that Vest's global `test()` accepts `string`; to check field names at compile time inside a suite, pass a schema to `create()` and use `satisfies NgxVestSuite<T>` (see [Suite type compatibility](./TYPE-COMPATIBILITY.md#schema-typed-suites)).
 
+### Composable validation functions
+
+When splitting a large suite into focused helper functions, pass typed field-name constants (`FieldPath<T>` or `FormFieldName<T>`) or use scoped model types so nested paths stay checked against the model. See [Composable validations](./COMPOSABLE-VALIDATIONS.md).
+
 ### `FieldPathValue<T, Path>`
 
 Resolves the value type at `Path` (stripping `NgxDeepPartial`'s `| undefined` on the leaf). Supports dot-indexed (`addresses.0.street`), bracket-indexed (`addresses[0].street`), and index-free (`addresses.street`) array paths.
@@ -154,8 +158,12 @@ type Invalid = ValidateFieldPath<Model, 'missing'>; // never
 Every path reported by ngx-vest-forms at runtime (`formState().errors`, `getAllFormErrors`, `fieldWarnings`, `fieldBlur.field`, `validatedFields`) uses dot notation, including array indices (`users.0.name`).
 
 - **`stringifyFieldPath(segments)`** converts a Standard Schema issue path array into bracket notation (`['users', 0, 'name']` becomes `'users[0].name'`) for display or logging. To match library-reported paths, join segments with `'.'` instead.
-- **`setValueAtPath(obj, path, value)`** writes a nested value by dot or bracket path and ignores unsafe prototype keys (`__proto__`, `prototype`, `constructor`).
+- **`setValueAtPath(obj, path, value)`** writes a nested value by dot or bracket path.
 - **`arrayToObject()` / `deepArrayToObject()` / `objectToArray()`** convert between arrays and numeric-keyed objects for `ngModelGroup` bindings. See [Utilities reference](../packages/ngx-vest-forms/src/lib/utils/README.md).
+
+### Security: Dynamic Path Inputs
+
+All runtime object-write helpers (`setValueAtPath`, `copyFormValue`, `objectToArray`, and `mergeValuesAndRawValues`) reject unsafe prototype keys (`__proto__`, `prototype`, `constructor`) at every path segment so dynamic or user-derived field paths cannot mutate `Object.prototype`. Still validate dynamic paths against your own allowlist before persisting or writing to application state.
 
 ## Troubleshooting
 

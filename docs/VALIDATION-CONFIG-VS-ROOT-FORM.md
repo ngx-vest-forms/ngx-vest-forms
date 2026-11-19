@@ -57,7 +57,7 @@ What happens when `password` changes:
 3. `confirmPassword`'s validator runs `suite.only('confirmPassword').run(model)`.
 4. Its validity updates immediately, while its visual error display still respects the wrapper's `errorDisplayMode` (so an untouched dependent field stays quiet until blur or submit).
 
-On submit, `FormDirective` revalidates `validationConfig` dependents before emitting `(submitSettled)` and `(errorsChange)`, so submitting immediately after editing a trigger field never passes on a stale result.
+On submit, `FormDirective` revalidates `validationConfig` dependents before emitting `(submitSettled)` (and its corresponding post-submit `(errorsChange)` update; during ordinary edits, `(errorsChange)` still emits on every non-`PENDING` status change), so submitting immediately after editing a trigger field never passes on a stale result.
 
 Use `whenChanged` for one-way dependencies (such as `age` to `emergencyContact`) and `bidirectional` only when both fields read each other. For the full builder API, see [ValidationConfig builder](./VALIDATION-CONFIG-BUILDER.md).
 
@@ -123,7 +123,7 @@ protected onSubmit(event: NgxSubmitSettledEvent<ContactModel>): void {
 }
 ```
 
-`(submitSettled)` waits for dependent `validationConfig` revalidation, submit-mode `ROOT_FORM` checks, and any async Vest tests to finish, then emits `{ valid, value, errors }` once per submit. Do not check `form.valid` inside `(ngSubmit)` when your suite has async tests.
+`(submitSettled)` waits for dependent `validationConfig` revalidation, submit-mode `ROOT_FORM` checks, and any async Vest tests to finish, then emits `{ valid, value, errors }` once per submit. If a newer submit occurs while an earlier submit is still waiting on async validation, the newer submit replaces the earlier one so only the latest emits. Do not check `form.valid` inside `(ngSubmit)` when your suite has async tests.
 
 ## 3. `triggerFormValidation(path?)` for structure changes
 
@@ -135,7 +135,10 @@ When a template switches between form controls and static content (such as repla
 Always clear hidden values inside `(formValueChange)`, not in a separate `(ngModelChange)` handler alongside `(formValueChange)` (which causes `NGX-100` same-tick sync conflicts):
 
 ```ts
+import { viewChild } from '@angular/core';
 import { clearFieldsWhen, FormDirective } from 'ngx-vest-forms';
+
+private readonly vestForm = viewChild(FormDirective<DynamicFormModel>);
 
 protected handleFormChange(value: DynamicFormModel): void {
   const next = clearFieldsWhen(value, {

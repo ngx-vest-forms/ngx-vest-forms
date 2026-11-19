@@ -95,7 +95,7 @@ For schema-typed suites with compile-time top-level field checking, use `satisfi
 
 ### `NgxFieldKey<T>`
 
-Union of valid dotted field keys for `T` plus `ROOT_FORM`. Useful when typing focused call-site calls such as `suite.only(field).run(model)` in helpers or specs.
+Open string type (`Extract<keyof T, string> | (string & {})`) that provides IDE autocomplete for top-level keys of `T` while still accepting arbitrary dotted or dynamic field strings (such as `'addresses.0.street'` or `ROOT_FORM`). Useful when typing call-site calls like `suite.only(field).run(model)` in helpers or specs. For strict compile-time path checking across nested keys and `ROOT_FORM`, use `FormFieldName<T>`.
 
 ---
 
@@ -118,7 +118,7 @@ setValueAtPath(model, 'addresses[0].street', 'Main St');
 
 ### `getAllFormErrors()`
 
-Collects all enabled control errors and warnings from an Angular `AbstractControl` into `{ errors, warnings }` (`NgxFormErrorsByPath`), keyed by dotted field path (including numeric array indices such as `phoneNumbers.0.number` and `ROOT_FORM`).
+Collects all enabled Vest-shaped control errors and warnings from an Angular `AbstractControl` into `{ errors, warnings }` (`NgxFormErrorsByPath`), keyed by dotted field path (including numeric array indices such as `phoneNumbers.0.number` and `ROOT_FORM`). It reads ngx-vest-forms's `{ errors: string[], warnings: string[] }` error entries; arbitrary Angular validator payloads (such as `{ required: true }`) are not collected.
 
 ```ts
 import { getAllFormErrors } from 'ngx-vest-forms';
@@ -267,7 +267,7 @@ The return type is `unknown`, so assert the concrete target type at the call sit
 - Only listed keys convert, plus numeric-keyed objects inside them (and numeric-keyed ancestors that hold a converted key).
 - An empty `{}` under a converted key becomes `[]`.
 - Unsafe prototype keys (`__proto__`, `prototype`, `constructor`) are omitted at every level.
-- A single-entry wrapper whose sole key is converted unwraps to the bare array.
+- A single-entry wrapper whose sole key is converted unwraps to the bare array only when every element in that array is a non-null object (or the array is empty). Primitive arrays (for example `{ phoneNumbers: { 0: '123' } }`) remain wrapped (`{ phoneNumbers: ['123'] }`).
 
 ```ts
 import { objectToArray } from 'ngx-vest-forms';
@@ -364,7 +364,7 @@ this.formValue.update((v) => clearFields(v, ['tempData', 'draft']));
 
 ### `keepFieldsWhen()`
 
-Keeps top-level keys whose condition is `true` and sets listed keys whose condition is `false` to `undefined`.
+Returns a new object containing only the listed top-level keys whose condition is `true` and that exist on the input state. Keys whose condition is `false`, and any unlisted keys, are omitted.
 
 ```ts
 import { keepFieldsWhen } from 'ngx-vest-forms';

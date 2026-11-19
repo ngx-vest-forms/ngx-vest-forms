@@ -244,20 +244,31 @@ export class DateRangeAdapterComponent {
 Hidden `<input>` elements register the real field paths with Angular's form tree and Vest validation:
 
 ```html
-<!-- Hidden proxy controls register real field paths in the form tree -->
-<input type="hidden" name="departureDate" [ngModel]="formValue().departureDate" />
-<input type="hidden" name="returnDate" [ngModel]="formValue().returnDate" />
+<form
+  ngxVestForm
+  [suite]="suite"
+  [formValue]="formValue()"
+  (formValueChange)="formValue.set($event)"
+  (ngSubmit)="onSubmit()"
+  #vestForm="ngxVestForm"
+>
+  <!-- Hidden proxy controls register real field paths in the form tree -->
+  <input type="hidden" name="departureDate" [ngModel]="formValue().departureDate" />
+  <input type="hidden" name="returnDate" [ngModel]="formValue().returnDate" />
 
-<app-date-range-adapter
-  [value]="{
-    departureDate: formValue().departureDate,
-    returnDate: formValue().returnDate
-  }"
-  [departureErrors]="departureErrors()"
-  [returnErrors]="returnErrors()"
-  [formSubmitted]="formSubmitted()"
-  (valueChange)="onRangeChange($event)"
-/>
+  <app-date-range-adapter
+    [value]="{
+      departureDate: formValue().departureDate,
+      returnDate: formValue().returnDate
+    }"
+    [departureErrors]="departureErrors()"
+    [returnErrors]="returnErrors()"
+    [formSubmitted]="formSubmitted()"
+    (valueChange)="onRangeChange($event)"
+  />
+
+  <button type="submit">Submit</button>
+</form>
 ```
 
 ```ts
@@ -272,6 +283,10 @@ protected readonly departureErrors = computed(
 protected readonly returnErrors = computed(
   () => this.formState().errors['returnDate'] ?? []
 );
+
+protected onSubmit(): void {
+  this.formSubmitted.set(true);
+}
 
 protected onRangeChange(range: DateRangeValue): void {
   const next = structuredClone(this.formValue());

@@ -33,12 +33,14 @@ find . -type f \( -name "*.ts" -o -name "*.html" \) -not -path "*/node_modules/*
     perl -0pi -e '
       s{<sc-control-wrapper\b}{<ngx-control-wrapper}g;
       s{</sc-control-wrapper>}{</ngx-control-wrapper>}g;
+      s{\[sc-control-wrapper\]}{[ngxControlWrapper]}g;
       s{(?<=\s)sc-control-wrapper(?=[\s=>])}{ngxControlWrapper}g;
       s{\bscControlWrapper\b}{ngxControlWrapper}g;
       s{<sc-form-group-wrapper\b}{<ngx-form-group-wrapper}g;
       s{</sc-form-group-wrapper>}{</ngx-form-group-wrapper>}g;
       s{(?<=\s)sc-form-group-wrapper(?=[\s=>])}{ngxFormGroupWrapper}g;
       s{\bscFormGroupWrapper\b}{ngxFormGroupWrapper}g;
+      s{\[ngx-control-wrapper\]}{[ngxControlWrapper]}g;
       s{(?<=\s)ngx-control-wrapper(?=[\s=>])}{ngxControlWrapper}g;
       s{\bscVestForm\b}{ngxVestForm}g;
       s{\bvalidateRootFormMode\b}{ngxValidateRootFormMode}g;

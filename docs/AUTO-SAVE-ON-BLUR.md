@@ -91,11 +91,16 @@ Save whenever `event.formValue` is present and `event.dirty` is `true`, deduplic
 
 ### Policy B: save only when valid
 
-Check `event.valid` (blurred control) or `this.vestForm().formState().valid` (whole form) when your backend rejects partial payloads or blur triggers a strict commit:
+When persisting the whole `event.formValue`, gate on whole-form validity (`this.vestForm().formState().valid`). Use `event.valid` only when persisting the blurred control by itself:
 
 ```ts
+import { viewChild } from '@angular/core';
+import { FormDirective, type NgxFieldBlurEvent } from 'ngx-vest-forms';
+
+private readonly vestForm = viewChild.required(FormDirective<DraftFormModel>);
+
 protected handleFieldBlur(event: NgxFieldBlurEvent<DraftFormModel>): void {
-  if (!event.formValue || !event.dirty || !event.valid) {
+  if (!event.formValue || !event.dirty || !this.vestForm().formState().valid) {
     return;
   }
 
