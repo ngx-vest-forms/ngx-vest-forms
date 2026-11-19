@@ -2110,4 +2110,77 @@ describe('ControlWrapperComponent while re-validating', () => {
       expect(input).toHaveAttribute('aria-describedby', 'handle-hint');
     });
   });
+
+  it('keeps inline [pendingDebounce] timers running across unrelated change detection', async () => {
+    vi.useFakeTimers();
+    onTestFinished(() => {
+      vi.useRealTimers();
+    });
+
+    @Component({
+      imports: [
+        FormsModule,
+        ControlWrapperComponent,
+        ManualAsyncValidatorDirective,
+      ],
+      template: `
+        <form #form="ngForm">
+          <p data-testid="counter">{{ counter() }}</p>
+          <ngx-control-wrapper
+            [pendingDebounce]="{ showAfter: 200, minimumDisplay: 500 }"
+          >
+            <label for="inline-pending">Handle</label>
+            <input
+              id="inline-pending"
+              name="handle"
+              ngxManualAsync
+              [(ngModel)]="model"
+            />
+          </ngx-control-wrapper>
+        </form>
+      `,
+    })
+    class InlinePendingDebounceHostComponent {
+      model = '';
+      readonly counter = signal(0);
+      readonly validator = viewChild.required(ManualAsyncValidatorDirective);
+      readonly ngForm = viewChild.required(NgForm);
+    }
+
+    const { fixture } = await render(InlinePendingDebounceHostComponent);
+    const host = fixture.componentInstance;
+    const control = host.ngForm().form.get('handle');
+    if (!control) throw new Error('handle control missing');
+
+    control.markAsDirty();
+    control.setValue('checking');
+    fixture.detectChanges();
+
+    // Repeated unrelated CD passes every 50ms must not reset the 200ms showAfter timer.
+    for (let i = 0; i < 4; i++) {
+      host.counter.update((n) => n + 1);
+      fixture.detectChanges();
+      await vi.advanceTimersByTimeAsync(50);
+    }
+    fixture.detectChanges();
+    expect(screen.getByText('Validating…')).toBeInTheDocument();
+
+    // Settle validation and keep triggering unrelated CD during the 500ms minimumDisplay window.
+    host.validator().settle(null);
+    fixture.detectChanges();
+
+    for (let i = 0; i < 9; i++) {
+      host.counter.update((n) => n + 1);
+      fixture.detectChanges();
+      await vi.advanceTimersByTimeAsync(50);
+    }
+    fixture.detectChanges();
+    expect(screen.getByText('Validating…')).toBeInTheDocument();
+
+    host.counter.update((n) => n + 1);
+    fixture.detectChanges();
+    await vi.advanceTimersByTimeAsync(50);
+    fixture.detectChanges();
+    expect(screen.queryByText('Validating…')).not.toBeInTheDocument();
+  });
 });

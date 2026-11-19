@@ -1,9 +1,11 @@
 import {
+  computed,
   effect,
   type Injector,
   isSignal,
   type Signal,
   signal,
+  untracked,
 } from '@angular/core';
 
 /**
@@ -96,16 +98,19 @@ export function createDebouncedPendingState(
   options: DebouncedPendingStateOptionsInput = {},
   config: { injector?: Injector } = {}
 ): DebouncedPendingStateResult {
-  // Reading the options inside the effect makes the timings reactive: when
-  // a consumer passes an `input()` accessor (a Signal), changes propagate at
-  // runtime rather than getting captured once at construction.
-  let optionsSignal: Signal<DebouncedPendingStateOptions> | null = null;
-  let staticOptions: DebouncedPendingStateOptions = {};
-  if (isSignal(options)) {
-    optionsSignal = options;
-  } else {
-    staticOptions = options;
-  }
+  // Memoize primitive timing numbers via computed() so inline object literals
+  // such as `[pendingDebounce]="{ showAfter: 200, minimumDisplay: 500 }"` do
+  // not re-run the effect and reset active timers on unrelated CD passes.
+  const showAfterSignal = isSignal(options)
+    ? computed(() => options().showAfter ?? 200)
+    : null;
+  const minimumDisplaySignal = isSignal(options)
+    ? computed(() => options().minimumDisplay ?? 500)
+    : null;
+  const staticShowAfter = isSignal(options) ? 200 : (options.showAfter ?? 200);
+  const staticMinimumDisplay = isSignal(options)
+    ? 500
+    : (options.minimumDisplay ?? 500);
 
   // Create writable signal for debounced state
   const showPendingMessageSignal = signal(false);
@@ -129,11 +134,10 @@ export function createDebouncedPendingState(
   // Effect to manage debounced pending message display
   effect((onCleanup) => {
     const pending = isPending();
-    const current = optionsSignal ? optionsSignal() : staticOptions;
-    const showAfter = current.showAfter ?? 200;
-    const minimumDisplay = current.minimumDisplay ?? 500;
 
     if (pending) {
+      const showAfter = showAfterSignal ? showAfterSignal() : staticShowAfter;
+
       // Clear any existing minimum display timeout
       if (minimumDisplayTimeout) {
         clearTimeout(minimumDisplayTimeout);
@@ -155,8 +159,13 @@ export function createDebouncedPendingState(
     } else {
       // Validation completed. A still-running show-delay timer was already
       // cleared by the previous run's cleanup, so the message only needs
-      // hiding when it is visible.
-      if (showPendingMessageSignal()) {
+      // hiding when it is visible. Read visibility untracked so clearing it
+      // when minimumDisplay elapses does not trigger a redundant effect run.
+      if (untracked(showPendingMessageSignal)) {
+        const minimumDisplay = minimumDisplaySignal
+          ? minimumDisplaySignal()
+          : staticMinimumDisplay;
+
         // Message was shown - keep it visible for minimum duration
         minimumDisplayTimeout = setTimeout(() => {
           showPendingMessageSignal.set(false);

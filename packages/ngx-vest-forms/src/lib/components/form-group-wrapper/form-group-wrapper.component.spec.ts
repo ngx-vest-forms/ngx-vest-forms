@@ -1,9 +1,9 @@
-import { Component, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, signal, viewChild } from '@angular/core';
+import { FormsModule, type NgForm } from '@angular/forms';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { create, test as vestTest } from 'vest';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import { NgxVestForms } from '../../exports';
 import { NGX_PENDING_LABEL } from '../../tokens/pending-label.token';
 import { FormGroupWrapperComponent } from './form-group-wrapper.component';
@@ -129,6 +129,89 @@ describe('FormGroupWrapperComponent', () => {
     await userEvent.type(screen.getByLabelText('A'), 'x');
 
     expect(await screen.findByText('Bezig…')).toBeInTheDocument();
+    expect(screen.queryByText('Validating…')).not.toBeInTheDocument();
+  });
+
+  it('keeps inline [pendingDebounce] timers running across unrelated change detection', async () => {
+    vi.useFakeTimers();
+    onTestFinished(() => {
+      vi.useRealTimers();
+    });
+
+    let resolveCheck: (() => void) | undefined;
+    const controlledGroupSuite = create(() => {
+      vestTest(
+        'group',
+        'Group check',
+        () =>
+          new Promise<void>((resolve) => {
+            resolveCheck = resolve;
+          })
+      );
+    });
+
+    @Component({
+      imports: [NgxVestForms],
+      template: `
+        <form ngxVestForm [suite]="suite" [formValue]="model()" #form="ngForm">
+          <p data-testid="counter">{{ counter() }}</p>
+          <ngx-form-group-wrapper
+            ngModelGroup="group"
+            [pendingDebounce]="{ showAfter: 200, minimumDisplay: 500 }"
+          >
+            <label for="group-inline-pending">A</label>
+            <input
+              id="group-inline-pending"
+              name="a"
+              [ngModel]="model().group.a"
+            />
+          </ngx-form-group-wrapper>
+        </form>
+      `,
+    })
+    class InlineGroupPendingDebounceHostComponent {
+      readonly model = signal({ group: { a: '' } });
+      readonly suite = controlledGroupSuite;
+      readonly counter = signal(0);
+      readonly ngForm = viewChild.required<NgForm>('form');
+    }
+
+    const { fixture } = await render(InlineGroupPendingDebounceHostComponent);
+    const host = fixture.componentInstance;
+    const groupControl = host.ngForm().form.get('group');
+    const aControl = host.ngForm().form.get('group.a');
+    if (!groupControl || !aControl) throw new Error('group controls missing');
+
+    aControl.markAsDirty();
+    aControl.setValue('x');
+    groupControl.markAsDirty();
+    groupControl.updateValueAndValidity();
+    fixture.detectChanges();
+
+    for (let i = 0; i < 4; i++) {
+      host.counter.update((n) => n + 1);
+      fixture.detectChanges();
+      await vi.advanceTimersByTimeAsync(50);
+    }
+    fixture.detectChanges();
+    expect(screen.getByText('Validating…')).toBeInTheDocument();
+
+    resolveCheck?.();
+    await Promise.resolve();
+    fixture.detectChanges();
+
+    for (let i = 0; i < 9; i++) {
+      host.counter.update((n) => n + 1);
+      fixture.detectChanges();
+      await vi.advanceTimersByTimeAsync(50);
+    }
+    fixture.detectChanges();
+    expect(screen.getByText('Validating…')).toBeInTheDocument();
+
+    host.counter.update((n) => n + 1);
+    fixture.detectChanges();
+    await vi.advanceTimersByTimeAsync(50);
+    fixture.detectChanges();
     expect(screen.queryByText('Validating…')).not.toBeInTheDocument();
   });
 });
