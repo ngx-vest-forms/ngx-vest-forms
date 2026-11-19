@@ -11,9 +11,10 @@ The page never lets one concern leak into another.
 A plain Vest suite (`submission-patterns.validations.ts`): full name
 required, email required + format, password required + min 8 characters
 (with a non-blocking `warn()` nudge under 12), and `acceptTerms` must be
-true. The suite has no Angular dependency and is unit-testable on its own:
-`submissionPatternsSuite.runStatic({ email: 'x' })`. Errors display on blur via
-`ngx-control-wrapper`.
+true. The suite has no Angular dependency and is unit-testable on its own
+(`submissionPatternsSuite.reset(); submissionPatternsSuite.run({ email: 'x' })`).
+The form body provides `NGX_ERROR_DISPLAY_MODE_TOKEN: 'on-submit'` so errors
+appear on submit via `ngx-control-wrapper`.
 
 ### (b) Submit-time INVALID handling
 
@@ -64,6 +65,7 @@ error (`?errorScenario=network-error`).
 | File                                    | Responsibility                         |
 | --------------------------------------- | -------------------------------------- |
 | `submission-patterns.page.ts` / `.html` | Page + four-state machine              |
+| `submission-patterns.form.ts` / `.html` | Form body (`on-submit` token, snapshot, focus helpers) |
 | `account.service.ts`                    | `POST /api/account` HTTP client        |
 | `submission-patterns.validations.ts`    | Vest suite (testable in isolation)     |
 | `submission-patterns.model.ts`          | Model + contract                       |

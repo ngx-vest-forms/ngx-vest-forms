@@ -38,11 +38,9 @@ events and a Reset that races an in-flight save.
 - `createValidationConfig<T>()` with `.bidirectional('quantity',
   'quantityJustification')` and `.whenChanged('preferredContactMethod',
   'email')` for coordinated dependent validation.
-- `FormDirective` view-child state: `formState()`, `fieldWarnings()`,
-  `touchedFieldPaths()`, plus `resetForm()`.
+- `FormDirective.resetForm()` and `createFormFeedbackSignals()` exposing
+  `formState`, `warnings`, `validatedFields`, and `pending`.
 - Vest `warn()` for non-blocking `notes` guidance.
-- `fieldWarningsToRecord` / `createEmptyFormState` helpers for presentational
-  state.
 
 ## Key files
 
