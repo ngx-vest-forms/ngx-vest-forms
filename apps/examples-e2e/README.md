@@ -6,13 +6,16 @@ own folder under `pages/`.
 ## Layout
 
 ```
-pages/<page>/<page>.page.spec.ts       layout, navigation, form-state sidebar
+pages/<page>/<page>.page.spec.ts       page-specific interactions
 pages/<page>/<page>.form.spec.ts       form behaviour and validation
 pages/<page>/<topic>.form.spec.ts      extra suites for a page, one file per topic
-app/app.page.spec.ts                   app shell
+app/app.page.spec.ts                   app shell, navigation, shared Form State panels
 helpers/form-helpers.ts                field, validation and navigation helpers
 helpers/wizard-helpers.ts              wizard step helpers
 ```
+
+The app shell test checks the heading, tab title, and Form State panel on every
+route in the navigation. Use the form tests for field and submit behavior.
 
 Naming rule: every test file ends in `*.spec.ts`. Playwright discovers only
 `pages/**/*.spec.ts` and `app/**/*.spec.ts` (see `playwright.config.ts`), so a

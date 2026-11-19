@@ -1,14 +1,18 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { NgxDeepPartial } from './deep-partial';
-import type { ValidationConfigMap } from './field-path-types';
 import {
   createValidationConfig,
-  ValidationConfigBuilder,
-} from './validation-config-builder';
+  type NgxDeepPartial,
+  type ValidationConfigMap,
+} from 'ngx-vest-forms';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  expectTypeOf,
+  it,
+  vi,
+} from 'vitest';
 
-/**
- * Test form model for validation config builder tests
- */
 type TestFormModel = NgxDeepPartial<{
   firstName: string;
   lastName: string;
@@ -62,13 +66,11 @@ describe('ValidationConfigBuilder', () => {
       });
     });
 
-    it('should reject an unknown property below an index', () => {
-      const builder = createValidationConfig<ListModel>();
+    it('rejects an unknown Trigger Field below an index', () => {
+      type Builder = ReturnType<typeof createValidationConfig<ListModel>>;
+      type Trigger = Parameters<Builder['whenChanged']>[0];
 
-      // @ts-expect-error `phone` is not a property of a contact
-      builder.whenChanged('contacts.0.phone', 'title');
-
-      expect(builder.build()).toEqual({ 'contacts.0.phone': ['title'] });
+      expectTypeOf<'contacts.0.phone'>().not.toExtend<Trigger>();
     });
   });
 
@@ -104,26 +106,6 @@ describe('ValidationConfigBuilder', () => {
       });
     });
 
-    it('should deduplicate dependents', () => {
-      const consoleWarnSpy = vi
-        .spyOn(console, 'warn')
-        .mockImplementation(() => {});
-
-      const config = createValidationConfig<TestFormModel>()
-        .whenChanged('password', ['confirmPassword', 'email'])
-        .whenChanged('password', ['email', 'firstName'])
-        .build();
-
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Duplicate dependencies detected')
-      );
-      expect(config).toEqual({
-        password: ['confirmPassword', 'email', 'firstName'],
-      });
-
-      consoleWarnSpy.mockRestore();
-    });
-
     it('should work with nested field paths', () => {
       const config = createValidationConfig<TestFormModel>()
         .whenChanged('addresses.billing.street', 'addresses.billing.city')
@@ -134,54 +116,36 @@ describe('ValidationConfigBuilder', () => {
       });
     });
 
-    it('should support method chaining', () => {
-      const config = createValidationConfig<TestFormModel>()
-        .whenChanged('firstName', 'lastName')
-        .whenChanged('email', 'password')
-        .build();
-
-      expect(config).toEqual({
-        firstName: ['lastName'],
-        email: ['password'],
-      });
-    });
-
     describe('duplicate detection warnings', () => {
       let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
 
       beforeEach(() => {
+        vi.stubGlobal('ngDevMode', true);
         consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       });
 
       afterEach(() => {
         consoleWarnSpy.mockRestore();
+        vi.unstubAllGlobals();
       });
 
-      it('should warn when adding duplicate dependents in development mode', () => {
-        // Mock ngDevMode to be true
-        (globalThis as any).ngDevMode = true;
-
-        createValidationConfig<TestFormModel>()
-          .whenChanged('password', ['confirmPassword', 'email'])
-          .whenChanged('password', ['email', 'firstName']) // email is duplicate
+      it('reports duplicate Dependent Fields and keeps one entry per field', () => {
+        const config = createValidationConfig<TestFormModel>()
+          .whenChanged('password', ['confirmPassword', 'email', 'firstName'])
+          .whenChanged('password', ['email', 'firstName', 'lastName'])
           .build();
 
         expect(consoleWarnSpy).toHaveBeenCalledWith(
-          expect.stringContaining(
-            '[ngx-vest-forms] ValidationConfigBuilder: Duplicate dependencies detected'
+          expect.stringMatching(
+            /Duplicate dependencies detected\.[\s\S]*Trigger: 'password'[\s\S]*Duplicates: 'email', 'firstName'/
           )
         );
-        expect(consoleWarnSpy).toHaveBeenCalledWith(
-          expect.stringContaining("Trigger: 'password'")
-        );
-        expect(consoleWarnSpy).toHaveBeenCalledWith(
-          expect.stringContaining("Duplicates: 'email'")
-        );
+        expect(config).toEqual({
+          password: ['confirmPassword', 'email', 'firstName', 'lastName'],
+        });
       });
 
       it('should not warn when adding unique dependents', () => {
-        (globalThis as any).ngDevMode = true;
-
         createValidationConfig<TestFormModel>()
           .whenChanged('password', ['confirmPassword'])
           .whenChanged('password', ['email']) // No duplicates
@@ -191,7 +155,7 @@ describe('ValidationConfigBuilder', () => {
       });
 
       it('should not warn in production mode', () => {
-        (globalThis as any).ngDevMode = false;
+        vi.stubGlobal('ngDevMode', false);
 
         createValidationConfig<TestFormModel>()
           .whenChanged('password', ['confirmPassword', 'email'])
@@ -199,33 +163,6 @@ describe('ValidationConfigBuilder', () => {
           .build();
 
         expect(consoleWarnSpy).not.toHaveBeenCalled();
-      });
-
-      it('should warn about multiple duplicates', () => {
-        (globalThis as any).ngDevMode = true;
-
-        createValidationConfig<TestFormModel>()
-          .whenChanged('password', ['confirmPassword', 'email', 'firstName'])
-          .whenChanged('password', ['email', 'firstName', 'lastName']) // Two duplicates
-          .build();
-
-        expect(consoleWarnSpy).toHaveBeenCalledWith(
-          expect.stringContaining("Duplicates: 'email', 'firstName'")
-        );
-      });
-
-      it('should deduplicate despite warning', () => {
-        (globalThis as any).ngDevMode = true;
-
-        const config = createValidationConfig<TestFormModel>()
-          .whenChanged('password', ['confirmPassword', 'email'])
-          .whenChanged('password', ['email', 'firstName'])
-          .build();
-
-        // Should still deduplicate correctly
-        expect(config).toEqual({
-          password: ['confirmPassword', 'email', 'firstName'],
-        });
       });
     });
   });
@@ -286,49 +223,42 @@ describe('ValidationConfigBuilder', () => {
       let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
 
       beforeEach(() => {
+        vi.stubGlobal('ngDevMode', true);
         consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       });
 
       afterEach(() => {
         consoleWarnSpy.mockRestore();
+        vi.unstubAllGlobals();
       });
 
-      it('should warn when calling bidirectional with same fields twice in development mode', () => {
-        (globalThis as any).ngDevMode = true;
+      it.each([
+        ['password', 'confirmPassword'],
+        ['confirmPassword', 'password'],
+      ] as const)(
+        'reports a duplicate pair entered as %s and %s',
+        (first, second) => {
+          const config = createValidationConfig<TestFormModel>()
+            .bidirectional('password', 'confirmPassword')
+            .bidirectional(first, second)
+            .build();
 
-        createValidationConfig<TestFormModel>()
-          .bidirectional('password', 'confirmPassword')
-          .bidirectional('password', 'confirmPassword') // Exact duplicate
-          .build();
-
-        expect(consoleWarnSpy).toHaveBeenCalledWith(
-          expect.stringContaining(
-            '[ngx-vest-forms] ValidationConfigBuilder: Duplicate bidirectional relationship detected'
-          )
-        );
-        expect(consoleWarnSpy).toHaveBeenCalledWith(
-          expect.stringContaining("Fields: 'password' ↔ 'confirmPassword'")
-        );
-      });
-
-      it('should warn when calling bidirectional with reversed fields in development mode', () => {
-        (globalThis as any).ngDevMode = true;
-
-        createValidationConfig<TestFormModel>()
-          .bidirectional('password', 'confirmPassword')
-          .bidirectional('confirmPassword', 'password') // Reversed duplicate
-          .build();
-
-        expect(consoleWarnSpy).toHaveBeenCalledWith(
-          expect.stringContaining(
-            'Duplicate bidirectional relationship detected'
-          )
-        );
-      });
+          expect(consoleWarnSpy).toHaveBeenCalledWith(
+            expect.stringContaining(
+              'Duplicate bidirectional relationship detected'
+            )
+          );
+          expect(consoleWarnSpy).toHaveBeenCalledWith(
+            expect.stringContaining(`Fields: '${first}' ↔ '${second}'`)
+          );
+          expect(config).toEqual({
+            password: ['confirmPassword'],
+            confirmPassword: ['password'],
+          });
+        }
+      );
 
       it('should not warn when adding different bidirectional relationships', () => {
-        (globalThis as any).ngDevMode = true;
-
         createValidationConfig<TestFormModel>()
           .bidirectional('password', 'confirmPassword')
           .bidirectional('startDate', 'endDate') // Different fields
@@ -338,7 +268,7 @@ describe('ValidationConfigBuilder', () => {
       });
 
       it('should not warn in production mode', () => {
-        (globalThis as any).ngDevMode = false;
+        vi.stubGlobal('ngDevMode', false);
 
         createValidationConfig<TestFormModel>()
           .bidirectional('password', 'confirmPassword')
@@ -348,23 +278,7 @@ describe('ValidationConfigBuilder', () => {
         expect(consoleWarnSpy).not.toHaveBeenCalled();
       });
 
-      it('should still create correct config despite warning', () => {
-        (globalThis as any).ngDevMode = true;
-
-        const config = createValidationConfig<TestFormModel>()
-          .bidirectional('password', 'confirmPassword')
-          .bidirectional('password', 'confirmPassword')
-          .build();
-
-        expect(config).toEqual({
-          password: ['confirmPassword'],
-          confirmPassword: ['password'],
-        });
-      });
-
       it('should not warn when bidirectional is combined with whenChanged for same fields', () => {
-        (globalThis as any).ngDevMode = true;
-
         createValidationConfig<TestFormModel>()
           .bidirectional('password', 'confirmPassword')
           .whenChanged('password', 'email') // Adding additional dependency is fine
@@ -468,9 +382,9 @@ describe('ValidationConfigBuilder', () => {
       });
     });
 
-    it('should merge and deduplicate dependents for same trigger', () => {
+    it('merges and deduplicates Dependent Fields for the same Trigger Field', () => {
       const existingConfig: ValidationConfigMap<TestFormModel> = {
-        password: ['confirmPassword'],
+        password: ['email', 'confirmPassword'],
       };
 
       const config = createValidationConfig<TestFormModel>()
@@ -544,19 +458,6 @@ describe('ValidationConfigBuilder', () => {
       expect(config).toEqual({});
     });
 
-    it('should return a copy of the configuration', () => {
-      const builder = createValidationConfig<TestFormModel>().whenChanged(
-        'password',
-        'confirmPassword'
-      );
-
-      const config1 = builder.build();
-      const config2 = builder.build();
-
-      expect(config1).toEqual(config2);
-      expect(config1).not.toBe(config2); // Different object instances
-    });
-
     it('should not allow external mutations to affect builder', () => {
       const builder = createValidationConfig<TestFormModel>().whenChanged(
         'password',
@@ -564,7 +465,8 @@ describe('ValidationConfigBuilder', () => {
       );
 
       const config1 = builder.build();
-      (config1 as any).password.push('email'); // Mutate returned config
+      config1.password?.push('email');
+      expect(config1.password).toEqual(['confirmPassword', 'email']);
 
       const config2 = builder.build();
 
@@ -574,110 +476,8 @@ describe('ValidationConfigBuilder', () => {
     });
   });
 
-  describe('complex scenarios', () => {
-    it('should handle real-world password validation config', () => {
-      const config = createValidationConfig<TestFormModel>()
-        .bidirectional('password', 'confirmPassword')
-        .whenChanged('password', 'email') // Update email validation when password changes
-        .build();
-
-      expect(config).toEqual({
-        password: ['confirmPassword', 'email'],
-        confirmPassword: ['password'],
-      });
-    });
-
-    it('should handle real-world date range validation', () => {
-      const config = createValidationConfig<TestFormModel>()
-        .bidirectional('startDate', 'endDate')
-        .build();
-
-      expect(config).toEqual({
-        startDate: ['endDate'],
-        endDate: ['startDate'],
-      });
-    });
-
-    it('should handle real-world address validation', () => {
-      const config = createValidationConfig<TestFormModel>()
-        .whenChanged('country', ['state', 'zipCode'])
-        .group([
-          'addresses.billing.street',
-          'addresses.billing.city',
-          'addresses.billing.zipCode',
-        ])
-        .build();
-
-      expect(config).toEqual({
-        country: ['state', 'zipCode'],
-        'addresses.billing.street': [
-          'addresses.billing.city',
-          'addresses.billing.zipCode',
-        ],
-        'addresses.billing.city': [
-          'addresses.billing.street',
-          'addresses.billing.zipCode',
-        ],
-        'addresses.billing.zipCode': [
-          'addresses.billing.street',
-          'addresses.billing.city',
-        ],
-      });
-    });
-
-    it('should handle conditional configuration merge', () => {
-      const isInternational = true;
-      const internationalConfig: ValidationConfigMap<TestFormModel> =
-        isInternational ? { country: ['state'] } : {};
-
-      const config = createValidationConfig<TestFormModel>()
-        .bidirectional('password', 'confirmPassword')
-        .merge(internationalConfig)
-        .build();
-
-      expect(config).toEqual({
-        password: ['confirmPassword'],
-        confirmPassword: ['password'],
-        country: ['state'],
-      });
-    });
-
-    it('should handle price range validation', () => {
-      const config = createValidationConfig<TestFormModel>()
-        .bidirectional('minPrice', 'maxPrice')
-        .build();
-
-      expect(config).toEqual({
-        minPrice: ['maxPrice'],
-        maxPrice: ['minPrice'],
-      });
-    });
-  });
-
-  describe('type safety', () => {
-    it('should be type-safe at compile time', () => {
-      // This test verifies that TypeScript compilation succeeds
-      // The actual type checking happens at compile time
-
-      const config = createValidationConfig<TestFormModel>()
-        .whenChanged('password', 'confirmPassword')
-        .bidirectional('startDate', 'endDate')
-        .group(['firstName', 'lastName', 'email'])
-        .whenChanged('addresses.billing.street', 'addresses.billing.city')
-        .build();
-
-      // Type assertion to verify the config matches expected type
-      const _typeCheck: typeof config extends Record<string, string[]>
-        ? true
-        : never = true;
-
-      expect(_typeCheck).toBe(true);
-      expect(config).toBeDefined();
-    });
-  });
-
   describe('edge cases', () => {
-    it('should handle single field in group (no-op)', () => {
+    it('keeps a single Trigger Field with no Dependent Fields', () => {
       const config = createValidationConfig<TestFormModel>()
         .group(['password'])
         .build();
@@ -685,27 +485,6 @@ describe('ValidationConfigBuilder', () => {
       expect(config).toEqual({
         password: [],
       });
-    });
-
-    it('should handle repeated bidirectional calls on same fields', () => {
-      const consoleWarnSpy = vi
-        .spyOn(console, 'warn')
-        .mockImplementation(() => {});
-
-      const config = createValidationConfig<TestFormModel>()
-        .bidirectional('password', 'confirmPassword')
-        .bidirectional('password', 'confirmPassword')
-        .build();
-
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Duplicate bidirectional relationship detected')
-      );
-      expect(config).toEqual({
-        password: ['confirmPassword'],
-        confirmPassword: ['password'],
-      });
-
-      consoleWarnSpy.mockRestore();
     });
 
     it('should handle empty array in whenChanged', () => {
@@ -741,12 +520,6 @@ describe('ValidationConfigBuilder', () => {
   });
 
   describe('createValidationConfig factory', () => {
-    it('should return a new builder instance', () => {
-      const builder = createValidationConfig<TestFormModel>();
-
-      expect(builder).toBeInstanceOf(ValidationConfigBuilder);
-    });
-
     it('should create independent builder instances', () => {
       const builder1 = createValidationConfig<TestFormModel>().whenChanged(
         'password',

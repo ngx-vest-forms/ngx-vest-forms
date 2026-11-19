@@ -9,6 +9,7 @@ import {
   viewChild,
   ViewChild,
 } from '@angular/core';
+import { outputToObservable } from '@angular/core/rxjs-interop';
 import { TestBed } from '@angular/core/testing';
 import { type ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { render, screen, waitFor } from '@testing-library/angular';
@@ -31,7 +32,7 @@ import {
   onTestFinished,
   vi,
 } from 'vitest';
-import type { StandardSchemaV1 } from '../../public-api';
+import { ROOT_FORM, type StandardSchemaV1 } from '../../public-api';
 import type {
   FormDirective,
   NgxFieldBlurEvent,
@@ -785,65 +786,6 @@ describe('FormDirective - Composability & Host Bindings', () => {
   });
 });
 
-describe('FormDirective - ValidationConfig', () => {
-  @Component({
-    selector: 'test-validation-config-host',
-    template: `
-      <form
-        ngxVestForm
-        [validationConfig]="validationConfig()"
-        #vest="ngxVestForm"
-      ></form>
-    `,
-
-    imports: [NgxVestForms],
-  })
-  class TestValidationConfigHost {
-    validationConfig = signal<{ [key: string]: string[] }>({
-      username: ['email'],
-    });
-    readonly vestForm =
-      viewChild.required<FormDirective<Record<string, unknown>>>('vest');
-  }
-
-  it('should debounce dependent field validation', async () => {
-    const { fixture } = await render(TestValidationConfigHost);
-    const instance = fixture.componentInstance;
-    expect(instance.vestForm()).toBeDefined();
-    expect(instance.vestForm().validationConfig()).toEqual({
-      username: ['email'],
-    });
-  });
-
-  it('should not cause infinite loops or redundant validations', async () => {
-    @Component({
-      selector: 'test-validation-config-loop',
-      template: `<form
-        ngxVestForm
-        [validationConfig]="validationConfig()"
-        #vest="ngxVestForm"
-      ></form>`,
-
-      imports: [NgxVestForms],
-    })
-    class TestValidationConfigLoop {
-      validationConfig = signal<{ [key: string]: string[] }>({
-        username: ['email'],
-        email: ['username'],
-      });
-      readonly vestForm =
-        viewChild.required<FormDirective<Record<string, unknown>>>('vest');
-    }
-    const { fixture } = await render(TestValidationConfigLoop);
-    const instance = fixture.componentInstance;
-    expect(instance.vestForm()).toBeDefined();
-    expect(instance.vestForm().validationConfig()).toEqual({
-      username: ['email'],
-      email: ['username'],
-    });
-  });
-});
-
 describe('FormDirective - Model to Form Synchronization', () => {
   it('should patch nested values when model changes (ngModelGroup) without requiring full objects', async () => {
     @Component({
@@ -918,39 +860,50 @@ describe('FormDirective - Model to Form Synchronization', () => {
 });
 
 describe('FormDirective - Signals/Outputs', () => {
-  it('should emit correct values on formValueChange, errorsChange, dirtyChange, validChange', async () => {
+  it('emits the dirty state on the first edit and clears it on reset', async () => {
     @Component({
-      selector: 'test-signals-outputs-host',
-      template: `<form ngxVestForm #vest="ngxVestForm"></form>`,
-
-      imports: [NgxVestForms],
-    })
-    class TestSignalsOutputsHost {
-      readonly vestForm =
-        viewChild.required<FormDirective<Record<string, unknown>>>('vest');
-    }
-    const { fixture } = await render(TestSignalsOutputsHost);
-    const instance = fixture.componentInstance;
-    expect(instance.vestForm().formValueChange).toBeDefined();
-    expect(instance.vestForm().errorsChange).toBeDefined();
-    expect(instance.vestForm().dirtyChange).toBeDefined();
-    expect(instance.vestForm().validChange).toBeDefined();
-    expect(instance.vestForm().fieldBlur).toBeDefined();
-  });
-
-  it('should emit field blur metadata for named controls', async () => {
-    @Component({
-      selector: 'test-field-blur-host',
       template: `
         <form
           ngxVestForm
+          #vest="ngxVestForm"
+          [formValue]="model()"
+          (formValueChange)="model.set($event)"
+          (dirtyChange)="dirtyStates.push($event)"
+        >
+          <input aria-label="Name" name="name" [ngModel]="model().name" />
+          <button type="button" (click)="vest.resetForm()">Reset</button>
+        </form>
+      `,
+      imports: [NgxVestForms],
+    })
+    class DirtyStateHost {
+      readonly model = signal<{ name?: string }>({});
+      readonly dirtyStates: boolean[] = [];
+    }
+
+    const { fixture } = await render(DirtyStateHost);
+    const { dirtyStates } = fixture.componentInstance;
+    expect(dirtyStates).toEqual([false]);
+
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText('Name'), 'Ada');
+    expect(dirtyStates).toEqual([false, true]);
+
+    await user.click(screen.getByRole('button', { name: 'Reset' }));
+    expect(dirtyStates).toEqual([false, true, false]);
+  });
+
+  it('emits Field Blur Event metadata to an outputToObservable subscriber', async () => {
+    @Component({
+      template: `
+        <form
+          ngxVestForm
+          #vest="ngxVestForm"
           [formValue]="formValue()"
           (formValueChange)="formValue.set($event)"
-          (fieldBlur)="handleFieldBlur($event)"
         >
-          <label for="projectName">Project name</label>
           <input
-            id="projectName"
+            aria-label="Project name"
             name="projectName"
             [ngModel]="formValue().projectName"
           />
@@ -958,51 +911,34 @@ describe('FormDirective - Signals/Outputs', () => {
       `,
       imports: [NgxVestForms],
     })
-    class TestFieldBlurHost {
-      readonly formValue = signal<{ projectName?: string }>({
-        projectName: '',
-      });
-      readonly blurEvents = signal<
-        Array<NgxFieldBlurEvent<{ projectName?: string }>>
-      >([]);
-
-      handleFieldBlur(
-        event: NgxFieldBlurEvent<{ projectName?: string }>
-      ): void {
-        this.blurEvents.update((events) => [...events, event]);
-      }
+    class FieldBlurHost {
+      readonly formValue = signal<{ projectName?: string }>({});
+      readonly vestForm =
+        viewChild.required<FormDirective<{ projectName?: string }>>('vest');
     }
 
-    const { fixture } = await render(TestFieldBlurHost);
-    await whenStable();
+    const { fixture } = await render(FieldBlurHost);
+    const events: NgxFieldBlurEvent<{ projectName?: string }>[] = [];
+    const subscription = outputToObservable(
+      fixture.componentInstance.vestForm().fieldBlur
+    ).subscribe((event) => events.push(event));
+    onTestFinished(() => subscription.unsubscribe());
 
-    const input = fixture.nativeElement.querySelector(
-      '#projectName'
-    ) as HTMLInputElement | null;
-    expect(input).toBeTruthy();
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText('Project name'), 'Angular course');
+    await user.tab();
 
-    if (!input) {
-      throw new Error('Expected #projectName input to exist');
-    }
-
-    await userEvent.clear(input);
-    await userEvent.type(input, 'Angular course');
-    await whenStable();
-
-    await userEvent.tab();
     await expect
-      .poll(() => fixture.componentInstance.blurEvents().length)
-      .toBe(1);
-
-    const [blurEvent] = fixture.componentInstance.blurEvents();
-    expect(blurEvent).toBeTruthy();
-    expect(blurEvent?.field).toBe('projectName');
-    expect(blurEvent?.value).toBe('Angular course');
-    expect(blurEvent?.touched).toBe(true);
-    expect(blurEvent?.dirty).toBe(true);
-    expect(blurEvent?.formValue).toEqual({
-      projectName: 'Angular course',
-    });
+      .poll(() => events)
+      .toEqual([
+        expect.objectContaining({
+          field: 'projectName',
+          value: 'Angular course',
+          touched: true,
+          dirty: true,
+          formValue: { projectName: 'Angular course' },
+        }),
+      ]);
   });
 
   it('should emit the latest blur snapshot even when model sync is delayed', async () => {
@@ -1564,20 +1500,25 @@ describe('FormDirective - triggerFormValidation', () => {
       viewChild.required<FormDirective<Record<string, unknown>>>('vest');
   }
 
-  it('should force validation of all fields when called', async () => {
+  it('refreshes the Root Form errors and emits the new errors', async () => {
     const { fixture } = await render(TestTriggerValidationHost);
-    const instance = fixture.componentInstance;
-    // Mock updateValueAndValidity
-    const mockFn = vi.fn();
-    Object.defineProperty(
-      instance.vestForm().ngForm.form,
-      'updateValueAndValidity',
-      {
-        value: mockFn,
-      }
+    const vestForm = fixture.componentInstance.vestForm();
+    const emissions: Record<string, string[]>[] = [];
+    vestForm.errorsChange.subscribe((errors) => emissions.push(errors));
+
+    let available = false;
+    vestForm.ngForm.form.addValidators(() =>
+      available ? null : { errors: ['Reservations are closed'] }
     );
-    instance.vestForm().triggerFormValidation();
-    expect(mockFn).toHaveBeenCalledWith({ emitEvent: true });
+
+    vestForm.triggerFormValidation();
+    expect(emissions.at(-1)).toEqual({
+      [ROOT_FORM]: ['Reservations are closed'],
+    });
+
+    available = true;
+    vestForm.triggerFormValidation();
+    expect(emissions.at(-1)).toEqual({});
   });
 });
 
@@ -1653,8 +1594,12 @@ describe('FormDirective - clearSubmittedState', () => {
       )
       .toBe('true');
 
-    fixture.componentInstance.vestForm().clearSubmittedState();
+    const vestForm = fixture.componentInstance.vestForm();
+    expect(vestForm.ngForm.submitted).toBe(true);
+
+    vestForm.clearSubmittedState();
     await whenStable();
+    expect(vestForm.ngForm.submitted).toBe(false);
 
     await expect
       .poll(

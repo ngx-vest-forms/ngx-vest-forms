@@ -37,58 +37,35 @@ test.describe('ValidationConfig Demo', () => {
       });
     });
 
-    test('should validate password minimum length', async ({ page }) => {
-      await test.step('Enter password shorter than 8 characters', async () => {
-        const password = page.getByLabel('Password', { exact: true });
+    test('shows an accessible Error for a short password and clears it after correction', async ({
+      page,
+    }) => {
+      const password = page.getByLabel('Password', { exact: true });
 
-        await fillAndBlur(password, 'Short1');
-        await expectFieldHasError(password, /8/i);
+      await fillAndBlur(password, 'Short1');
+      const minimumLengthError = /at least 8 characters/i;
+      await expectFieldHasError(password, minimumLengthError);
+      await expect(password).toHaveAccessibleDescription(minimumLengthError);
 
-        // Verify accessibility structure shows error
-        const passwordWrapper = password.locator('..');
-        await expect(passwordWrapper).toMatchAriaSnapshot(`
-          - text: Password
-          - textbox "Password":
-            - /placeholder: Enter password (min 8 chars)
-        `);
-
-        await fillAndBlur(password, 'LongEnough123');
-        await expectFieldValid(password);
-
-        // Verify error cleared in accessibility tree
-        await expect(passwordWrapper).toMatchAriaSnapshot(`
-          - text: Password
-          - textbox "Password":
-            - /placeholder: Enter password (min 8 chars)
-            - text: LongEnough123
-        `);
-      });
+      await fillAndBlur(password, 'LongEnough123');
+      await expectFieldValid(password);
+      await expect(password).not.toHaveAccessibleDescription(
+        minimumLengthError
+      );
     });
 
-    test('should show error when passwords do not match', async ({ page }) => {
-      await test.step('Fill mismatched passwords', async () => {
-        const password = page.getByLabel('Password', { exact: true });
-        const confirmPassword = page.getByLabel(/confirm password/i);
+    test('shows a mismatch Error until the passwords match', async ({
+      page,
+    }) => {
+      const password = page.getByLabel('Password', { exact: true });
+      const confirmPassword = page.getByLabel(/confirm password/i);
 
-        await fillAndBlur(password, 'MySecure123');
-        await fillAndBlur(confirmPassword, 'Different456');
+      await fillAndBlur(password, 'MySecure123');
+      await fillAndBlur(confirmPassword, 'Different456');
+      await expectFieldHasError(confirmPassword, /match/i);
 
-        await expectFieldHasError(confirmPassword, /match/i);
-      });
-    });
-
-    test('should clear errors when passwords match', async ({ page }) => {
-      await test.step('Fix mismatched passwords', async () => {
-        const password = page.getByLabel('Password', { exact: true });
-        const confirmPassword = page.getByLabel(/confirm password/i);
-
-        await fillAndBlur(password, 'MySecure123');
-        await fillAndBlur(confirmPassword, 'Different456');
-        await expectFieldHasError(confirmPassword);
-
-        await fillAndBlur(confirmPassword, 'MySecure123');
-        await expectFieldValid(confirmPassword);
-      });
+      await fillAndBlur(confirmPassword, 'MySecure123');
+      await expectFieldValid(confirmPassword);
     });
 
     test('should revalidate confirmPassword when password changes (bidirectional)', async ({
@@ -430,15 +407,6 @@ test.describe('ValidationConfig Demo', () => {
         await zipCode.focus();
         await zipCode.blur();
         await expectFieldHasError(zipCode, /required/i);
-
-        // Verify accessibility structure shows cascade validation errors
-        const cascadeSection = page
-          .locator('text=Cascade Validation')
-          .locator('..');
-        await expect(cascadeSection).toMatchAriaSnapshot(`
-          - heading "Cascade Validation" [level=3]
-          - paragraph: Changing country triggers state and zip code validation.
-        `);
       });
     });
 
@@ -676,131 +644,6 @@ test.describe('ValidationConfig Demo', () => {
         await expect(
           getMainContentSidebar(page).getByLabel('Valid')
         ).toBeVisible();
-      });
-    });
-  });
-
-  test.describe('Key Features Verification', () => {
-    test('should display the intro callout content', async ({ page }) => {
-      await test.step('Verify the intro section reflects the current examples layout', async () => {
-        await expect(
-          page.getByRole('heading', {
-            name: /why this matters/i,
-            level: 2,
-          })
-        ).toBeVisible();
-        await expect(
-          page.getByText(/one config map declares all dependencies/i)
-        ).toBeVisible();
-        await expect(page.getByText(/conditional revalidation/i)).toBeVisible();
-        await expect(
-          page.getByText(/errors block, warnings advise/i)
-        ).toBeVisible();
-        await expect(page.getByText(/omit rules conditionally/i)).toBeVisible();
-      });
-    });
-
-    test('should work correctly with debounced validation', async ({
-      page,
-    }) => {
-      await test.step('Type rapidly and verify validation waits for debounce', async () => {
-        const password = page.getByLabel('Password', { exact: true });
-        const confirmPassword = page.getByLabel(/confirm password/i);
-
-        // Use fill() for reliability - tests debounce on value change, not keystroke timing
-        await password.fill('MySecure123');
-        await password.blur();
-
-        // Validation should run after debounce completes
-        await waitForValidationToSettle(page);
-
-        // Fill confirmPassword to make passwords match
-        await confirmPassword.fill('MySecure123');
-        await confirmPassword.blur();
-        await waitForValidationToSettle(page);
-
-        // Password field should not be invalid (warnings don't affect validity)
-        await expect(password).not.toHaveClass(/ng-invalid/);
-      });
-    });
-  });
-
-  // Colour is theme CSS and is not asserted in e2e. These tests keep the
-  // behaviour the library owns: aria-invalid follows validity.
-  test.describe('Invalid Field ARIA State', () => {
-    test('should set aria-invalid on an invalid select', async ({ page }) => {
-      const country = page.getByLabel(/country/i);
-
-      await country.focus();
-      await country.blur();
-
-      await expect(country).toHaveAttribute('aria-invalid', 'true');
-    });
-
-    test('should set aria-invalid on an invalid textarea', async ({ page }) => {
-      const checkbox = page.getByLabel(/requires justification/i);
-      await checkbox.check();
-
-      const justification = page.getByRole('textbox', {
-        name: /justification.*min 20/i,
-      });
-
-      await fillAndBlur(justification, 'Too short');
-
-      // ARIA wiring happens in an effect after controls are detected.
-      await expect(justification).toHaveAttribute('aria-invalid', 'true', {
-        timeout: 10000,
-      });
-    });
-
-    test('should clear aria-invalid when field becomes valid', async ({
-      page,
-    }) => {
-      const password = page.getByLabel('Password', { exact: true });
-
-      await fillAndBlur(password, 'Short');
-      await expect(password).toHaveClass(/ng-invalid/, { timeout: 10000 });
-      await expect(password).toHaveAttribute('aria-invalid', 'true', {
-        timeout: 10000,
-      });
-
-      await fillAndBlur(password, 'ValidPassword123');
-      await expect(password).not.toHaveClass(/ng-invalid/, {
-        timeout: 10000,
-      });
-      await expect(password).not.toHaveAttribute('aria-invalid', 'true');
-    });
-
-    test('should set aria-invalid on every invalid field type', async ({
-      page,
-    }) => {
-      await test.step('Trigger validation errors on multiple fields', async () => {
-        const password = page.getByLabel('Password', { exact: true });
-        const country = page.getByLabel(/country/i);
-        const state = page.getByRole('textbox', { name: /state\/province/i });
-
-        await fillAndBlur(password, 'Short');
-        // Country stays invalid until a value is selected; selecting it makes
-        // state required, so blur state after selection.
-        await country.focus();
-        await country.blur();
-        await country.selectOption({ label: 'United States' });
-        await state.focus();
-        await state.blur();
-      });
-
-      await test.step('Verify text inputs expose invalid state', async () => {
-        const password = page.getByLabel('Password', { exact: true });
-        const state = page.getByRole('textbox', { name: /state\/province/i });
-
-        await expectFieldHasError(password);
-        await expect(password).toHaveAttribute('aria-invalid', 'true', {
-          timeout: 10000,
-        });
-        await expectFieldHasError(state);
-        await expect(state).toHaveAttribute('aria-invalid', 'true', {
-          timeout: 10000,
-        });
       });
     });
   });

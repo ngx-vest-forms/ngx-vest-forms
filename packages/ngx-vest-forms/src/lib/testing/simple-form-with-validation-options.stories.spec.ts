@@ -2,7 +2,7 @@ import { JsonPipe } from '@angular/common';
 import { Component, computed, signal } from '@angular/core';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import { NgxVestForms } from '../exports';
 import { provideFormContract } from '../tokens/form-contract.token';
 import {
@@ -137,57 +137,54 @@ class FormDirectiveDemoComponent {
 }
 
 describe('simple-form-with-validation-options stories', () => {
-  it('ShouldShowFirstnameRequiredAfterDelayForNgModel', async () => {
-    await render(FormDirectiveDemoComponent);
+  it('shows the first name Error after the control debounce', async () => {
+    vi.useFakeTimers();
+    onTestFinished(() => {
+      vi.useRealTimers();
+    });
 
-    const firstNameInput = screen.getByTestId(
-      selectors.inputFirstName
-    ) as HTMLInputElement;
+    const { fixture } = await render(FormDirectiveDemoComponent);
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const input = screen.getByRole('textbox', { name: 'First name' });
+    const wrapper = screen.getByTestId(selectors.ngxControlWrapperFirstName);
 
-    await userEvent.click(firstNameInput);
-    await userEvent.tab();
+    await user.type(input, 'Ada');
+    await vi.advanceTimersByTimeAsync(500);
 
-    expect(
-      screen.getByTestId(selectors.ngxControlWrapperFirstName)
-    ).not.toHaveTextContent('First name is required');
+    await user.clear(input);
+    await user.tab();
+    await vi.advanceTimersByTimeAsync(499);
+    fixture.detectChanges();
+    expect(wrapper).not.toHaveTextContent('First name is required');
 
-    await waitFor(
-      () =>
-        expect(
-          screen.getByTestId(selectors.ngxControlWrapperFirstName)
-        ).toHaveTextContent('First name is required'),
-      { timeout: 5000 }
-    );
+    await vi.advanceTimersByTimeAsync(1);
+    fixture.detectChanges();
+    expect(wrapper).toHaveTextContent('First name is required');
   });
 
-  it('ShouldShowPasswordConfirmationAfterDelayForNgModelGroup', async () => {
-    await render(FormDirectiveDemoComponent);
+  it('shows the password mismatch Error after the group debounce', async () => {
+    vi.useFakeTimers();
+    onTestFinished(() => {
+      vi.useRealTimers();
+    });
 
-    const passwordInput = screen.getByTestId(
-      selectors.inputPassword
-    ) as HTMLInputElement;
-    const confirmPasswordInput = screen.getByTestId(
-      selectors.inputConfirmPassword
-    ) as HTMLInputElement;
+    const { fixture } = await render(FormDirectiveDemoComponent);
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const wrapper = screen.getByTestId(selectors.ngxControlWrapperPasswords);
 
-    await userEvent.type(passwordInput, 'first');
-    await userEvent.type(confirmPasswordInput, 'second');
-    await userEvent.tab();
+    await user.type(screen.getByLabelText('Password'), 'first');
+    await user.type(screen.getByLabelText('Confirm'), 'second');
+    await user.tab();
+    await vi.advanceTimersByTimeAsync(899);
+    fixture.detectChanges();
+    expect(wrapper).not.toHaveTextContent('Passwords do not match');
 
-    expect(
-      screen.getByTestId(selectors.ngxControlWrapperPasswords)
-    ).not.toHaveTextContent('Passwords do not match');
-
-    await waitFor(
-      () =>
-        expect(
-          screen.getByTestId(selectors.ngxControlWrapperPasswords)
-        ).toHaveTextContent('Passwords do not match'),
-      { timeout: 5000 }
-    );
+    await vi.advanceTimersByTimeAsync(1);
+    fixture.detectChanges();
+    expect(wrapper).toHaveTextContent('Passwords do not match');
   });
 
-  it('ShouldValidateOnRootFormAfterDelay', async () => {
+  it('shows the Root Form Error after submit', async () => {
     await render(FormDirectiveDemoComponent);
 
     await userEvent.type(
