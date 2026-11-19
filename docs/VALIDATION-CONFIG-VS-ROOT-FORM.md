@@ -1,641 +1,181 @@
-# Validation Features: Complete Guide
+# ValidationConfig vs root-form validation
 
-## Overview
+ngx-vest-forms provides three complementary mechanisms for cross-field and dynamic validation. They solve different problems and often work together:
 
-ngx-vest-forms provides three complementary features for handling validation in complex, dynamic forms:
+| Mechanism | Purpose | Where errors appear | Triggered when |
+| --- | --- | --- | --- |
+| `[validationConfig]` | Revalidate dependent fields when a trigger field changes | On the dependent field (`errors['confirmPassword']`) | Automatically on trigger value change and before `(submitSettled)` |
+| `ngxValidateRootForm` (`ROOT_FORM`) | Validate form-wide rules that belong to no single field | On the root form (`errors[ROOT_FORM]`) | On submit (`'submit'`, default) or on every change (`'live'`) |
+| `triggerFormValidation(path?)` | Recalculate root validity (or revalidate one `path`) after structure changes without a value change | Root form or target control | Manually from component code |
 
-- **`validationConfig`**: Triggers **re-validation** of dependent fields (when field X changes, also validate field Y)
-- **`ngxValidateRootForm`**: Enables **form-level** validation (cross-field rules at the form level)
-- **`triggerFormValidation()`**: Manually triggers validation when switching from **input fields to non-input content** (structure changes without value changes)
+## 1. `[validationConfig]` for dependent fields
 
-**Key Insight**: These are **not alternatives** - they solve different problems and often work together!
+`validationConfig` controls **when** field validations re-run. All validation rules still live in your Vest suite.
 
-## Quick Comparison
+When field B's Vest test reads field A's value (or sits inside `omitWhen`/`skipWhen` based on field A), Angular does not know to re-run field B when field A changes. `validationConfig` bridges that gap.
 
-| Feature                 | `validationConfig`                            | `ngxValidateRootForm`                               | `triggerFormValidation()`                                        |
-| ----------------------- | --------------------------------------------- | --------------------------------------------------- | ---------------------------------------------------------------- |
-| **Purpose**             | Re-validation trigger                         | Create form-level validations                       | Manual validation trigger                                        |
-| **What it does**        | When field X changes, re-validate field Y     | Runs ROOT_FORM tests from Vest suite                | Forces validation update when form structure changes             |
-| **Where errors appear** | At **field level** (`errors.fieldName`)       | At **form level** (`errors[ROOT_FORM]`)             | N/A (triggers existing validations)                              |
-| **Use for**             | Field validations that depend on other fields | Form-wide business rules                            | Structure changes without value changes                          |
-| **When to call**        | Automatic (via config)                        | Automatic (on blur/submit)                          | Manual (after structure change)                                  |
-| **Directive/Method**    | `FormDirective` (`ngxVestForm`)               | `ValidateRootFormDirective` (`ngxValidateRootForm`) | `FormDirective.triggerFormValidation()` (public method)          |
-| **Works with**          | Field-level tests (`test()`)                  | ROOT_FORM tests (`test(ROOT_FORM, ...)`)            | All validations (validationConfig + ngxValidateRootForm + tests) |
+```ts
+import { createValidationConfig, type NgxDeepPartial, type NgxVestSuite } from 'ngx-vest-forms';
+import { create, enforce, omitWhen, test } from 'vest';
 
-## Understanding validationConfig
+type SignupModel = NgxDeepPartial<{
+  password: string;
+  confirmPassword: string;
+  age: number;
+  emergencyContact: string;
+}>;
 
-### Purpose
+export const signupSuite: NgxVestSuite<SignupModel> = create((model) => {
+  test('password', 'Password is required', () => {
+    enforce(model.password).isNotBlank();
+  });
 
-**Triggers re-validation of dependent fields.** When field X changes, `validationConfig` tells Angular to also re-validate field Y.
+  omitWhen(!model.password, () => {
+    test('confirmPassword', 'Passwords must match', () => {
+      enforce(model.confirmPassword).equals(model.password);
+    });
+  });
 
-> **Critical Distinction**: `validationConfig` does **NOT** define validation logic - it only controls WHEN validations run.
->
-> - ❌ It does NOT create validation rules
-> - ✅ It DOES trigger re-validation of existing rules
-> - 📝 Validation logic is always defined in your Vest suite with `test()`
-
-> **⚠️ IMPORTANT: Works with `omitWhen`/`skipWhen`**
->
-> `validationConfig` is **essential** when using Vest.js's `omitWhen` or `skipWhen` for conditional validations.
-> When the condition changes (e.g., password gets filled), Angular needs to know to re-validate dependent fields.
-> Without `validationConfig`, conditional validations won't update properly!
-
-### How It Works
-
-```typescript
-// Step 1: Define validation logic in Vest suite
-test('confirmPassword', 'Passwords must match', () => {
-  enforce(model.confirmPassword).equals(model.password);
+  omitWhen((model.age ?? 0) >= 18, () => {
+    test('emergencyContact', 'Required for minors', () => {
+      enforce(model.emergencyContact).isNotBlank();
+    });
+  });
 });
 
-// Step 2: Configure re-validation trigger
-protected validationConfig = {
-  'password': ['confirmPassword'],  // When password changes, re-validate confirmPassword
-};
-```
-
-**Flow:**
-
-1. User changes the `password` field
-2. `validationConfig` sees `password` in the map
-3. Angular calls `updateValueAndValidity()` on `confirmPassword` control
-4. Vest suite runs with `only('confirmPassword')`
-5. Validation result appears at **field level**: `errors['confirmPassword']`
-
-### Use Cases
-
-✅ **Password confirmation** - When password changes, revalidate confirmPassword
-
-```typescript
-validationConfig = {
-  password: ['confirmPassword'],
-  confirmPassword: ['password'], // Bidirectional
-};
-
-// Vest suite (field-level test)
-test('confirmPassword', 'Passwords must match', () => {
-  enforce(model.confirmPassword).equals(model.password);
-});
-```
-
-✅ **One-way dependencies** - Quantity → Justification (quantity decides whether justification is required; use `bidirectional` only when both rules read each other, such as password and confirm password)
-
-```typescript
-validationConfig = createValidationConfig<FormModel>()
-  .whenChanged('quantity', 'justification')
+// In your component:
+protected readonly validationConfig = createValidationConfig<SignupModel>()
+  .bidirectional('password', 'confirmPassword')
+  .whenChanged('age', 'emergencyContact')
   .build();
+```
 
-// Vest suite (field-level tests with omitWhen)
-omitWhen(!model.quantity, () => {
-  test('justification', 'Required when quantity is filled', () => {
-    enforce(model.justification).isNotBlank();
+What happens when `password` changes:
+
+1. `FormDirective` sees `password` in `validationConfig`.
+2. After the configured debounce (`NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN`, default 100 ms), it calls `updateValueAndValidity()` on `confirmPassword`.
+3. `confirmPassword`'s validator runs `suite.only('confirmPassword').run(model)`.
+4. Its validity updates immediately, while its visual error display still respects the wrapper's `errorDisplayMode` (so an untouched dependent field stays quiet until blur or submit).
+
+On submit, `FormDirective` revalidates `validationConfig` dependents before emitting `(submitSettled)` (and its corresponding post-submit `(errorsChange)` update; during ordinary edits, `(errorsChange)` still emits on every non-`PENDING` status change), so submitting immediately after editing a trigger field never passes on a stale result.
+
+Use `whenChanged` for one-way dependencies (such as `age` to `emergencyContact`) and `bidirectional` only when both fields read each other. For the full builder API, see [ValidationConfig builder](./VALIDATION-CONFIG-BUILDER.md).
+
+## 2. `ngxValidateRootForm` for form-level rules
+
+Use `ngxValidateRootForm` and `ROOT_FORM` when a rule spans multiple fields and belongs to the whole form rather than any one input (for example, "provide at least one contact method" or "billing and shipping addresses must differ").
+
+```ts
+import { ROOT_FORM, type NgxVestSuite } from 'ngx-vest-forms';
+import { create, enforce, test } from 'vest';
+
+export const contactSuite: NgxVestSuite<ContactModel> = create((model) => {
+  test(ROOT_FORM, 'At least one contact method is required', () => {
+    enforce(model.email || model.phone).isTruthy();
   });
 });
 ```
 
-Use this pattern when the dependent field should revalidate immediately, but error visibility
-should still wait for the target field's own blur/submission policy (for example
-`<ngx-control-wrapper [errorDisplayMode]="'on-blur'">`).
+Expose `ROOT_FORM` on the component class so the template can read `errors()[ROOT_FORM]`:
 
-This is especially useful in blur-driven workflows such as draft auto-save:
-
-- the dependent field becomes logically invalid immediately
-- the draft can still be persisted
-- the untouched dependent field stays visually quiet until its own blur
-
-Avoid adding `(blur)` handlers that call `triggerFormValidation()` just to enforce this
-pattern. `validationConfig` already handles the revalidation side, while
-`errorDisplayMode="on-blur"` keeps error visibility tied to the dependent field's own
-interaction timing.
-
-Use the form's `fieldBlur` output to trigger the save side, and keep
-`validationConfig` focused on revalidation timing.
-
-See also: [Auto-Save on Blur](./AUTO-SAVE-ON-BLUR.md)
-
-✅ **Conditional field requirements** - Age triggers emergency contact
-
-```typescript
-// Step 1: Vest suite with omitWhen (conditional validation logic)
-omitWhen((model.age || 0) >= 18, () => {
-  test('emergencyContact', 'Required for minors', () => {
-    enforce(model.emergencyContact).isNotBlank();
-  });
-});
-
-// Step 2: validationConfig ensures re-validation when age changes
-// WITHOUT this, emergencyContact won't re-validate when age changes!
-validationConfig = {
-  age: ['emergencyContact'],
-};
-```
-
-### Key Characteristics
-
-- **Field-level validation**: Errors belong to specific fields
-- **Validation timing**: Controls when Angular runs validators
-- **Works with omitWhen**: Ensures conditional validations update properly
-- **Template display**: Show errors next to the field
-  ```html
-  <input name="confirmPassword" [ngModel]="..." />
-  @if (errors()['confirmPassword']) {
-  <div>{{ errors()['confirmPassword'][0] }}</div>
-  }
-  ```
-
-## Understanding ngxValidateRootForm
-
-### Purpose
-
-Enables **form-level** validation for cross-field business rules that don't belong to any single field.
-
-### How It Works
-
-```typescript
-// Vest suite
-import { ROOT_FORM } from 'ngx-vest-forms';
-
-test(ROOT_FORM, 'Brecht is not 30 anymore', () => {
-  enforce(
-    model.firstName === 'Brecht' &&
-      model.lastName === 'Billiet' &&
-      model.age === 30
-  ).isFalsy();
-});
+```ts
+protected readonly ROOT_FORM = ROOT_FORM;
+protected readonly errors = signal<Record<string, string[]>>({});
 ```
 
 ```html
-<!-- Template -->
 <form
   ngxVestForm
   ngxValidateRootForm
   [ngxValidateRootFormMode]="'submit'"
+  [suite]="suite"
+  [formValue]="formValue()"
+  (formValueChange)="formValue.set($event)"
   (errorsChange)="errors.set($event)"
+  (submitSettled)="onSubmit($event)"
 >
-  <!-- Fields... -->
+  <!-- controls -->
 
-  <!-- Display form-level error -->
   @if (errors()[ROOT_FORM]) {
-  <div role="alert">{{ errors()[ROOT_FORM][0] }}</div>
+    <div role="alert">{{ errors()[ROOT_FORM][0] }}</div>
   }
+
+  <button type="submit">Submit</button>
 </form>
 ```
 
-> **Note**: Templates cannot read imported constants directly — expose it on the component class: `protected readonly ROOT_FORM = ROOT_FORM;`
+### Root validation modes
 
-**Flow:**
+- `'submit'` (default): runs `suite.only(ROOT_FORM).run(model)` only after the form is submitted.
+- `'live'`: runs on every form value change.
 
-1. Form value changes or submit button clicked (depending on mode)
-2. `ValidateRootFormDirective` runs Vest suite with `only(ROOT_FORM)`
-3. Only tests defined with `test(ROOT_FORM, ...)` execute
-4. Validation result appears at **form level**: `errors[ROOT_FORM]`
+### Checking validity on submit (sync and async)
 
-### Use Cases
+With `ngxVestForm`, listen to `(submitSettled)` to decide whether to submit:
 
-✅ **Form-wide business rules** - Rules spanning multiple fields
-
-```typescript
-test(ROOT_FORM, 'Brecht is not 30 anymore', () => {
-  enforce(
-    model.firstName === 'Brecht' &&
-      model.lastName === 'Billiet' &&
-      model.age === 30
-  ).isFalsy();
-});
-```
-
-✅ **At least one required** - Form needs at least one contact method
-
-```typescript
-test(ROOT_FORM, 'At least one contact method required', () => {
-  enforce(model.email || model.phone || model.address).isTruthy();
-});
-```
-
-✅ **Date range validation** - Start date before end date (form-level constraint)
-
-```typescript
-test(ROOT_FORM, 'Start date must be before end date', () => {
-  if (model.startDate && model.endDate) {
-    enforce(new Date(model.startDate) < new Date(model.endDate)).isTruthy();
+```ts
+protected onSubmit(event: NgxSubmitSettledEvent<ContactModel>): void {
+  if (!event.valid) {
+    return;
   }
-});
-```
 
-✅ **Address comparison** - Billing and shipping addresses must differ
-
-```typescript
-test(ROOT_FORM, 'Addresses cannot be the same', () => {
-  if (model.useDifferentShipping) {
-    enforce(JSON.stringify(model.billingAddress)).notEquals(
-      JSON.stringify(model.shippingAddress)
-    );
-  }
-});
-```
-
-### Key Characteristics
-
-- **Form-level validation**: Errors belong to the entire form
-- **ROOT_FORM constant**: Special field name for form-wide rules
-- **Validation modes**:
-  - `'submit'` (default): Validates only after form submission
-  - `'live'`: Validates on every value change
-- **Checking validity in `(ngSubmit)`**: with `ngxVestForm` on the form, submit-mode root validation runs before your `(ngSubmit)` handler. For synchronous `ROOT_FORM` rules the form is already `INVALID` there. If the suite has async `ROOT_FORM` tests the form is `PENDING`, so wait for it to settle:
-  ```typescript
-  save(form: NgForm): void {
-    const control = form.control;
-    if (control.pending) {
-      control.statusChanges
-        .pipe(first((status) => status !== 'PENDING'))
-        .subscribe(() => this.save(form));
-      return;
-    }
-    if (control.invalid) return;
-    // submit the model
-  }
-  ```
-  Without `ngxVestForm`, submit-mode root validation only starts after the handler has run, so the handler cannot rely on `valid` for `ROOT_FORM` rules.
-- **Template display**: Show errors at form level (typically at top or bottom); expose the constant on the class first (`protected readonly ROOT_FORM = ROOT_FORM;`)
-  ```html
-  @if (errors()[ROOT_FORM]) {
-  <div role="alert" class="form-error">{{ errors()[ROOT_FORM][0] }}</div>
-  }
-  ```
-
-## Understanding triggerFormValidation()
-
-### Purpose
-
-Manually triggers validation update when switching from **input fields to non-input content** (like `<p>` tags) where no control values change.
-
-**Critical Distinction**: Only needed when switching between form controls and non-form content. NOT needed when switching between different input fields (value changes trigger validation automatically).
-
-### How It Works
-
-```typescript
-// Component method
-this.vestFormRef().triggerFormValidation();
-```
-
-**CRITICAL: This does NOT mark fields as touched or show errors.** It only re-runs validation logic.
-
-> **Note on form submission**: With the default `on-blur-or-submit` error display mode, errors are shown automatically when you submit via `(ngSubmit)`. The form internally calls `markAllAsTouched()` on submit. You only need to call `markAllAsTouched()` manually for special cases like multiple forms with one submit button.
-
-**Flow:**
-
-1. Form structure changes (e.g., `@if` switches from `<input>` to `<p>`)
-2. No control values changed → No `ValueChangeEvent` → No automatic validation
-3. Call `triggerFormValidation()` manually
-4. Calls `updateValueAndValidity({ emitEvent: true })` on root form
-5. All validations re-run (field-level + form-level)
-6. Validity state updates but touched state remains unchanged
-
-### Use Cases
-
-✅ **Switching from input field to non-input content (like paragraphs)**
-
-**This is the primary use case** - when `@if` conditions switch from a form control to informational content:
-
-```typescript
-@Component({
-  template: `
-    <form ngxVestForm #vestForm="ngxVestForm">
-      <select
-        name="type"
-        [ngModel]="formValue().type"
-        (ngModelChange)="onTypeChange($event)"
-      >
-        <option value="typeA">Type A</option>
-        <option value="typeC">Type C (no input)</option>
-      </select>
-
-      @if (formValue().type === 'typeA') {
-        <input name="fieldA" [ngModel]="formValue().fieldA" />
-      } @else {
-        <p>No additional input required.</p>
-      }
-    </form>
-  `,
-})
-class MyComponent {
-  protected readonly vestFormRef = viewChild.required('vestForm', {
-    read: FormDirective,
-  });
-
-  onTypeChange(type: string) {
-    this.formValue.update((v) => ({ ...v, type, fieldA: undefined }));
-    this.vestFormRef().triggerFormValidation(); // ✅ CRITICAL
-  }
+  this.save(event.value);
 }
 ```
 
-✅ **After clearing fields programmatically** - Using field clearing utilities
+`(submitSettled)` waits for dependent `validationConfig` revalidation, submit-mode `ROOT_FORM` checks, and any async Vest tests to finish, then emits `{ valid, value, errors }` once per submit. If a newer submit occurs while an earlier submit is still waiting on async validation, the newer submit replaces the earlier one so only the latest emits. Do not check `form.valid` inside `(ngSubmit)` when your suite has async tests.
 
-✅ **Dynamic form modes** - Switching between different layouts
+## 3. `triggerFormValidation(path?)` for structure changes
 
-### Key Characteristics
+When a template switches between form controls and static content (such as replacing an `<input>` with a `<p>`), no control emits a value change, so root form validity can remain stale.
 
-- **Manual**: Must be called explicitly (not automatic)
-- **Form-wide**: Triggers ALL validations (fields + root form)
-- **Structure changes**: Needed when controls added/removed without value changes
-- **Does NOT show errors**: Only re-runs validation logic, doesn't mark fields as touched
-- **Zero overhead**: Only runs when explicitly called
+- `triggerFormValidation()` (no argument) calls `ngForm.form.updateValueAndValidity({ emitEvent: true })`. It re-runs root-level validators and recalculates aggregate form validity from the remaining controls. It does **not** re-run individual child field validators and does **not** mark fields as touched.
+- `triggerFormValidation('address.street')` calls `updateValueAndValidity({ emitEvent: true })` on that specific control path (and logs `[NGX-003]` in dev mode if the path does not exist).
 
-### Comparison with markAllAsTouched()
+Always clear hidden values inside `(formValueChange)`, not in a separate `(ngModelChange)` handler alongside `(formValueChange)` (which causes `NGX-100` same-tick sync conflicts):
 
-| Method                    | Purpose                 | Updates Validity | Shows Errors | When to Use                                         |
-| ------------------------- | ----------------------- | ---------------- | ------------ | --------------------------------------------------- |
-| `triggerFormValidation()` | Re-run validation logic | ✅ Yes           | ❌ No        | Structure changes without value changes             |
-| `markAllAsTouched()`      | Show all errors         | ❌ No            | ✅ Yes       | Multiple forms with one button, programmatic submit |
-| Both together             | Complete refresh        | ✅ Yes           | ✅ Yes       | Rare - structure changed AND show all errors        |
+```ts
+import { viewChild } from '@angular/core';
+import { clearFieldsWhen, FormDirective } from 'ngx-vest-forms';
 
-> **Note**: With `on-blur-or-submit` mode (default), `markAllAsTouched()` is called automatically on `(ngSubmit)`. You rarely need to call it manually.
+private readonly vestForm = viewChild(FormDirective<DynamicFormModel>);
 
-### Common Pattern with Field Clearing
-
-```typescript
-import { clearFieldsWhen } from 'ngx-vest-forms';
-
-onTypeChange(type: string) {
-  this.formValue.update(v => {
-    const cleared = clearFieldsWhen(v, { fieldA: type !== 'typeA' });
-    return { ...cleared, type };
+protected handleFormChange(value: DynamicFormModel): void {
+  const next = clearFieldsWhen(value, {
+    fieldA: value.type !== 'typeA',
   });
-  this.vestFormRef().triggerFormValidation(); // Always call after clearing
-}
-```
-
-> **📖 See Also**: [Field Clearing Utilities](./FIELD-CLEARING-UTILITIES.md) and [Structure Change Detection](./STRUCTURE_CHANGE_DETECTION.md) for detailed examples.
-
-## Working Together: All Three Features
-
-These features complement each other in complex, dynamic forms:
-
-> **Note:** `createValidationConfig` is exported from `ngx-vest-forms`. Add it to your imports alongside `FormDirective` (e.g. `import { createValidationConfig, FormDirective } from 'ngx-vest-forms';`) before using it in the example below.
-
-```typescript
-// Component
-@Component({
-  template: `
-    <form
-      ngxVestForm
-      [suite]="suite"
-      [formValue]="formValue()"
-      (formValueChange)="formValue.set($event)"
-      [validationConfig]="validationConfig()"
-      ngxValidateRootForm
-      [ngxValidateRootFormMode]="'submit'"
-      (errorsChange)="errors.set($event)"
-      #vestForm="ngxVestForm"
-    >
-      <select
-        name="type"
-        [ngModel]="formValue().type"
-        (ngModelChange)="onTypeChange($event)"
-      >
-        <option value="typeA">Type A</option>
-        <option value="typeB">Type B</option>
-      </select>
-
-      @if (formValue().type === 'typeA') {
-        <!-- Field-level errors with validationConfig -->
-        <input name="password" [ngModel]="formValue().password" />
-        @if (errors()['password']) {
-          <div>{{ errors()['password'][0] }}</div>
-        }
-
-        <input name="confirmPassword" [ngModel]="formValue().confirmPassword" />
-        @if (errors()['confirmPassword']) {
-          <div>{{ errors()['confirmPassword'][0] }}</div>
-        }
-      } @else {
-        <p>Type B requires no password.</p>
-      }
-
-      <!-- Form-level errors from ROOT_FORM -->
-      @if (errors()[ROOT_FORM]) {
-        <div role="alert" class="form-error">
-          {{ errors()[ROOT_FORM][0] }}
-        </div>
-      }
-
-      <button type="submit">Submit</button>
-    </form>
-  `,
-})
-export class MyFormComponent {
-  protected readonly vestFormRef = viewChild.required('vestForm', {
-    read: FormDirective,
-  });
-  // Expose the constant so the template can read errors()[ROOT_FORM]
-  protected readonly ROOT_FORM = ROOT_FORM;
-  protected readonly formValue = signal<MyFormModel>({});
-  protected readonly errors = signal<Record<string, string[]>>({});
-
-  // validationConfig: Field dependency timing
-  protected readonly validationConfig = computed(() =>
-    this.formValue().type === 'typeA'
-      ? createValidationConfig<MyFormModel>()
-          .whenChanged('password', 'confirmPassword')
-          .build()
-      : null
-  );
-
-  protected readonly suite = create((model: MyFormModel) => {
-    // Field-level validations
-    omitWhen(model.type !== 'typeA', () => {
-      test('password', 'Password required', () => {
-        enforce(model.password).isNotBlank();
-      });
-      test('confirmPassword', 'Passwords must match', () => {
-        enforce(model.confirmPassword).equals(model.password);
-      });
-    });
-
-    // Form-level validation using ROOT_FORM
-    test(ROOT_FORM, 'At least one contact method required', () => {
-      enforce(model.email || model.phone).isTruthy();
-    });
-  });
-
-  // triggerFormValidation(): After structure changes
-  onTypeChange(type: string) {
-    this.formValue.update((v) => ({
-      ...v,
-      type,
-      // Clear fields when switching types
-      ...(type !== 'typeA' && {
-        password: undefined,
-        confirmPassword: undefined,
-      }),
-    }));
-    this.vestFormRef().triggerFormValidation(); // ✅ CRITICAL: Update validation after structure change
+  if (value.type !== 'typeA') {
+    this.vestForm()?.removeField('fieldA');
   }
+  this.formValue.set(next);
+  this.vestForm()?.triggerFormValidation();
 }
 ```
 
-**This example demonstrates:**
+### `triggerFormValidation()` vs `markAllAsTouched()`
 
-1. **`validationConfig`**: When `password` changes, automatically revalidate `confirmPassword`
-2. **`ngxValidateRootForm`**: Form-level rule ("at least one contact method") appears at form level
-3. **`triggerFormValidation()`**: Called after type change to update validation when structure changes
+| Method | Updates validity | Shows errors | Typical use |
+| --- | --- | --- | --- |
+| `triggerFormValidation(path?)` | Yes (root or target path) | No | Template structure changes without value changes |
+| `markAllAsTouched()` | No | Yes | Submitting multiple forms from one external button |
 
-## Decision Tree: Which Features to Use?
+With the default `'on-blur-or-submit'` error display mode, standard `(ngSubmit)` / `(submitSettled)` submissions call `markAllAsTouched()` automatically.
 
-### Use `validationConfig` when:
+## Decision guide
 
-- ✅ Field Y's **validation logic** checks field X's value
-- ✅ When field X **changes**, field Y needs to be **re-validated**
-- ✅ You need **bidirectional re-validation** (when A changes → validate B, when B changes → validate A)
-- ✅ Using `omitWhen` for **conditional field requirements**
-- ✅ Error belongs to a **specific field** (not form-level)
+- **Error belongs to a specific field whose rule reads another field** (password confirmation, conditional `omitWhen`, end date after start date): use `[validationConfig]`.
+- **Error belongs to the whole form** (at least one contact method, mutually exclusive sections, cross-section business rules): use `ngxValidateRootForm` with `ROOT_FORM`.
+- **Controls unmount and turn into static text without another input changing**: clear hidden values in `(formValueChange)`, call `removeField()` for removed fields, and call `triggerFormValidation()`.
 
-**Examples:**
+## Common mistakes
 
-- Password confirmation
-- Quantity requires justification
-- Age triggers emergency contact requirement
-- End date must be after start date (error on end date field)
+- **Using `omitWhen` without `[validationConfig]`:** The dependent control never revalidates when the controlling field changes.
+- **Putting field-specific errors on `ROOT_FORM`:** Errors like "Passwords must match" belong on `confirmPassword` (with `validationConfig`) so the error attaches to the right input via `aria-describedby`.
+- **Calling `triggerFormValidation()` from blur handlers to show dependent errors:** `validationConfig` already handles revalidation, and each wrapper's `errorDisplayMode` controls visibility. For blur-driven side effects such as draft auto-save, listen to `(fieldBlur)` instead.
 
-### Use `ngxValidateRootForm` when:
+## Related guides
 
-- ✅ Error belongs to the **entire form**, not a specific field
-- ✅ Rule validates **multiple fields together** as a business constraint
-- ✅ No single field "owns" the error
-- ✅ Error should display **at form level** (top/bottom)
-- ✅ Want to control **when** validation runs (submit vs live)
-
-**Examples:**
-
-- "Brecht is not 30 anymore" (firstName + lastName + age)
-- "At least one contact method required" (email OR phone OR address)
-- "Addresses cannot be identical" (comparing two address groups)
-- Form-wide business rules
-
-### Use `triggerFormValidation()` when:
-
-- ☑ Switching from **input field → non-input content** (e.g., `<input>` → `<p>`)
-- ☑ Structure changes **without** value changes
-- ☑ Clearing fields programmatically (often combined with field clearing utilities)
-
-**NOT needed when:**
-
-- ☒ Switching between different input fields (value changes handle this automatically)
-- ☒ Normal field value updates (Angular's ValueChangeEvent handles this)
-
-**Examples:**
-
-- ✅ Switching from form input to informational paragraph
-- ✅ After using `clearFieldsWhen()` that removes fields completely
-- ✅ Conditional sections that toggle between inputs and static content
-- ❌ Switching from one input to another input (automatic)
-
-### Use ALL THREE when:
-
-- ✅ Complex **dynamic forms** with multiple concerns:
-  - Field-level dependencies (`validationConfig`)
-  - Form-level business rules (`ngxValidateRootForm`)
-  - Dynamic structure changes (`triggerFormValidation()`)
-- ✅ Forms with **conditional layouts** and **cross-field validation**
-- ✅ Need **comprehensive validation** at all levels
-
-**Example:** Purchase form with:
-
-- Field-level: Password confirmation (`validationConfig`)
-- Form-level: "Brecht is not 30 anymore" (`ngxValidateRootForm`)
-- Structure changes: Switching between form types (`triggerFormValidation()`)
-
-## Common Mistakes
-
-### ❌ Using ROOT_FORM for field-level validation
-
-```typescript
-// ❌ WRONG: Password mismatch belongs to confirmPassword field
-test(ROOT_FORM, 'Passwords must match', () => {
-  enforce(model.confirmPassword).equals(model.password);
-});
-```
-
-```typescript
-// ✅ CORRECT: Field-level validation with validationConfig
-test('confirmPassword', 'Passwords must match', () => {
-  enforce(model.confirmPassword).equals(model.password);
-});
-
-// In component:
-validationConfig = { password: ['confirmPassword'] };
-```
-
-### ❌ Using validationConfig for form-level rules
-
-```typescript
-// ❌ WRONG: Can't use validationConfig for form-wide constraints
-// Where would the error show? firstName? lastName? age?
-validationConfig = {
-  firstName: ['lastName', 'age'], // Doesn't make semantic sense
-};
-```
-
-```typescript
-// ✅ CORRECT: Form-level validation with ROOT_FORM
-test(ROOT_FORM, 'Brecht is not 30 anymore', () => {
-  enforce(
-    model.firstName === 'Brecht' &&
-      model.lastName === 'Billiet' &&
-      model.age === 30
-  ).isFalsy();
-});
-```
-
-### ❌ Forgetting validationConfig with omitWhen
-
-```typescript
-// ❌ WRONG: confirmPassword won't revalidate when password changes
-omitWhen(!model.password, () => {
-  test('confirmPassword', 'Required', () => {
-    enforce(model.confirmPassword).isNotBlank();
-  });
-});
-// Missing: validationConfig = { 'password': ['confirmPassword'] }
-```
-
-```typescript
-// ✅ CORRECT: Include validationConfig for proper timing
-omitWhen(!model.password, () => {
-  test('confirmPassword', 'Required', () => {
-    enforce(model.confirmPassword).isNotBlank();
-  });
-});
-
-// In component:
-validationConfig = { password: ['confirmPassword'] };
-```
-
-## Summary Table
-
-| Scenario                                 | Solution                     | Why                                                         |
-| ---------------------------------------- | ---------------------------- | ----------------------------------------------------------- |
-| Password confirmation                    | `validationConfig`           | Field-level validation - error belongs to `confirmPassword` |
-| "Brecht is not 30"                       | `ngxValidateRootForm`        | Form-level rule - doesn't belong to any single field        |
-| Switching input → paragraph/text         | `triggerFormValidation()`    | Structure change from input to non-input content            |
-| Switching between different inputs       | **Not needed (automatic)**   | Value changes trigger validation automatically              |
-| Quantity ↔ Justification                 | `validationConfig`           | Bidirectional field-level validations                       |
-| At least one contact method              | `ngxValidateRootForm`        | Form-level constraint across multiple fields                |
-| Clearing fields to non-input content     | `triggerFormValidation()`    | After structure change with field clearing utilities        |
-| Age triggers emergency contact           | `validationConfig`           | Conditional field requirement                               |
-| Addresses must differ                    | `ngxValidateRootForm`        | Form-wide business rule                                     |
-| Dynamic layout (inputs ↔ static content) | `triggerFormValidation()`    | Controls replaced with non-input elements                   |
-| End date after start date                | `validationConfig` (usually) | Field-level validation on `endDate` field                   |
-| Complex dynamic purchase form            | **ALL THREE**                | Field dependencies + form-level rules + structure changes   |
-
-## Additional Resources
-
-- **[README: Quick Start](../README.md#quick-start)** - Core validation concepts
-- **[README: Field Blur Events & Draft Auto-Save](../README.md#field-blur-events--draft-auto-save)** - Blur-driven persistence pattern
-- **[README: Dependent Field Validation](../README.md#validation-config)** - validationConfig patterns
-- **[README: Root Form Validation](../README.md#root-form-validation)** - ngxValidateRootForm usage
-- **[Auto-Save on Blur](./AUTO-SAVE-ON-BLUR.md)** - Draft persistence pattern with `fieldBlur`
-- **[Complete Example](./COMPLETE-EXAMPLE.md)** - Full working example
-- **[Migration Guide (v1.x → v2.0.0)](./migration/MIGRATION-v1.x-to-v2.0.0.md)** - Upgrading guide (ngxValidateRootFormMode change)
-- **[Vest.js Documentation](https://vestjs.dev)** - Validation framework docs
+- [ValidationConfig builder](./VALIDATION-CONFIG-BUILDER.md)
+- [Structure change detection](./STRUCTURE_CHANGE_DETECTION.md)
+- [Field clearing utilities](./FIELD-CLEARING-UTILITIES.md)
+- [Auto-save on blur](./AUTO-SAVE-ON-BLUR.md)

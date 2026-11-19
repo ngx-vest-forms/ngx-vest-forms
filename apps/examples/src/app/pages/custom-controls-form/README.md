@@ -52,7 +52,8 @@ control.
 
 | File | Responsibility |
 | --- | --- |
-| `custom-controls.page.ts` / `.html` | Self-contained page + form |
+| `custom-controls.page.ts` / `.html` | Page shell: state, submit outcome, reset |
+| `custom-controls.form.ts` / `.html` | Form body hosting the CVA controls |
 | `star-rating.component.ts` | Custom number CVA control |
 | `segmented-control.component.ts` | Custom single-select CVA control |
 | `tag-input.component.ts` | Custom `string[]` CVA control |

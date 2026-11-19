@@ -23,7 +23,7 @@ so it shows how little code the library needs.
   can warn (in dev) about `name` attributes that drift from the model.
 - A plain Vest suite wired in through the `[suite]` input. It has no Angular
   dependency and is unit-testable on its own:
-  `starterFormSuite.runStatic({ name: '' })`.
+  `starterFormSuite.reset(); starterFormSuite.run({ name: '' })`.
 - `ngx-control-wrapper` with `ariaRequired` rendering label, input and error
   message with the default on-blur error timing.
 - A submit decided in `(submitSettled)`: the handler records `event.value`

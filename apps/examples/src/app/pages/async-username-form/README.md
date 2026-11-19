@@ -46,7 +46,8 @@ first, the network last, every stale request cancelled.
 
 | File | Responsibility |
 | --- | --- |
-| `async-username.page.ts` / `.html` | Self-contained page + form |
+| `async-username.page.ts` / `.html` | Page shell: state, submit outcome, reset |
+| `async-username.form.ts` / `.html` | Form body: `<form ngxVestForm>`, `NGX_PENDING_LABEL`, pending hint |
 | `async-username.validations.ts` | Suite factory (testable in isolation) |
 | `username-availability.service.ts` | HttpClient wrapper → `Observable<boolean>` |
 | `async-username.model.ts` | Model + contract |

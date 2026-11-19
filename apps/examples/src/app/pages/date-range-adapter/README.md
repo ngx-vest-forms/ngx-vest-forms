@@ -28,10 +28,9 @@ Either way, `validationConfig` keeps the two dates cross-validated.
 - `provideFormContract(travelFormContract)` — shape contract for the form body.
 - `ControlWrapperComponent` / `NgxVestForms` — wrapper-based field approach and
   template directives.
-- `FormDirective<TravelFormModel>` — `triggerFormValidation()`, `resetForm()`,
-  `formState()`, `fieldWarnings()`, `touchedFieldPaths()`.
-- `fieldWarningsToRecord` / `createEmptyFormState` — feedback helpers for the
-  sidebar state card.
+- `FormDirective<TravelFormModel>` (`resetForm()`) and
+  `createFormFeedbackSignals()` for the sidebar state card and per-field error
+  slicing.
 
 ## Key files
 
