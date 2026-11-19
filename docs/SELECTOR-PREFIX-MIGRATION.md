@@ -1,49 +1,28 @@
-# Selector Prefix Migration Guide: `sc-` → `ngx-`
+# Selector prefix migration: `sc-` to `ngx-`
 
-## Overview
+v3.0.0 removes the legacy `sc-` selector family, unprefixed directive aliases, `[ngxModel]`/`[ngxModelGroup]` aliases, `SC_ERROR_DISPLAY_MODE_TOKEN`, and `ScErrorDisplayMode`.
 
-As of **v3.0.0**, the `sc-` selector family and related legacy aliases were removed from ngx-vest-forms.
-
-**Removed in v3.0.0:**
-
-- `scVestForm` → `ngxVestForm`
-- `validateRootForm` → `ngxValidateRootForm`
-- `validateRootFormMode` → `ngxValidateRootFormMode`
-- `formControlState` → `ngxControlState`
-- `formErrorDisplay` → `ngxErrorDisplay`
-- `formErrorControl` → `ngxErrorControl`
-- `<sc-control-wrapper>` / `[scControlWrapper]` / `[sc-control-wrapper]` → `<ngx-control-wrapper>` / `[ngxControlWrapper]`
-- `<sc-form-group-wrapper>` / `[scFormGroupWrapper]` → `<ngx-form-group-wrapper>` / `[ngxFormGroupWrapper]`
-- `[ngx-control-wrapper]` → `[ngxControlWrapper]`
-- `#form="scVestForm"` → `#form="ngxVestForm"`
-
-Use this codemod before upgrading a v2.x app to v3.x.
-
-## Required migration steps
-
-1. Run the codemod script below across your app.
-2. Replace any remaining template references and provider tokens manually.
-3. Run your test suite and build.
+Run the codemod below before upgrading a v2.x application to v3.x.
 
 ## Replacement map
 
-| Old | New |
+| Removed (v2.x) | Replacement (v3.x) |
 | --- | --- |
 | `<sc-control-wrapper>` | `<ngx-control-wrapper>` |
-| `[scControlWrapper]` | `[ngxControlWrapper]` |
-| `[sc-control-wrapper]` | `[ngxControlWrapper]` |
+| `[scControlWrapper]`, `[sc-control-wrapper]`, `[ngx-control-wrapper]` | `[ngxControlWrapper]` |
 | `<sc-form-group-wrapper>` | `<ngx-form-group-wrapper>` |
 | `[scFormGroupWrapper]` | `[ngxFormGroupWrapper]` |
-| `[ngx-control-wrapper]` | `[ngxControlWrapper]` |
-| `scVestForm` | `ngxVestForm` |
+| `scVestForm`, `#form="scVestForm"` | `ngxVestForm`, `#form="ngxVestForm"` |
 | `validateRootForm` | `ngxValidateRootForm` |
 | `validateRootFormMode` | `ngxValidateRootFormMode` |
-| `formControlState` | `ngxControlState` |
-| `formErrorDisplay` | `ngxErrorDisplay` |
-| `formErrorControl` | `ngxErrorControl` |
-| `"scVestForm"` | `"ngxVestForm"` |
+| `formControlState`, `#s="formControlState"` | `ngxControlState`, `#s="ngxControlState"` |
+| `formErrorDisplay`, `#d="formErrorDisplay"` | `ngxErrorDisplay`, `#d="ngxErrorDisplay"` |
+| `formErrorControl`, `#ec="formErrorControl"` | `ngxErrorControl`, `#ec="ngxErrorControl"` |
+| `[ngxModel]`, `[ngxModelGroup]` | Remove attribute (keep Angular's `ngModel` / `ngModelGroup`) |
+| `SC_ERROR_DISPLAY_MODE_TOKEN` | `NGX_ERROR_DISPLAY_MODE_TOKEN` |
+| `ScErrorDisplayMode` | `NgxErrorDisplayMode` |
 
-## Required codemod
+## Codemod script
 
 ```bash
 #!/bin/bash
@@ -67,6 +46,8 @@ find . -type f \( -name "*.ts" -o -name "*.html" \) -not -path "*/node_modules/*
       s{\bformControlState\b}{ngxControlState}g;
       s{\bformErrorDisplay\b}{ngxErrorDisplay}g;
       s{\bformErrorControl\b}{ngxErrorControl}g;
+      s{\bSC_ERROR_DISPLAY_MODE_TOKEN\b}{NGX_ERROR_DISPLAY_MODE_TOKEN}g;
+      s{\bScErrorDisplayMode\b}{NgxErrorDisplayMode}g;
     ' "$file"
 
     echo "Migrated: $file"
@@ -75,10 +56,8 @@ find . -type f \( -name "*.ts" -o -name "*.html" \) -not -path "*/node_modules/*
 
 ## Manual follow-up
 
-After the codemod:
+1. Remove any stray `ngxModel` or `ngxModelGroup` attributes alongside `ngModel` / `ngModelGroup`.
+2. Update custom CSS selectors targeting removed `sc-` host classes or `[ngx-control-wrapper]`.
+3. Rebuild and run your test suite.
 
-- replace any `SC_ERROR_DISPLAY_MODE_TOKEN` usage with `NGX_ERROR_DISPLAY_MODE_TOKEN`
-- update template refs such as `#wrapper="ngxErrorDisplay"` and `#state="ngxControlState"`
-- update custom CSS selectors that still target legacy `sc-` host classes or the removed `[ngx-control-wrapper]` attribute selector
-
-See [migration/MIGRATION-v2.x-to-v3.0.0.md](./migration/MIGRATION-v2.x-to-v3.0.0.md) for the full v3 breaking-change checklist.
+See [MIGRATION-v2.x-to-v3.0.0.md](./migration/MIGRATION-v2.x-to-v3.0.0.md) for the complete v3 upgrade checklist.

@@ -1,57 +1,53 @@
-# Complete Example: User Form
+# Complete example: user form
 
-> **Vest 6 Example:** This guide demonstrates the modern Vest 6 pattern with model-only callbacks and call-site field focus. For Vest 5 patterns (v2.x), see the [v2.x-to-v3.0.0 migration guide](./migration/MIGRATION-v2.x-to-v3.0.0.md).
+A complete v3 form using `NgxDeepPartial<T>`, a development-mode form contract, a Vest 6 model-only suite, `<ngx-control-wrapper>`, and `(submitSettled)`.
 
-## Full Working Example
+## Full working example
 
-```typescript
-import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
-import { create, test, enforce } from 'vest';
+```ts
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import {
   NgxVestForms,
-  NgxDeepPartial,
-  NgxDeepRequired,
-  NgxVestSuite,
   provideFormContract,
+  type NgxDeepPartial,
+  type NgxDeepRequired,
+  type NgxSubmitSettledEvent,
+  type NgxVestSuite,
 } from 'ngx-vest-forms';
+import { create, enforce, test } from 'vest';
 
-// 1. Define your form model (always NgxDeepPartial)
+// 1. Define the form model (always NgxDeepPartial because controls build values incrementally)
 type UserFormModel = NgxDeepPartial<{
   firstName: string;
   lastName: string;
   email: string;
 }>;
 
-// 2. Define a form contract
+// 2. Define a dev-mode form contract (or reuse an existing Standard Schema such as Zod)
 const userFormContract: NgxDeepRequired<UserFormModel> = {
   firstName: '',
   lastName: '',
   email: '',
 };
 
-// New code can also reuse an existing Standard Schema here.
+// 3. Create a Vest 6 model-only suite
+const userValidationSuite: NgxVestSuite<UserFormModel> = create((model) => {
+  test('firstName', 'First name is required', () => {
+    enforce(model.firstName).isNotBlank();
+  });
 
-// 3. Create a Vest validation suite
-const userValidationSuite: NgxVestSuite<UserFormModel> = create(
-  (model: UserFormModel) => {
-    test('firstName', 'First name is required', () => {
-      enforce(model.firstName).isNotBlank();
-    });
+  test('lastName', 'Last name is required', () => {
+    enforce(model.lastName).isNotBlank();
+  });
 
-    test('lastName', 'Last name is required', () => {
-      enforce(model.lastName).isNotBlank();
-    });
+  test('email', 'Valid email is required', () => {
+    enforce(model.email ?? '').matches(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
+  });
+});
 
-    test('email', 'Valid email is required', () => {
-      enforce(model.email ?? '').matches(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
-    });
-  }
-);
-// Call site: userValidationSuite.only('firstName').run(model) for field-level validation
-
-// 4. Create the component
+// 4. Bind the form
 @Component({
-  selector: 'ngx-user-form',
+  selector: 'app-user-form',
   imports: [NgxVestForms],
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [provideFormContract(userFormContract)],
@@ -61,11 +57,10 @@ const userValidationSuite: NgxVestSuite<UserFormModel> = create(
       [suite]="suite"
       [formValue]="formValue()"
       (formValueChange)="formValue.set($event)"
-      (submitSettled)="$event.valid && save()"
+      (submitSettled)="onSubmit($event)"
     >
-      <!-- Each field wrapped for error display -->
       <ngx-control-wrapper>
-        <label for="firstName">First Name</label>
+        <label for="firstName">First name</label>
         <input
           id="firstName"
           name="firstName"
@@ -74,8 +69,12 @@ const userValidationSuite: NgxVestSuite<UserFormModel> = create(
       </ngx-control-wrapper>
 
       <ngx-control-wrapper>
-        <label for="lastName">Last Name</label>
-        <input id="lastName" name="lastName" [ngModel]="formValue().lastName" />
+        <label for="lastName">Last name</label>
+        <input
+          id="lastName"
+          name="lastName"
+          [ngModel]="formValue().lastName"
+        />
       </ngx-control-wrapper>
 
       <ngx-control-wrapper>
@@ -96,134 +95,65 @@ export class UserFormComponent {
   protected readonly formValue = signal<UserFormModel>({});
   protected readonly suite = userValidationSuite;
 
-  protected save() {
-    console.log('Form submitted:', this.formValue());
+  protected onSubmit(event: NgxSubmitSettledEvent<UserFormModel>): void {
+    if (!event.valid) {
+      return;
+    }
+
+    console.log('Form submitted:', event.value);
   }
 }
 ```
 
-## What This Example Demonstrates
+## Five rules to remember
 
-- ✅ **Type-safe form model** with `NgxDeepPartial<T>`
-- ✅ **Automatic form control creation** - No manual FormControl definitions
-- ✅ **Validation on blur and submit** - Default error display modes
-- ✅ **Error display** with built-in `ngx-control-wrapper`
-- ✅ **Development-time contract diagnostics** - Catches path typos in development mode
-- ✅ **Unidirectional data flow** - Using `[ngModel]` (not `[(ngModel)]`)
-- ✅ **Performance optimized** — Field-level validation via `suite.only(field).run(model)` at call site
-- ✅ **Canonical suite typing** — Uses `NgxVestSuite<T>` in new code
+### 1. Type form models with `NgxDeepPartial<T>`
 
-> **v3 note:** the older `NgxTypedVestSuite<T>` alias was removed in v3.0.0. Use `NgxVestSuite<T>` everywhere.
+Template-driven forms construct values as controls register and users type, so every level can be `undefined` until populated. Read nested properties with optional chaining (`formValue().address?.street`).
 
-## Key Points to Remember
+### 2. Provide a form contract for dev-mode typo checks
 
-### 1. Always Use `NgxDeepPartial` for Form Models
+When a component always uses the same contract, register it with `providers: [provideFormContract(schemaOrShape)]`. If you already validate payloads with Zod or Valibot (Standard Schema v1), pass that schema instead of maintaining a separate `NgxDeepRequired<T>` object. Use the `[formContract]` input only when the contract varies per usage site.
 
-Form values are built incrementally, so not all properties are always present:
+### 3. Keep Vest 6 suite callbacks model-only
 
-```typescript
-type MyFormModel = NgxDeepPartial<{
-  firstName: string;
-  lastName: string;
-}>;
-```
+ngx-vest-forms runs focused checks at the call site via `suite.only(field).run(model)`. Write `create((model) => { ... })` and type the suite with `NgxVestSuite<T>`. Do not accept a `field` argument or call `only(field)` inside the callback (that was the Vest 5 pattern).
 
-### 2. Define a Form Contract
+### 4. Use `[ngModel]` instead of `[(ngModel)]`
 
-Use `NgxDeepRequired` for a lightweight fallback contract when you do not already have a schema to reuse:
+Bind `[ngModel]` one way and update your signal from `(formValueChange)` on `<form ngxVestForm>`. Two-way `[(ngModel)]` mutates state outside the form stream and can trigger `NGX-100` sync warnings.
 
-```typescript
-const myFormContract: NgxDeepRequired<MyFormModel> = {
-  firstName: '',
-  lastName: '',
-};
-```
+### 5. Match `name` and `ngModelGroup` to the model path
 
-This enables development-time contract diagnostics to catch typos in `name` attributes. If you already have a Standard Schema (for example Zod), prefer reusing that instead of maintaining a separate object contract.
+The control's enclosing `ngModelGroup` names joined with its `name` attribute must match the property path in `[ngModel]`:
 
-If the contract is fixed for the component, prefer `providers: [provideFormContract(...)]`.
-Reserve `[formContract]` for cases where the contract genuinely changes per usage site.
-
-### 3. Suite Callbacks Take Only the Model
-
-In Vest 6, suite callbacks take only the model parameter. Field focus is handled at the call site:
-
-```typescript
-const suite = create((model) => {
-  test('firstName', 'Required', () => {
-    enforce(model.firstName).isNotBlank();
-  });
-});
-
-// Field-level validation at the call site:
-suite.only('firstName').run(model); // Validate only 'firstName'
-suite.run(model); // Validate all fields
-suite.reset(); // Reset accumulated state
-```
-
-**Never** use the old Vest 5 pattern with `field?` parameter and `only()` inside the callback:
-
-```typescript
-// ❌ WRONG — old Vest 5 pattern
-const suite = create((model, field?) => {
-  only(field);
-  ...
-});
-```
-
-### 4. Use `[ngModel]` Not `[(ngModel)]`
-
-For unidirectional data flow, use property binding only:
-
-```typescript
-// ✅ CORRECT - Unidirectional flow
-<input [ngModel]="formValue().firstName" name="firstName" />
-
-// ❌ WRONG - Two-way binding bypasses form events
-<input [(ngModel)]="formValue().firstName" name="firstName" />
-```
-
-Update the form value through the `(formValueChange)` event:
-
-```typescript
-<form ngxVestForm (formValueChange)="formValue.set($event)">
-```
-
-### 5. Name Attribute Must Match Property Path
-
-The `name` attribute must exactly match the property path in your `[ngModel]` binding:
-
-```typescript
-// ✅ CORRECT - name matches property path
+```html
+<!-- Top-level field: path is "firstName" -->
 <input name="firstName" [ngModel]="formValue().firstName" />
 
-// For nested properties, use dot notation
-<input name="address.street" [ngModel]="formValue().address?.street" />
-
-// ❌ WRONG - name doesn't match property path
-<input name="first_name" [ngModel]="formValue().firstName" />
+<!-- Nested field: path is "address.street" -->
+<div ngModelGroup="address">
+  <input name="street" [ngModel]="formValue().address?.street" />
+</div>
 ```
 
-## Optional: Derived Feedback Signals for Presenter Components
+Do not write `name="address.street"` without `ngModelGroup="address"`: Angular creates a literal key `'address.street'` instead of `{ address: { street } }`.
 
-If your form body passes state into a presentational component (for example, a
-sidebar summary, sticky footer, or debug panel), derive those signals once with
-`createFormFeedbackSignals()` instead of repeating several `computed()` wrappers.
+## Optional: derived feedback signals for presenter components
 
-You do **not** need this helper to use ngx-vest-forms. Direct derivation from
-`this.vestForm()` is still a first-class option and is often clearer when you
-only need one signal.
+When a form passes status, errors, warnings, and validated fields into a sidebar, summary banner, or debug panel, derive them once with `createFormFeedbackSignals()` instead of writing four separate `computed()` expressions:
 
-```typescript
-import { Component, signal, viewChild } from '@angular/core';
-import { create, test, enforce } from 'vest';
+```ts
+import { JsonPipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, signal, viewChild } from '@angular/core';
 import {
   createFormFeedbackSignals,
   FormDirective,
-  NgxDeepPartial,
   NgxVestForms,
-  NgxVestSuite,
+  type NgxDeepPartial,
+  type NgxVestSuite,
 } from 'ngx-vest-forms';
+import { create, enforce, test } from 'vest';
 
 type UserFormModel = NgxDeepPartial<{
   firstName: string;
@@ -241,7 +171,9 @@ const suite: NgxVestSuite<UserFormModel> = create((model) => {
 });
 
 @Component({
-  imports: [NgxVestForms],
+  selector: 'app-user-form-with-summary',
+  imports: [JsonPipe, NgxVestForms],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <form
       ngxVestForm
@@ -249,8 +181,15 @@ const suite: NgxVestSuite<UserFormModel> = create((model) => {
       [formValue]="formValue()"
       (formValueChange)="formValue.set($event)"
     >
-      <input name="firstName" [ngModel]="formValue().firstName" />
-      <input name="email" [ngModel]="formValue().email" />
+      <ngx-control-wrapper>
+        <label for="firstName">First name</label>
+        <input id="firstName" name="firstName" [ngModel]="formValue().firstName" />
+      </ngx-control-wrapper>
+
+      <ngx-control-wrapper>
+        <label for="email">Email</label>
+        <input id="email" name="email" [ngModel]="formValue().email" />
+      </ngx-control-wrapper>
     </form>
 
     <aside>
@@ -261,13 +200,12 @@ const suite: NgxVestSuite<UserFormModel> = create((model) => {
     </aside>
   `,
 })
-export class UserFormComponent {
+export class UserFormWithSummaryComponent {
   protected readonly formValue = signal<UserFormModel>({});
   protected readonly suite = suite;
   protected readonly vestForm = viewChild(FormDirective<UserFormModel>);
 
   private readonly feedback = createFormFeedbackSignals(this.vestForm);
-
   protected readonly formState = this.feedback.formState;
   protected readonly warnings = this.feedback.warnings;
   protected readonly validatedFields = this.feedback.validatedFields;
@@ -275,34 +213,24 @@ export class UserFormComponent {
 }
 ```
 
-Why is this exposed as a **function**? Because it only packages signal
-composition around the `viewChild()` result you already have. No extra
-directive, provider, or lifecycle abstraction is necessary.
+If you only need a single derived signal, a plain `computed()` is simpler:
 
-If you only need one derived value, direct derivation is usually simpler:
-
-```typescript
+```ts
 protected readonly formState = computed(
-  () => this.vestForm()?.formState() ?? createEmptyFormState()
+  () => this.vestForm()?.formState() ?? createEmptyFormState<UserFormModel>()
 );
 ```
 
-Use `fieldWarningsToRecord()` when you only need the warnings conversion, and
-`createEmptyFormState()` when you only need a safe fallback packaged state.
+## Next steps
 
-## Next Steps
+- [Composable validations](./COMPOSABLE-VALIDATIONS.md) - Split large suites into reusable functions
+- [ValidationConfig vs root-form](./VALIDATION-CONFIG-VS-ROOT-FORM.md) - Cross-field dependencies and form-level rules
+- [Child components](./CHILD-COMPONENTS.md) - Split large templates with `vestFormsViewProviders`
+- [Custom control wrappers](./CUSTOM-CONTROL-WRAPPERS.md) - Theme wrappers or build custom ones
+- [Field clearing utilities](./FIELD-CLEARING-UTILITIES.md) - Handle conditional sections cleanly
 
-Now that you understand the basics, explore more advanced features:
+## Runnable examples in this repository
 
-- **[Composable Validations](./COMPOSABLE-VALIDATIONS.md)** - Reusable validation patterns
-- **[Custom Control Wrappers](./CUSTOM-CONTROL-WRAPPERS.md)** - Custom error display components
-- **[Child Components](./CHILD-COMPONENTS.md)** - Splitting large forms
-- **[Field Clearing Utilities](./FIELD-CLEARING-UTILITIES.md)** - Managing dynamic form state
-
-## Live Examples
-
-Check out these complete, real-world examples:
-
-- **[Purchase Form Demo](../apps/examples/src/app/pages/purchase-form)** - Complex form with nested objects and conditional logic
-- **[Business Hours Demo](../apps/examples/src/app/pages/business-hours-form)** - Dynamic form arrays with validation
-- **[Interactive Stackblitz Demo](https://stackblitz.com/~/github.com/simplifiedcourses/ngx-vest-forms-stackblitz)** - Try it in your browser
+- [Starter form (`apps/examples/src/app/pages/starter-form`)](../apps/examples/src/app/pages/starter-form) - Copy-ready baseline matching this guide (`/starter`)
+- [Purchase form (`apps/examples/src/app/pages/purchase-form`)](../apps/examples/src/app/pages/purchase-form) - Nested groups, warnings, and cross-field rules (`/purchase`)
+- [Business hours (`apps/examples/src/app/pages/business-hours-form`)](../apps/examples/src/app/pages/business-hours-form) - Dynamic form arrays and root-form rules (`/business-hours`)

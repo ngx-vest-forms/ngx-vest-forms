@@ -1,101 +1,69 @@
-# Suite Type Compatibility
+# Suite type compatibility
 
-> **v3 guidance:** Use `NgxVestSuite<T>` everywhere. The legacy `NgxTypedVestSuite<T>` alias was **removed in v3.0.0**.
+`ngx-vest-forms` v3 exports one canonical suite type: `NgxVestSuite<T>`. The v2 alias `NgxTypedVestSuite<T>` was removed in v3.0.0.
 
-## Overview
+## Basic usage
 
-`ngx-vest-forms` v3.x exposes one canonical public suite type: `NgxVestSuite<T>`. The earlier `NgxTypedVestSuite<T>` alias is no longer exported — imports of it will fail to compile.
+Type Vest 6 model-only suites with `NgxVestSuite<T>`:
 
-## Quick start
-
-```typescript
+```ts
 import { Component, signal } from '@angular/core';
-import { create, test, enforce } from 'vest';
-import { NgxDeepPartial, NgxVestSuite } from 'ngx-vest-forms';
+import {
+  NgxVestForms,
+  type NgxDeepPartial,
+  type NgxVestSuite,
+} from 'ngx-vest-forms';
+import { create, enforce, test } from 'vest';
 
 type UserModel = NgxDeepPartial<{
   email: string;
-  password: string;
-  profile: {
-    age: number;
-  };
+  profile: { age: number };
 }>;
 
 export const userSuite: NgxVestSuite<UserModel> = create((model) => {
-  test('email', 'Required', () => enforce(model.email).isNotBlank());
-  test('profile.age', 'Must be 18+', () =>
-    enforce(model.profile?.age).greaterThanOrEquals(18)
-  );
+  test('email', 'Email is required', () => {
+    enforce(model.email).isNotBlank();
+  });
+
+  test('profile.age', 'Must be 18 or older', () => {
+    enforce(model.profile?.age).greaterThanOrEquals(18);
+  });
 });
 
-// Field focus is handled at the call site.
-// userSuite.only('email').run(model)
-
 @Component({
-  /* ... */
+  selector: 'app-user-form',
+  imports: [NgxVestForms],
+  template: `...`,
 })
-class UserFormComponent {
+export class UserFormComponent {
   protected readonly suite = userSuite;
   protected readonly formValue = signal<UserModel>({});
 }
 ```
 
-## What changed in v3.x
+## Public contract of `NgxVestSuite<T>`
 
-- Suite callbacks now take only the model: `create((model) => { ... })`.
-- Field focus moved to the call site: `suite.only(field).run(model)`.
-- `NgxVestSuite<T>` is the canonical public wrapper for Vest 6 suites.
-- `NgxTypedVestSuite<T>` was **removed**.
+`NgxVestSuite<T>` exposes the Vest 6 suite interface used by the directive:
 
-## Migration from `NgxTypedVestSuite<T>`
-
-Mechanical rename — the public API surface of the two types was identical:
-
-```text
-// Before (v2.x)
-import { NgxTypedVestSuite } from 'ngx-vest-forms';
-
-export const suite: NgxTypedVestSuite<FormModel> = create((model) => {
-  test('email', 'Required', () => enforce(model.email).isNotBlank());
-});
-// NOTE: This import no longer exists in v3; shown for migration context only.
-
-// After (v3.x)
-```
-
-```typescript
-import { NgxVestSuite } from 'ngx-vest-forms';
-
-export const suite: NgxVestSuite<FormModel> = create((model) => {
-  test('email', 'Required', () => enforce(model.email).isNotBlank());
-});
-```
-
-A repo-wide find-and-replace from `NgxTypedVestSuite` to `NgxVestSuite` is safe.
-
-## Public surface
-
-`NgxVestSuite<T>` exposes the Vest 6 contract used by the library:
-
-- `only(match).run(model)` for focused validation
-- `focus({ only, skip, onlyGroup, skipGroup }).run(model)` for field and group focus. It is optional on the type, so hand-written suite fakes need not implement it; every Vest 6.3 suite has it.
+- `only(match).run(model)` for field-focused validation
+- `focus({ only, skip, onlyGroup, skipGroup }).run(model)` for combined field and group focus (optional on the type so minimal test fakes do not have to implement it; every Vest 6.3+ suite provides it)
 - `run(model)` for full validation
-- `get()`, `reset()`, `resetField(field)`, and `remove(field)`
+- `get()`, `reset()`, `resetField(field)`, and `remove(field)` (also exposed via `FormDirective.resetForm()`, `FormDirective.resetField()`, and `FormDirective.removeField()`)
+- `subscribe()`, `dump()`, and `resume()` (typed without `any` in v3)
 
 ## Schema-typed suites
 
-Vest 6 types a suite from a schema passed as the second argument of `create()`. With `enforce.shape(...)` (or any Standard Schema), the callback's `model` gets the schema's output type, `run()` takes its input type, and `only()`, `focus()`, `afterField()` and result lookups such as `getErrors()`, `hasErrors()` and `isValid()` accept only the schema's field names. A misspelled field becomes a compile error.
+Vest 6 types a suite from a schema passed as the second argument of `create()`. With `enforce.shape(...)` (or any Standard Schema), the callback receives the schema output type, `run()` takes the schema input type, and `only()`, `focus()`, `afterField()`, `getErrors()`, `hasErrors()`, and `isValid()` accept only the schema's top-level field names.
 
-An annotation such as `const suite: NgxVestSuite<Model> = create(...)` widens those field names back to `string`. To keep them, leave the suite's type inferred and check it with `satisfies`. The suite still binds to `[suite]`, because `NgxVestSuite<T>` declares its methods with method syntax and TypeScript checks their parameters bivariantly.
+Annotating `const suite: NgxVestSuite<Model> = create(...)` widens those field names back to `string`. To keep strict field-name checking while verifying compatibility with `[suite]`, use `satisfies NgxVestSuite<Model>`:
 
-```typescript
-import { NgxDeepPartial, NgxVestSuite } from 'ngx-vest-forms';
+```ts
+import type { NgxDeepPartial, NgxVestSuite } from 'ngx-vest-forms';
 import { create, enforce, test } from 'vest';
 
 type SignupModel = NgxDeepPartial<{ email: string; age: number }>;
 
-// Every key optional: the directive runs one field at a time against a
-// partial model, and a focused run checks only that field's part of the schema.
+// Keep every schema key optional: the form builds values one control at a time.
 const signupSchema = enforce.shape({
   email: enforce.optional(enforce.isString()),
   age: enforce.optional(enforce.isNumber()),
@@ -110,35 +78,31 @@ export const signupSuite = create((model) => {
   });
 }, signupSchema) satisfies NgxVestSuite<SignupModel>;
 
-signupSuite.only('email').run({ email: 'a@b.c' }); // OK
-// @ts-expect-error 'emial' is not a field of the schema.
+signupSuite.only('email').run({ email: 'a@b.c' }); // Valid
+// @ts-expect-error 'emial' is not a field of the schema
 signupSuite.only('emial');
 ```
 
-The field names are the schema's top-level keys. Nested Field Paths such as `'address.city'` are not in that union: `test('address.city', ...)` still works, and you read their messages from `result.getErrors()`, a record keyed by any path. The [native schema example](../apps/examples/src/app/pages/native-schema-demo/native-schema-demo.validations.ts) uses this pattern, and its spec checks the typing.
+The checked union covers top-level schema keys. Nested paths such as `'address.city'` still work in `test()` and appear on `result.getErrors()`. See `apps/examples/src/app/pages/native-schema-demo/native-schema-demo.validations.ts` for a runnable example.
 
-## Date field compatibility
+## Date fields in legacy object contracts
 
-When using `Date` fields in deep-partial form models, prefer expressing the contract in your Standard Schema if you already have one. For schema-less forms, the legacy `NgxDeepRequired<T>` fallback still supports the common pattern where form controls start with empty strings before a date is selected:
+When using a Standard Schema (Zod, Valibot, etc.), express `Date` coercion directly in the schema. If you use a legacy `NgxDeepRequired<T>` object contract for dev-mode diagnostics, ngx-vest-forms tolerates empty-string initialization (`''`) on `Date` fields while keeping TypeScript typing strict:
 
-```typescript
-import { NgxDeepPartial, NgxDeepRequired } from 'ngx-vest-forms';
+```ts
+import type { NgxDeepPartial, NgxDeepRequired } from 'ngx-vest-forms';
 
-type FormModel = NgxDeepPartial<{
-  birthDate: Date;
-  appointmentDate: Date;
+type EventFormModel = NgxDeepPartial<{
+  startDate: Date;
+  endDate: Date;
 }>;
 
-export const formContract: NgxDeepRequired<FormModel> = {
-  birthDate: new Date(),
-  appointmentDate: new Date(),
+export const eventFormContract: NgxDeepRequired<EventFormModel> = {
+  startDate: new Date(),
+  endDate: new Date(),
 };
 ```
 
-Compile-time typing remains strict; development-time contract diagnostics tolerate empty-string initialization from form controls for this legacy contract style. If you already use Standard Schema, prefer modeling the date coercion directly in the schema.
+## Migrating from `NgxTypedVestSuite<T>`
 
-## Summary
-
-- Use `NgxVestSuite<T>` everywhere in v3.
-- If migrating from v2.x, rename `NgxTypedVestSuite` → `NgxVestSuite`; structural shape is unchanged.
-- Use the Vest 6 execution model: `suite.only(field).run(model)` and `suite.run(model)`.
+`NgxTypedVestSuite<T>` was structurally identical to `NgxVestSuite<T>`. Rename all imports and references from `NgxTypedVestSuite` to `NgxVestSuite`. See [MIGRATION-v2.x-to-v3.0.0.md](./migration/MIGRATION-v2.x-to-v3.0.0.md) for the full v3 upgrade checklist.

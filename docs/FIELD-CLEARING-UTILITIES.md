@@ -1,385 +1,193 @@
-# Field Clearing Utilities
+# Field clearing utilities
 
-Utilities for managing form state when conditionally switching between **form inputs** and **non-form elements** (like informational text or static content).
+Immutable helpers for clearing hidden model fields when conditional sections unmount, keeping your `formValue` signal aligned with the controls mounted in the DOM.
 
-## When to Use Field Clearing
+## Why field clearing is needed
 
-These utilities are **specifically needed** when conditional logic switches between:
+When an `@if` block hides a control (for example, switching from an `<input name="fieldA">` to static text `<p>No input needed</p>`), Angular removes the `FormControl` from `ngForm.form.value`, but your `formValue` signal still holds the old `fieldA` value. If that stale value stays in `formValue`, conditional Vest rules or form submission can read outdated data.
 
-- **Form inputs** (`<input>`, `<select>`, `<textarea>`) ↔ **NON-form elements** (`<p>`, `<div>`, informational content)
+Pure form-to-form switches that reuse the same `name` attribute (such as changing an input's `type`) keep the same `FormControl` and do not need manual clearing.
 
-### The Problem: State Inconsistency
+## Available utilities
 
-```typescript
-// Template with form input → non-form content switch
-@if (procedureType() === 'typeA') {
-  <input name="fieldA" [ngModel]="formValue().fieldA" />  // Form input
-} @else if (procedureType() === 'typeB') {
-  <input name="fieldB" [ngModel]="formValue().fieldB" />  // Form input
-} @else if (procedureType() === 'typeC') {
-  <p>No additional input required for this procedure.</p>   // NON-form element!
-}
-```
+All three utilities operate on **top-level keys only** (`keyof T`) and return a new shallow copy without mutating the input object.
 
-**What happens:**
+### `clearFieldsWhen(currentState, conditions)`
 
-1. **Switching FROM form input TO non-form content**: Angular removes FormControl, but component signal retains old value
-2. **Result**: `ngForm.form.value` becomes clean, but `formValue()` signal remains stale
-3. **Problem**: State inconsistency between Angular's form state and your component state
+Sets each listed top-level key to `undefined` when its boolean condition is `true`.
 
-```typescript
-// Before switching from typeA to typeC:
-formValue() = { procedureType: 'typeA', fieldA: 'some-value' };
-ngForm.form.value = { procedureType: 'typeA', fieldA: 'some-value' };
-
-// After switching (WITHOUT manual clearing):
-formValue() = { procedureType: 'typeC', fieldA: 'some-value' }; // ❌ Stale fieldA!
-ngForm.form.value = { procedureType: 'typeC' }; // ✅ Clean
-
-// After switching (WITH manual clearing):
-formValue() = { procedureType: 'typeC' }; // ✅ Consistent
-ngForm.form.value = { procedureType: 'typeC' }; // ✅ Consistent
-```
-
-### When Field Clearing is NOT Required
-
-Pure form-to-form conditionals usually don't need manual field clearing:
-
-```typescript
-// This template structure DOES NOT require manual field clearing:
-@if (inputType() === 'text') {
-  <input name="field" [ngModel]="formValue().field" type="text" />
-} @else if (inputType() === 'number') {
-  <input name="field" [ngModel]="formValue().field" type="number" />
-} @else if (inputType() === 'email') {
-  <input name="field" [ngModel]="formValue().field" type="email" />
-}
-```
-
-**Why:** All branches contain form inputs with the **same `name` attribute**, so Angular maintains the FormControl and your component state naturally stays consistent.
-
-## Available Utilities
-
-### `clearFieldsWhen` - Conditional Clearing
-
-Conditionally clears fields based on boolean conditions. Use when switching to non-form content.
-
-```typescript
-import { clearFieldsWhen } from 'ngx-vest-forms';
-
-// Example: Clear fields when switching to non-form content
-const updatedState = clearFieldsWhen(currentFormValue, {
-  fieldA: procedureType !== 'typeA', // Clear when NOT showing fieldA input
-  fieldB: procedureType !== 'typeB', // Clear when NOT showing fieldB input
-  shippingAddress: !useShippingAddress, // Clear when showing "No shipping needed" message
-});
-```
-
-**Type signature:**
-
-```typescript
+```ts
 function clearFieldsWhen<T extends Record<string, unknown>>(
   currentState: T,
   conditions: Readonly<Partial<Record<keyof T, boolean>>>
 ): T;
 ```
 
-### `clearFields` - Unconditional Clearing
+```ts
+import { clearFieldsWhen } from 'ngx-vest-forms';
 
-Unconditionally clears specific fields. Useful for form reset operations or cleanup tasks.
-
-```typescript
-import { clearFields } from 'ngx-vest-forms';
-
-// Clear specific fields unconditionally
-const cleanedState = clearFields(currentFormValue, [
-  'temporaryData',
-  'draftSaved',
-  'cachedResults',
-]);
+const next = clearFieldsWhen(value, {
+  fieldA: value.procedureType !== 'typeA',
+  fieldB: value.procedureType !== 'typeB',
+  shippingAddress: !value.useShippingAddress,
+});
 ```
 
-**Type signature:**
+### `clearFields(currentState, fieldsToClear)`
 
-```typescript
+Unconditionally sets the listed top-level keys to `undefined`.
+
+```ts
 function clearFields<T extends Record<string, unknown>>(
   currentState: T,
   fieldsToClear: ReadonlyArray<keyof T>
 ): T;
 ```
 
-### `keepFieldsWhen` - Whitelist Approach
+```ts
+import { clearFields } from 'ngx-vest-forms';
 
-Creates a new state containing only fields that meet specified conditions. Takes a "whitelist" approach instead of clearing unwanted fields.
-
-```typescript
-import { keepFieldsWhen } from 'ngx-vest-forms';
-
-// Keep only relevant fields
-const filteredState = keepFieldsWhen(currentFormValue, {
-  basicInfo: true, // always keep
-  addressInfo: needsAddress,
-  paymentInfo: requiresPayment,
-});
+const cleaned = clearFields(value, ['temporaryData', 'draftNotes']);
 ```
 
-**Type signature:**
+### `keepFieldsWhen(currentState, conditions)`
 
-```typescript
+Allowlist helper: keeps listed top-level keys whose condition is `true` and sets listed keys whose condition is `false` to `undefined`.
+
+```ts
 function keepFieldsWhen<T extends Record<string, unknown>>(
   currentState: T,
   conditions: Readonly<Partial<Record<keyof T, boolean>>>
 ): Partial<T>;
 ```
 
-## Complete Example
+```ts
+import { keepFieldsWhen } from 'ngx-vest-forms';
 
-### Component with Conditional Form Structure
+const filtered = keepFieldsWhen(value, {
+  basicInfo: true,
+  addressInfo: needsAddress,
+  paymentInfo: requiresPayment,
+});
+```
 
-```typescript
+## Recommended usage inside `(formValueChange)`
+
+Always apply field clearing inside your `(formValueChange)` handler rather than in a separate `(ngModelChange)` handler on the toggle control. Writing `formValue` from `(ngModelChange)` while `(formValueChange)` is bound causes a same-tick sync conflict (`[NGX-100]`).
+
+Also call `vestForm().removeField(path)` for unmounted fields so Vest 6's stateful suite drops their validation history and cancels any pending async checks, and call `vestForm().triggerFormValidation()` when switching from inputs to static content.
+
+```ts
+import { ChangeDetectionStrategy, Component, signal, viewChild } from '@angular/core';
 import {
-  Component,
-  signal,
-  viewChild,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-import {
-  NgxVestForms,
-  NgxDeepPartial,
   clearFieldsWhen,
   FormDirective,
+  NgxVestForms,
+  type NgxDeepPartial,
 } from 'ngx-vest-forms';
-import { procedureSuite } from './procedure.suite'; // your Vest suite
+import { procedureSuite } from './procedure.validations';
 
-// In a real app, move this type to procedure.model.ts so the suite file can
-// import it without a circular import.
 export type ProcedureFormModel = NgxDeepPartial<{
   procedureType: 'typeA' | 'typeB' | 'typeC';
-  fieldA?: string;
-  fieldB?: string;
+  fieldA: string;
+  fieldB: string;
 }>;
 
 @Component({
-  selector: 'ngx-procedure-form',
+  selector: 'app-procedure-form',
   imports: [NgxVestForms],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <form
       ngxVestForm
       [suite]="suite"
       [formValue]="formValue()"
-      (formValueChange)="formValue.set($event)"
+      (formValueChange)="handleFormChange($event)"
       #vestForm="ngxVestForm"
     >
-      <label>Procedure Type</label>
-      <select
-        name="procedureType"
-        [ngModel]="formValue().procedureType"
-        (ngModelChange)="onProcedureTypeChange($event)"
-      >
-        <option value="typeA">Type A</option>
-        <option value="typeB">Type B</option>
-        <option value="typeC">Type C</option>
-      </select>
+      <ngx-control-wrapper>
+        <label for="procedureType">Procedure type</label>
+        <select
+          id="procedureType"
+          name="procedureType"
+          [ngModel]="formValue().procedureType"
+        >
+          <option value="typeA">Type A</option>
+          <option value="typeB">Type B</option>
+          <option value="typeC">Type C</option>
+        </select>
+      </ngx-control-wrapper>
 
       @if (formValue().procedureType === 'typeA') {
-        <div>
-          <label>Field A</label>
-          <input name="fieldA" [ngModel]="formValue().fieldA" />
-        </div>
-      }
-
-      @if (formValue().procedureType === 'typeB') {
-        <div>
-          <label>Field B</label>
-          <input name="fieldB" [ngModel]="formValue().fieldB" />
-        </div>
-      }
-
-      @if (formValue().procedureType === 'typeC') {
-        <p>No additional input required for Type C procedures.</p>
+        <ngx-control-wrapper>
+          <label for="fieldA">Field A</label>
+          <input id="fieldA" name="fieldA" [ngModel]="formValue().fieldA" />
+        </ngx-control-wrapper>
+      } @else if (formValue().procedureType === 'typeB') {
+        <ngx-control-wrapper>
+          <label for="fieldB">Field B</label>
+          <input id="fieldB" name="fieldB" [ngModel]="formValue().fieldB" />
+        </ngx-control-wrapper>
+      } @else if (formValue().procedureType === 'typeC') {
+        <p>No additional input required for Type C.</p>
       }
 
       <button type="submit">Submit</button>
     </form>
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProcedureFormComponent {
-  readonly vestFormRef = viewChild.required('vestForm', {
-    read: FormDirective,
-  });
+  private readonly vestForm =
+    viewChild.required<FormDirective<ProcedureFormModel>>('vestForm');
+
   protected readonly suite = procedureSuite;
   protected readonly formValue = signal<ProcedureFormModel>({});
 
-  protected onProcedureTypeChange(newType: string): void {
-    // Clear fields that are no longer relevant
-    this.formValue.update((current) =>
-      clearFieldsWhen(current, {
-        fieldA: newType !== 'typeA',
-        fieldB: newType !== 'typeB',
-      })
-    );
+  protected handleFormChange(value: ProcedureFormModel): void {
+    const hideA = value.procedureType !== 'typeA';
+    const hideB = value.procedureType !== 'typeB';
 
-    // Trigger validation update after structure change
-    this.vestFormRef().triggerFormValidation();
+    const next = clearFieldsWhen(value, {
+      fieldA: hideA,
+      fieldB: hideB,
+    });
+
+    if (hideA) {
+      this.vestForm().removeField('fieldA');
+    }
+    if (hideB) {
+      this.vestForm().removeField('fieldB');
+    }
+
+    this.formValue.set(next);
+    this.vestForm().triggerFormValidation();
   }
 }
 ```
 
-### Alternative: Manual Clearing Pattern
+## Top-level keys only
 
-Without utilities, you can manually clear fields:
+`clearFieldsWhen`, `clearFields`, and `keepFieldsWhen` accept top-level keys (`keyof T`), not dotted paths. Clearing a top-level key clears its entire nested object:
 
-```typescript
-protected onProcedureTypeChange(newType: string): void {
-  this.formValue.update(current => ({
-    ...current,
-    procedureType: newType,
-    // Clear fields that are no longer relevant
-    ...(newType !== 'typeA' && { fieldA: undefined }),
-    ...(newType !== 'typeB' && { fieldB: undefined }),
-  }));
-
-  this.vestFormRef().triggerFormValidation();
-}
-```
-
-## Common Use Cases
-
-### Use Case 1: Conditional Shipping Address
-
-```typescript
-type CheckoutModel = NgxDeepPartial<{
-  useDifferentShipping: boolean;
-  shippingAddress?: AddressModel;
-}>;
-
-protected onShippingToggle(useDifferentShipping: boolean): void {
-  this.formValue.update(current =>
-    clearFieldsWhen(current, {
-      shippingAddress: !useDifferentShipping,
-    })
-  );
-  this.vestFormRef().triggerFormValidation();
-}
-```
-
-### Use Case 2: Multi-Step Form with Navigation
-
-```typescript
-protected goToStep(step: number): void {
-  this.currentStep.set(step);
-
-  // Clear fields from steps that are no longer visible
-  this.formValue.update(current =>
-    clearFieldsWhen(current, {
-      step2Data: step !== 2,
-      step3Data: step !== 3,
-      step4Data: step !== 4,
-    })
-  );
-
-  this.vestFormRef().triggerFormValidation();
-}
-```
-
-### Use Case 3: Form Reset with Partial Preservation
-
-```typescript
-protected resetForm(): void {
-  // Keep basic info, clear everything else
-  this.formValue.update(current =>
-    keepFieldsWhen(current, {
-      userId: true, // always keep
-      userName: true, // always keep
-      email: false, // clear
-      address: false, // clear
-      preferences: false, // clear
-    })
-  );
-}
-```
-
-### Use Case 4: Dependent Field Groups
-
-```typescript
-type ApplicationModel = NgxDeepPartial<{
-  applicantType: 'individual' | 'business';
-  personalInfo?: PersonalInfoModel;
-  businessInfo?: BusinessInfoModel;
-}>;
-
-protected onApplicantTypeChange(type: string): void {
-  this.formValue.update(current =>
-    clearFieldsWhen(current, {
-      personalInfo: type !== 'individual',
-      businessInfo: type !== 'business',
-    })
-  );
-  this.vestFormRef().triggerFormValidation();
-}
-```
-
-## Top-Level Keys Only
-
-The utilities clear **top-level keys only**. The `conditions` parameter is typed as `Partial<Record<keyof T, boolean>>`, so dot-separated paths like `'user.profile'` are not accepted — and the implementation does not traverse into nested objects.
-
-Clearing a top-level key removes the entire subtree it holds:
-
-```typescript
-const state = {
-  user: {
-    profile: { name: 'John', age: 30 },
-    settings: { theme: 'dark' },
-  },
-  temp: { cache: 'data' },
-};
-
-// ✅ Top-level keys — clears the whole nested object at once
+```ts
+// Valid: clears the entire `shippingAddress` subtree
 const cleaned = clearFieldsWhen(state, {
-  user: !showProfile, // clears user (profile AND settings)
-  temp: true, // always clear temp data
+  shippingAddress: !showShipping,
 });
 
-// ❌ Not supported: nested paths are a type error and would not work
-// clearFieldsWhen(state, { 'user.profile': !showProfile });
+// Type error: dotted nested paths are not supported
+// clearFieldsWhen(state, { 'shippingAddress.street': !showShipping });
 ```
 
-To clear a single nested property while keeping its siblings, update the nested object yourself (e.g. spread `user` and set `profile: undefined`).
+To clear a single nested property while keeping its siblings, spread the nested object and set that property to `undefined` (or call `clearFieldsWhen` on the nested slice itself).
 
-## Combining with `triggerFormValidation()`
+## Pairing with Vest `omitWhen`
 
-**Important**: Only call `triggerFormValidation()` when clearing fields results in switching from **input fields to non-input content** (like paragraphs or informational text).
+Skip validation for cleared fields in your Vest suite using `omitWhen`:
 
-**You DON'T need it** if you're just switching between different input fields (value changes trigger validation automatically).
-
-```typescript
-protected onStructureChange(newValue: string): void {
-  // 1. Clear relevant fields
-  this.formValue.update(current =>
-    clearFieldsWhen(current, {
-      conditionalField: newValue !== 'showField',
-    })
-  );
-
-  // 2. Trigger validation update (only if structure changes to non-input content)
-  // Example: @if switches from <input> to <p>No input required</p>
-  this.vestFormRef().triggerFormValidation();
-}
-```
-
-**When to call `triggerFormValidation()`**:
-
-- ✅ Clearing a field that switches from `<input>` → `<p>` (non-input content)
-- ❌ Clearing a field that switches from one `<input>` to another `<input>` (automatic)
-
-## Validation Pattern for Cleared Fields
-
-Use `omitWhen` in your validation suite to skip validation for cleared fields:
-
-```typescript
+```ts
 import type { NgxVestSuite } from 'ngx-vest-forms';
-import { create, test, enforce, omitWhen } from 'vest';
+import { create, enforce, omitWhen, test } from 'vest';
 import type { ProcedureFormModel } from './procedure.model';
 
 export const procedureSuite: NgxVestSuite<ProcedureFormModel> = create(
@@ -388,44 +196,24 @@ export const procedureSuite: NgxVestSuite<ProcedureFormModel> = create(
       enforce(model.procedureType).isNotBlank();
     });
 
-    // Only validate fieldA when procedureType is 'typeA'
     omitWhen(model.procedureType !== 'typeA', () => {
       test('fieldA', 'Field A is required for Type A', () => {
         enforce(model.fieldA).isNotBlank();
       });
     });
 
-    // Only validate fieldB when procedureType is 'typeB'
     omitWhen(model.procedureType !== 'typeB', () => {
       test('fieldB', 'Field B is required for Type B', () => {
         enforce(model.fieldB).isNotBlank();
       });
     });
-
-    // Note: No validation needed for typeC as it has no input fields
   }
 );
 ```
 
-## Best Practices
+## Related guides
 
-1. **Use with non-form content switches** - Only needed when switching between form inputs and non-form elements
-2. **Call `triggerFormValidation()` only when needed** - Use it when clearing causes control ↔ non-control structure changes
-3. **Match validation logic** - Use `omitWhen` in validation suites for fields that can be cleared
-4. **Prefer utilities over manual** - Use `clearFieldsWhen`, `clearFields`, or `keepFieldsWhen` for cleaner code
-5. **Document clearing logic** - Comment why fields need clearing for future maintainers
-6. **Test edge cases** - Verify state consistency when navigating through all conditional branches
-
-## Comparison: When to Use Each Utility
-
-| Utility           | Use When                                                           | Example                                                        |
-| ----------------- | ------------------------------------------------------------------ | -------------------------------------------------------------- |
-| `clearFieldsWhen` | Conditionally clearing multiple fields based on boolean conditions | Clearing shipping address when checkbox unchecked              |
-| `clearFields`     | Unconditionally clearing specific fields                           | Resetting temporary/cached data                                |
-| `keepFieldsWhen`  | Whitelist approach - keeping only specific fields                  | Multi-step form where you want to preserve only certain fields |
-
-## Related Topics
-
-- [Structure Change Detection Guide](./STRUCTURE_CHANGE_DETECTION.md) - Understanding `triggerFormValidation()`
-- [Conditional Validations](../README.md#validation-config) - Re-validating dependents with `omitWhen`/`skipWhen` conditional logic
-- [Vest.js skill](../.agents/skills/vestjs/SKILL.md) - Vest.js 6 patterns
+- [Structure change detection](./STRUCTURE_CHANGE_DETECTION.md)
+- [ValidationConfig vs root-form](./VALIDATION-CONFIG-VS-ROOT-FORM.md)
+- [Troubleshooting `NGX-100`](./TROUBLESHOOTING.md#ngx-100-divergent-same-tick-formmodel-writes)
+- Runnable demo: `/conditional-structure` (`apps/examples/src/app/pages/conditional-structure-demo`)

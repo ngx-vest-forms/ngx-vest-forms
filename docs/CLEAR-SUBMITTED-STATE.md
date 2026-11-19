@@ -1,114 +1,73 @@
-# Clear Submitted State
+# Clear submitted state
 
-Use `clearSubmittedState()` when you want to end the current **submit cycle** without resetting form values or Angular control metadata.
+Use `clearSubmittedState()` to end the current submit cycle without resetting form values, `touched`, `dirty`, or `pristine` metadata.
 
-## The Problem
+## Why it exists
 
-In `'on-submit'` error display mode, errors stay visible after the first submit because the form remains in a submitted state until `resetForm()` is called.
+In `'on-submit'` error display mode, errors remain visible after the first submit because `ngForm.submitted` stays `true` until `resetForm()` is called. Calling `resetForm()` (even `resetForm(form.ngForm.value)`) resets `touched`, `dirty`, and `pristine` across the whole form tree, which is often too disruptive for multi-form or section-by-section review flows.
 
-That is often too heavy-handed:
+`clearSubmittedState()` only resets the submitted gate back to `false` (and clears submit-mode `ROOT_FORM` errors). It does **not** change values, clear warnings, reset `touched`/`dirty`/`pristine`, or re-run field validation.
 
-- `resetForm()` clears `touched`
-- `resetForm()` clears `dirty` / `pristine` state
-- `resetForm()` can hide errors that should still remain visible in mixed display-mode scenarios
+## When to use something else
 
-This matters when the user has already submitted once, fixed the current errors, and then continues editing untouched parts of a long or multi-form workflow.
+- **Reset values and control metadata:** call `resetForm()`.
+- **Show all errors immediately without submitting:** call `markAllAsTouched()`.
+- **Recalculate validity after a structure change:** call `triggerFormValidation()`.
 
-## When to Use `clearSubmittedState()`
+## Usage
 
-Use it when all of the following are true:
+```ts
+import { ChangeDetectionStrategy, Component, signal, viewChild } from '@angular/core';
+import {
+  FormDirective,
+  NgxVestForms,
+  type NgxDeepPartial,
+  type NgxSubmitSettledEvent,
+  type NgxVestSuite,
+} from 'ngx-vest-forms';
 
-1. You are using submit-gated error visibility such as `'on-submit'`
-2. A submit attempt has already happened
-3. You want to return to a pre-submit UX state
-4. You want to preserve form values and control metadata
-
-Typical examples:
-
-- A review page with multiple child forms and one external submit button
-- A long form where users fix submit-time errors section by section
-- A custom submit flow that calls `ngForm.onSubmit(...)` programmatically
-
-## When NOT to Use It
-
-Do **not** use `clearSubmittedState()` as a general-purpose reset API.
-
-Use `resetForm()` instead when you intentionally want to:
-
-- clear values
-- mark controls pristine
-- mark controls untouched
-- fully reset the Angular form state
-
-Use `markAllAsTouched()` instead when you want to show errors immediately.
-
-Use `triggerFormValidation()` instead when form structure changed and you only need validation to re-run.
-
-## What It Does
-
-`clearSubmittedState()` only ends the current submit cycle.
-
-It does **not**:
-
-- change field values
-- clear warnings
-- mark controls pristine
-- mark controls untouched
-- re-run validation by itself
-
-That makes it the lightweight counterpart to `resetForm()` for submit-only UX flows.
-
-## Basic Usage
-
-```typescript
-import { Component, signal, viewChild } from '@angular/core';
-import { FormDirective } from 'ngx-vest-forms';
+type CheckoutFormModel = NgxDeepPartial<{ email: string }>;
 
 @Component({
+  selector: 'app-checkout',
+  imports: [NgxVestForms],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <form
       ngxVestForm
       [suite]="suite"
       [formValue]="formValue()"
       (formValueChange)="formValue.set($event)"
+      (submitSettled)="onSubmitSettled($event)"
       #vestForm="ngxVestForm"
     >
-      <!-- fields -->
+      <!-- controls -->
+      <button type="submit">Submit</button>
     </form>
   `,
 })
 export class CheckoutComponent {
-  protected readonly formValue = signal({});
+  protected readonly formValue = signal<CheckoutFormModel>({});
+  protected readonly suite: NgxVestSuite<CheckoutFormModel> = checkoutSuite;
   protected readonly vestForm =
-    viewChild.required<FormDirective<Record<string, unknown>>>('vestForm');
+    viewChild.required<FormDirective<CheckoutFormModel>>('vestForm');
 
-  protected finishSubmitCycle(): void {
+  protected onSubmitSettled(event: NgxSubmitSettledEvent<CheckoutFormModel>): void {
+    if (!event.valid) {
+      return;
+    }
+
+    // End the submit cycle while keeping current values and touched/dirty state.
     this.vestForm().clearSubmittedState();
   }
 }
 ```
 
-## Recommended Flow
+### Programmatic multi-form submit
 
-```typescript
-submit(): void {
-  const form = this.vestForm();
+When one external button submits several synchronous child forms:
 
-  form.ngForm.onSubmit(new Event('submit'));
-
-  if (!form.formState().valid) {
-    return;
-  }
-
-  // Submit succeeded or the previously submitted issues were resolved
-  // and the UI should return to a pre-submit state.
-  form.clearSubmittedState();
-}
-```
-
-## Multi-Form Example
-
-```typescript
+```ts
 submitAll(): void {
   const forms = this.submitForms();
 
@@ -116,8 +75,7 @@ submitAll(): void {
     form.ngForm.onSubmit(new Event('submit'));
   }
 
-  const allValid = forms.every((form) => form.formState().valid);
-  if (!allValid) {
+  if (!forms.every((form) => form.formState().valid)) {
     return;
   }
 
@@ -127,13 +85,4 @@ submitAll(): void {
 }
 ```
 
-## Why Not Just Call `resetForm(form.ngForm.value)`?
-
-That workaround preserves values, but it still resets Angular control metadata across the whole form tree.
-
-```typescript
-// Works, but resets touched/dirty/pristine metadata.
-form.resetForm(form.ngForm.value);
-```
-
-`clearSubmittedState()` exists for the narrower case where you only want to close the submit gate and leave the rest of the form state alone.
+If any of those forms runs async Vest validators, `formState().valid` is `false` while the form is `PENDING`. In that case, wait for each form's `(submitSettled)` event before checking validity and calling `clearSubmittedState()`.

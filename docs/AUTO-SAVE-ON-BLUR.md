@@ -1,39 +1,19 @@
-# Auto-Save on Blur
+# Auto-save on blur
 
-## Overview
+`ngx-vest-forms` keeps persistence out of the library and exposes `FormDirective.fieldBlur` so your application can trigger draft auto-save, analytics, or other blur-driven side effects.
 
-`ngx-vest-forms` does **not** implement persistence for you, but it now exposes a
-low-level primitive that makes blur-driven draft persistence straightforward:
+## Separate validation from draft persistence
 
-- `FormDirective.fieldBlur`
+Validation and draft auto-save answer different questions:
 
-This output emits whenever a named form control loses focus. It is designed for
-application-level workflows such as:
+- **Validation** checks whether the form is ready for final submission.
+- **Auto-save** saves work in progress so the user does not lose edits.
 
-- draft auto-save
-- analytics
-- field-level side effects
-- progressive persistence in long forms
+For most forms, save drafts on blur even when fields are incomplete, and keep blocking validation for final submission.
 
-## Keep validation and persistence separate
+## The `fieldBlur` output
 
-Blur-driven persistence and validation are related, but they solve different
-problems:
-
-- **Validation** answers: “Is the current form state valid?”
-- **Auto-save** answers: “Should we persist the current draft state now?”
-
-For most forms, the recommended UX is:
-
-1. save the **draft** on blur
-2. allow the draft to be incomplete
-3. reserve full blocking validation for final submission
-
-This avoids turning auto-save into a disguised submit button.
-
-## `fieldBlur` output
-
-The `fieldBlur` output emits this payload:
+`(fieldBlur)` emits whenever a named control inside `<form ngxVestForm>` loses focus:
 
 ```ts
 type NgxFieldBlurEvent<T> = {
@@ -47,16 +27,14 @@ type NgxFieldBlurEvent<T> = {
 };
 ```
 
-`field` is the control's full dotted path, also when the blurred element is inside a custom control (for example the inner `<input>` of a date picker that has `[ngModel]` on its host) or under a dynamic `[ngModelGroup]="expr"` binding. For a custom control, `value` is the control's value; for native inputs it is read from the element.
-
-### Example
+`field` is the control's full dotted path, including controls inside dynamic `[ngModelGroup]` bindings and custom controls whose inner input blurs.
 
 ```ts
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import {
-  NgxFieldBlurEvent,
   NgxVestForms,
   type NgxDeepPartial,
+  type NgxFieldBlurEvent,
 } from 'ngx-vest-forms';
 
 type DraftFormModel = NgxDeepPartial<{
@@ -65,7 +43,9 @@ type DraftFormModel = NgxDeepPartial<{
 }>;
 
 @Component({
+  selector: 'app-draft-form',
   imports: [NgxVestForms],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <form
       ngxVestForm
@@ -92,57 +72,26 @@ export class DraftFormComponent {
       return;
     }
 
-    // Persist the latest draft value here.
     this.saveDraft(event.formValue);
   }
 
   private saveDraft(draft: DraftFormModel): void {
-    // API call, sessionStorage, IndexedDB, etc.
+    // Persist to API, sessionStorage, IndexedDB, etc.
   }
 }
 ```
 
-The important bit is that draft persistence should usually key off `formValue`
-and `dirty`, not `pending`. Async validation may still be in progress when the
-user blurs a field, and blocking persistence on `pending` turns auto-save into a
-validation gate instead of a draft-saving workflow.
+Treat `event.pending` as informational metadata rather than a blocker for draft saves. Gating saves on `!event.pending` drops a draft save whenever an async validator is still running on blur.
 
-In practice, a solid baseline is:
+## Choosing a persistence policy
 
-- require `event.formValue`
-- require `event.dirty`
-- optionally dedupe against the last saved/queued snapshot
-- allow save + validation to proceed independently
+### Policy A: always save drafts on blur (recommended for drafts)
 
-## Choose a persistence policy
+Save whenever `event.formValue` is present and `event.dirty` is `true`, deduplicating against the last saved snapshot. Best for long forms, multi-step flows, and crash recovery.
 
-`fieldBlur` supports both common blur-save policies. The right choice depends on
-whether you are persisting a **draft** or persisting only **acceptable state**.
+### Policy B: save only when valid
 
-### Policy A: always save drafts on blur
-
-Use this when the saved value is explicitly a draft and may be incomplete.
-
-```ts
-protected handleFieldBlur(event: NgxFieldBlurEvent<DraftFormModel>): void {
-  if (!event.formValue || !event.dirty) {
-    return;
-  }
-
-  this.saveDraft(event.formValue);
-}
-```
-
-This is the recommended default for:
-
-- auto-save drafts
-- long forms
-- multi-step flows
-- recovery-oriented UX
-
-### Policy B: save only if valid
-
-Use this when persistence should happen only after the relevant validation has passed.
+Check `event.valid` (blurred control) or `this.vestForm().formState().valid` (whole form) when your backend rejects partial payloads or blur triggers a strict commit:
 
 ```ts
 protected handleFieldBlur(event: NgxFieldBlurEvent<DraftFormModel>): void {
@@ -154,78 +103,27 @@ protected handleFieldBlur(event: NgxFieldBlurEvent<DraftFormModel>): void {
 }
 ```
 
-This variant is better when:
+For temporary client-only drafts, `sessionStorage` (per tab) or `localStorage` works well. For cross-device or collaborative workflows, persist drafts to your backend.
 
-- the blur action triggers side effects that require valid data
-- your backend rejects partial values and you do not want draft semantics
-- you are treating blur-save more like a field-level commit than a draft save
+## Combining dependent validation with blur auto-save
 
-### Whole-form valid variant
+When editing field A makes field B required, you usually want field B to become invalid immediately while staying visually quiet until the user blurs field B or submits the form.
 
-If your policy is “save only when the whole form is valid”, check the form state
-instead of relying only on `event.valid`, which refers to the blurred control.
-
-```ts
-// Template: <form ngxVestForm #vestForm="ngxVestForm" ...>
-// Imports: viewChild from '@angular/core', FormDirective from 'ngx-vest-forms'
-protected readonly vestForm = viewChild.required('vestForm', {
-  read: FormDirective,
-});
-
-protected handleFieldBlur(event: NgxFieldBlurEvent<DraftFormModel>): void {
-  if (!event.formValue || !event.dirty) {
-    return;
-  }
-
-  if (!this.vestForm().formState().valid) {
-    return;
-  }
-
-  this.saveDraft(event.formValue);
-}
-```
-
-In short:
-
-- **drafts** → usually save even if incomplete
-- **commits/strict side effects** → consider valid-only gating
-
-## Recommended persistence strategy
-
-For demos and simple workflows, temporary draft persistence in browser storage is
-fine:
-
-- `sessionStorage` for per-tab temporary drafts
-- `localStorage` for longer-lived browser-only drafts
-
-For production applications, server-side draft persistence is often the better
-fit, especially when users switch devices or collaborate.
-
-## Dependent validation + blur auto-save
-
-If field **A** makes field **B** required, a good blur-save UX usually wants:
-
-1. field **B** becomes logically invalid immediately
-2. the draft can still be saved
-3. field **B** stays visually quiet until the user blurs **B**
-
-That works well with the regular `validationConfig` dependency map:
+Pair `[validationConfig]` with the default `'on-blur-or-submit'` error display mode on `<ngx-control-wrapper>`:
 
 ```ts
 protected readonly validationConfig = createValidationConfig<FormModel>()
-  .bidirectional('quantity', 'quantityJustification')
+  .whenChanged('quantity', 'quantityJustification')
   .build();
 ```
 
-Pair it with `on-blur` wrappers:
-
 ```html
-<ngx-control-wrapper [errorDisplayMode]="'on-blur'">
+<ngx-control-wrapper>
   <label for="quantity">Quantity</label>
   <input id="quantity" name="quantity" [ngModel]="formValue().quantity" />
 </ngx-control-wrapper>
 
-<ngx-control-wrapper [errorDisplayMode]="'on-blur'">
+<ngx-control-wrapper>
   <label for="quantityJustification">Quantity justification</label>
   <textarea
     id="quantityJustification"
@@ -235,56 +133,26 @@ Pair it with `on-blur` wrappers:
 </ngx-control-wrapper>
 ```
 
-This gives you the calm UX discussed in issue #93:
+Do not call `triggerFormValidation()` inside field blur handlers to force this timing. `validationConfig` handles dependent revalidation, wrapper display modes handle error visibility, and `(fieldBlur)` handles persistence.
 
-- immediate revalidation
-- accurate required state
-- no premature inline error on untouched dependent fields
+## Accessibility notes
 
-Avoid calling `triggerFormValidation()` from field blur handlers as part of this pattern.
-That method is meant for structure changes and other explicit revalidation cases, not for
-re-implementing dependent-field blur timing. For dependent fields, prefer the built-in
-combination of `validationConfig` and wrapper display modes, and use `fieldBlur` only for
-application-level side effects such as draft persistence.
+- Announce save status in a polite live region (`role="status"`) rather than an assertive alert unless a failure blocks the user.
+- Keep the final submit button enabled and separate from draft saves.
+- Communicate conditional requirements in labels or helper text so users know why a field became required before blurring it.
 
-## Example in this repository
+## Runnable example
 
-See the examples app:
-
-- route: `/auto-save-demo`
-
-The demo stores the draft temporarily in:
-
-- `sessionStorage`
-- key: `ngx-vest-forms:auto-save-demo:draft`
-
-It also demonstrates:
-
-- blur-triggered draft persistence using the **always-save draft** policy
-- deduping queued saves by serialized draft snapshot
-- dependent validation with on-blur error display
-- reload restore behavior
-- save failure + retry behavior
-
-The docs above also show how to switch to a valid-only policy when your product
-needs stricter persistence rules.
-
-Relevant files:
+See `/auto-save-demo` in `apps/examples`:
 
 - `apps/examples/src/app/pages/auto-save-demo/auto-save-demo.page.ts`
 - `apps/examples/src/app/pages/auto-save-demo/auto-save-demo.form.ts`
 - `apps/examples/src/app/pages/auto-save-demo/auto-save-demo.service.ts`
 
-## Accessibility notes
+It demonstrates the always-save draft policy, snapshot deduplication, `sessionStorage` restore, retry on failure, and quiet dependent validation.
 
-- Keep save status messaging in a polite live region (`role="status"`) unless it
-  blocks the workflow.
-- Do not disable final submit just because auto-save exists.
-- If a field becomes conditionally required, ensure the UI still communicates that
-  state even when inline errors are deferred until blur.
+## Related guides
 
-## Related docs
-
-- [ValidationConfig vs Root-Form](./VALIDATION-CONFIG-VS-ROOT-FORM.md)
-- [Accessibility Guide](./ACCESSIBILITY.md)
-- [Complete Example](./COMPLETE-EXAMPLE.md)
+- [ValidationConfig vs root-form](./VALIDATION-CONFIG-VS-ROOT-FORM.md)
+- [Accessibility](./ACCESSIBILITY.md)
+- [Complete example](./COMPLETE-EXAMPLE.md)

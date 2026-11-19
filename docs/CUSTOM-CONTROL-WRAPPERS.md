@@ -1,38 +1,12 @@
-# Creating Custom Control Wrappers
+# Custom control wrappers and custom controls
 
-## Recommended Pattern: HostDirective on Component
+Before writing a custom wrapper, check whether theming `<ngx-control-wrapper>` and `<ngx-form-group-wrapper>` with CSS custom properties is enough.
 
-The **recommended approach** for error display is to use `FormErrorDisplayDirective` as a **hostDirective on a wrapper component** with content projection. This pattern:
+## Theming built-in wrappers with CSS tokens
 
-- ✅ Provides clean separation of concerns (UI in template, logic in directive)
-- ✅ Supports all directive features via `contentChild()` queries
-- ✅ Enables reusable error display components across your application
-- ✅ Follows Angular best practices for directive composition
-
-If the default `ngx-control-wrapper` doesn't meet your design requirements, you can easily create your own custom wrapper component using this pattern.
-
-## Choose the right level of customization
-
-Before creating a custom wrapper, decide whether you only need visual theming or a different UI structure/behavior.
-
-### Prefer CSS token overrides when
-
-- You want different colors, spacing, typography, or spinner sizing.
-- You want to align built-in wrappers with a design system theme.
-- You want to keep built-in semantics and behavior (error/warning/pending regions, ARIA behavior, debounced pending state).
-
-Both built-in wrappers expose CSS custom properties with sensible defaults:
-
-- `ngx-control-wrapper` tokens (for field-level wrappers)
-- `ngx-form-group-wrapper` tokens (for `NgModelGroup` containers)
-
-Token surface includes colors, spacing, typography, pending layout, and spinner sizing.
-See the full token list in each component's stylesheet (`control-wrapper.component.css`, `form-group-wrapper.component.css`) for complete theming options.
-
-Example:
+Override the public `--ngx-control-wrapper-*` and `--ngx-form-group-wrapper-*` custom properties in your stylesheet to change colors, typography, spacing, or spinner sizing while keeping all built-in ARIA and display-mode logic:
 
 ```css
-/* App/theme stylesheet */
 ngx-control-wrapper {
   --ngx-control-wrapper-error-color: #b91c1c;
   --ngx-control-wrapper-warning-color: #92400e;
@@ -44,82 +18,16 @@ ngx-form-group-wrapper,
 [ngxFormGroupWrapper] {
   --ngx-form-group-wrapper-error-color: #b91c1c;
   --ngx-form-group-wrapper-warning-color: #92400e;
-  --ngx-form-group-wrapper-message-margin-top: 0.375rem;
 }
 ```
 
-### Create a custom wrapper when
+See [ControlWrapperComponent README](../packages/ngx-vest-forms/src/lib/components/control-wrapper/README.md#styling-and-theming) for the full token list and class-based dark mode setup.
 
-- You need different markup/layout (tooltip/popover errors, inline icons, custom containers).
-- You need different message ordering or grouping.
-- You need framework-specific UI composition (Material/PrimeNG/etc.) beyond token-level styling.
-- You need custom ARIA wiring behavior not covered by built-ins.
+## Building a custom wrapper with automatic ARIA (`FormErrorControlDirective`)
 
-In those cases, build a wrapper with `FormErrorDisplayDirective` (or `FormErrorControlDirective` when you also want automatic ARIA association).
+Build a custom wrapper when you need different markup, popover errors, or design-system integration (Angular Material, PrimeNG, etc.).
 
-## Basic Custom Wrapper (Recommended Pattern)
-
-```typescript
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { FormErrorDisplayDirective } from 'ngx-vest-forms';
-
-@Component({
-  selector: 'ngx-custom-control-wrapper',
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  // ✅ RECOMMENDED: Use FormErrorDisplayDirective as hostDirective
-  hostDirectives: [
-    {
-      directive: FormErrorDisplayDirective,
-      inputs: ['errorDisplayMode'],
-    },
-  ],
-  template: `
-    <div class="field-wrapper">
-      <!-- Content projection enables contentChild() queries in the directive -->
-      <ng-content />
-
-      @if (errorDisplay.shouldShowErrors()) {
-        <div
-          class="error-message"
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
-        >
-          @for (error of errorDisplay.errors(); track error) {
-            <span>{{ error }}</span>
-          }
-        </div>
-      }
-
-      @if (errorDisplay.isPending()) {
-        <div
-          class="validating"
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
-        >
-          Validating...
-        </div>
-      }
-    </div>
-  `,
-})
-export class CustomControlWrapperComponent {
-  // Inject the hostDirective to access its signals and state
-  protected readonly errorDisplay = inject(FormErrorDisplayDirective, {
-    self: true,
-  });
-}
-```
-
-## When you want automatic ARIA wiring (recommended)
-
-If you want your custom wrapper to automatically:
-
-- merge `aria-describedby` without clobbering consumer-provided IDs, and
-- toggle `aria-invalid` when errors become visible
-
-…use `FormErrorControlDirective` (it composes `FormErrorDisplayDirective` and adds ARIA + stable IDs).
+Attach `FormErrorControlDirective` via `hostDirectives` when you want automatic `aria-describedby` merging, `aria-invalid` toggling, stable region IDs (`errorId`, `warningId`, `pendingId`), debounced pending state (`showPendingMessage`), and the localized pending text (`pendingLabel` from `NGX_PENDING_LABEL`). `FormErrorControlDirective` composes `FormErrorDisplayDirective` automatically.
 
 ```ts
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
@@ -129,22 +37,27 @@ import {
 } from 'ngx-vest-forms';
 
 @Component({
-  selector: 'ngx-custom-error-control',
+  selector: 'app-field-wrapper',
   changeDetection: ChangeDetectionStrategy.OnPush,
   hostDirectives: [
     {
       directive: FormErrorControlDirective,
       // Only FormErrorControlDirective's own inputs can be forwarded here.
-      // Display modes come from NGX_ERROR_DISPLAY_MODE_TOKEN /
-      // NGX_WARNING_DISPLAY_MODE_TOKEN (app-wide or in this component's providers).
+      // Configure display modes with NGX_ERROR_DISPLAY_MODE_TOKEN /
+      // NGX_WARNING_DISPLAY_MODE_TOKEN, or forward FormErrorDisplayDirective
+      // inputs directly (see the FormErrorDisplayDirective-only section below).
       inputs: ['ariaAssociationMode'],
     },
   ],
+  host: {
+    '[class.field-invalid]': 'errorDisplay.shouldShowErrors()',
+    '[attr.aria-busy]': "errorDisplay.isPending() ? 'true' : null",
+  },
   template: `
     <div class="field-wrapper">
       <ng-content />
 
-      <!-- Keep regions in the DOM so aria-describedby targets always exist -->
+      <!-- Keep live regions mounted so aria-describedby targets always exist -->
       <div
         [id]="ec.errorId"
         role="status"
@@ -153,7 +66,20 @@ import {
       >
         @if (errorDisplay.shouldShowErrors()) {
           @for (error of errorDisplay.errors(); track error) {
-            <div>{{ error }}</div>
+            <p class="error">{{ error }}</p>
+          }
+        }
+      </div>
+
+      <div
+        [id]="ec.warningId"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        @if (errorDisplay.shouldShowWarnings()) {
+          @for (warning of errorDisplay.warnings(); track warning) {
+            <p class="warning">{{ warning }}</p>
           }
         }
       </div>
@@ -165,169 +91,86 @@ import {
         aria-atomic="true"
       >
         @if (ec.showPendingMessage()) {
-          <div>Validating…</div>
+          <p class="pending">{{ ec.pendingLabel() }}</p>
         }
       </div>
     </div>
   `,
 })
-export class CustomErrorControlComponent {
+export class FieldWrapperComponent {
   protected readonly ec = inject(FormErrorControlDirective, { self: true });
-  // FormErrorControlDirective keeps its own errorDisplay reference protected;
-  // inject the composed FormErrorDisplayDirective directly for template access.
   protected readonly errorDisplay = inject(FormErrorDisplayDirective, {
     self: true,
   });
 }
 ```
 
-### Choosing an ARIA association mode
+### `ariaAssociationMode` options
 
-Both `<ngx-control-wrapper>` and `FormErrorControlDirective` support:
+Both `<ngx-control-wrapper>` and `FormErrorControlDirective` accept:
 
-- `ariaAssociationMode="all-controls"` (default) — stamps all descendant controls
-- `ariaAssociationMode="single-control"` — stamps only if exactly one control exists
-- `ariaAssociationMode="none"` — **never** mutates descendant controls (group-safe)
+- `'all-controls'` (default): stamps descendant `input`, `select`, `textarea`, and ARIA form-widget roles (`checkbox`, `combobox`, `listbox`, `radiogroup`, `searchbox`, `slider`, `spinbutton`, `switch`, `textbox`).
+- `'single-control'`: stamps only when exactly one descendant control exists (useful for an input paired with an inline "Clear" button).
+- `'none'`: never mutates descendant controls (group-safe or manual wiring).
 
-If your wrapper targets an `NgModelGroup` container (or otherwise contains multiple controls), prefer using
-`<ngx-form-group-wrapper>` instead of trying to make `<ngx-control-wrapper>` behave like a group wrapper.
+For `ngModelGroup` containers, prefer `<ngx-form-group-wrapper>`.
 
-If you still need a custom wrapper around a multi-control container, use `ariaAssociationMode="none"` so the
-wrapper does not stamp `aria-describedby` / `aria-invalid` onto every descendant control.
+## Building a custom wrapper with `FormErrorDisplayDirective` only
 
-`ariaAssociationMode="single-control"` is mainly useful when your wrapper _usually_ contains one control, but
-may sometimes contain additional focusable elements (for example, an input with an adjacent “Clear” button).
+If you manage ARIA attributes yourself (for example, wrapping a third-party form field component), compose `FormErrorDisplayDirective` directly so you can also forward `errorDisplayMode` and `warningDisplayMode` inputs:
 
-## ARIA Association Utilities (Public API)
-
-For advanced use cases or custom wrapper implementations, ngx-vest-forms exposes the underlying ARIA association utilities as a public API. These utilities are used internally by `FormErrorControlDirective` and can help maintain consistent accessibility behavior across your custom wrappers.
-
-### Available Utilities
-
-```typescript
+```ts
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import {
-  AriaAssociationMode,
-  parseAriaIdTokens,
-  mergeAriaDescribedBy,
-  resolveAssociationTargets,
-} from 'ngx-vest-forms';
-```
-
-### parseAriaIdTokens
-
-Splits an `aria-describedby` attribute value into normalized token IDs:
-
-```typescript
-function parseAriaIdTokens(value: string | null): string[];
-
-// Example
-const tokens = parseAriaIdTokens('hint-id error-id warning-id');
-// Returns: ['hint-id', 'error-id', 'warning-id']
-```
-
-### mergeAriaDescribedBy
-
-Merges currently-active wrapper IDs into an existing `aria-describedby` value. Existing tokens owned by the wrapper are removed first, then current active IDs are appended while preserving non-owned tokens and token uniqueness:
-
-```typescript
-function mergeAriaDescribedBy(
-  existing: string | null,
-  activeIds: readonly string[],
-  ownedIds: readonly string[]
-): string | null;
-
-// Example: Preserve consumer-provided IDs while managing wrapper IDs
-const merged = mergeAriaDescribedBy(
-  'help-text field-error', // existing value
-  ['field-error'], // currently active IDs
-  ['field-error', 'field-warning'] // all IDs owned by wrapper
-);
-// Returns: 'help-text field-error'
-// (preserved 'help-text', removed stale 'field-warning', kept active 'field-error')
-```
-
-### resolveAssociationTargets
-
-Resolves control targets based on ARIA association mode:
-
-```typescript
-function resolveAssociationTargets(
-  controls: readonly HTMLElement[],
-  mode: AriaAssociationMode
-): HTMLElement[];
-
-// Example
-const controls = [inputElement, textareaElement];
-
-resolveAssociationTargets(controls, 'all-controls'); // Returns: [inputElement, textareaElement]
-resolveAssociationTargets(controls, 'single-control'); // Returns: [] (more than one control)
-resolveAssociationTargets(controls, 'none'); // Returns: []
-```
-
-### Use Cases
-
-These utilities are particularly useful when:
-
-- Building custom wrapper components that need to maintain ARIA associations
-- Creating wrapper libraries that need to match ngx-vest-forms accessibility behavior
-- Implementing custom ARIA management logic while staying consistent with the library
-- Testing accessibility implementations in downstream projects
-
-The utilities help prevent logic duplication and ensure consistent ARIA behavior across different wrapper implementations.
-
-## Preventing Flashing Validation Messages
-
-For async validations, you may want to prevent the "Validating..." message from flashing when validation completes quickly. Use the `createDebouncedPendingState` utility:
-
-```typescript
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import {
-  FormErrorDisplayDirective,
   createDebouncedPendingState,
+  FormErrorDisplayDirective,
 } from 'ngx-vest-forms';
 
 @Component({
-  selector: 'ngx-debounced-wrapper',
+  selector: 'app-mat-field-wrapper',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  hostDirectives: [FormErrorDisplayDirective],
+  hostDirectives: [
+    {
+      directive: FormErrorDisplayDirective,
+      inputs: ['errorDisplayMode', 'warningDisplayMode'],
+    },
+  ],
+  host: {
+    class: 'mat-form-field',
+    '[class.mat-form-field-invalid]': 'errorDisplay.shouldShowErrors()',
+    '[attr.aria-busy]': "errorDisplay.isPending() ? 'true' : null",
+  },
   template: `
-    <div class="field-wrapper">
-      <ng-content />
+    <ng-content />
 
-      @if (errorDisplay.shouldShowErrors()) {
-        <div
-          class="error-message"
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
-        >
-          @for (error of errorDisplay.errors(); track error) {
-            <span>{{ error }}</span>
-          }
-        </div>
-      }
+    @if (errorDisplay.shouldShowErrors()) {
+      <div class="mat-error" role="status" aria-live="polite" aria-atomic="true">
+        @for (error of errorDisplay.errors(); track error) {
+          <span>{{ error }}</span>
+        }
+      </div>
+    }
 
-      <!-- Only show after 200ms delay, keep visible for minimum 500ms -->
-      @if (showPendingMessage()) {
-        <div
-          class="validating"
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
-        >
-          <span class="spinner" aria-hidden="true"></span>
-          Validating…
-        </div>
-      }
-    </div>
+    @if (errorDisplay.shouldShowWarnings() && !errorDisplay.shouldShowErrors()) {
+      <div class="mat-warn" role="status" aria-live="polite" aria-atomic="true">
+        @for (warning of errorDisplay.warnings(); track warning) {
+          <span>{{ warning }}</span>
+        }
+      </div>
+    }
+
+    @if (showPendingMessage()) {
+      <div class="mat-hint" role="status" aria-live="polite" aria-atomic="true">
+        Validating…
+      </div>
+    }
   `,
 })
-export class DebouncedWrapperComponent {
+export class MatFieldWrapperComponent {
   protected readonly errorDisplay = inject(FormErrorDisplayDirective, {
     self: true,
   });
 
-  // Debounced pending state prevents flashing for quick validations
   private readonly pendingState = createDebouncedPendingState(
     this.errorDisplay.isPending,
     { showAfter: 200, minimumDisplay: 500 }
@@ -337,275 +180,69 @@ export class DebouncedWrapperComponent {
 }
 ```
 
-**How it works:**
+### Signals exposed by `FormErrorDisplayDirective`
 
-- **200ms delay** — Validation message only shows if validation takes longer than 200ms
-- **500ms minimum** — Once shown, message stays visible for at least 500ms to prevent flickering
-- **Better UX** — Users don't see distracting flashes for quick async validations
+Always render the **display signals** (`shouldShowErrors`, `errors`, `shouldShowWarnings`, `warnings`) in templates instead of the raw ones. While an async check re-runs, the display signals hold the last settled messages so text and `aria-invalid` do not flicker or re-announce; they update when the new result settles and clear immediately on `resetForm()` / `resetField()`.
 
-**Options:**
+| Signal | Type | Description |
+| --- | --- | --- |
+| `shouldShowErrors()` | `boolean` | Display-mode gated error visibility (held while pending) |
+| `errors()` | `string[]` | Error messages to render (held while pending) |
+| `shouldShowWarnings()` | `boolean` | Display-mode gated warning visibility (held while pending) |
+| `warnings()` | `string[]` | Warning messages to render (held while pending) |
+| `isPending()` | `boolean` | Pending state (false for pristine untouched controls) |
+| `errorMessages()` | `string[]` | Raw current error messages (empty while pending) |
+| `warningMessages()` | `string[]` | Raw current warning messages |
+| `controlState()` | `FormControlState` | Snapshot of Angular control state |
+| `isTouched()`, `isDirty()`, `isValid()`, `isInvalid()` | `boolean` | Angular control flags |
+| `hasPendingValidation()` | `boolean` | Raw pending flag (including initial validation) |
+| `hasBeenValidated()` | `boolean` | True after the first non-pending status change or touch |
+| `updateOn()` | `'change' \| 'blur' \| 'submit'` | Control's `ngModelOptions.updateOn` strategy |
+| `formSubmitted()` | `boolean` | Reactive signal tracking `NgForm.submitted` |
 
-```typescript
-interface DebouncedPendingStateOptions {
-  showAfter?: number; // Default: 200ms
+## Debounced pending state (`createDebouncedPendingState`)
+
+To avoid flashing "Validating…" on fast async validators:
+
+```ts
+type DebouncedPendingStateOptions = {
+  showAfter?: number; // Default: 200ms in utility (500ms in built-in wrappers)
   minimumDisplay?: number; // Default: 500ms
-}
+};
+
+type DebouncedPendingStateOptionsInput =
+  | DebouncedPendingStateOptions
+  | Signal<DebouncedPendingStateOptions>;
+
+type DebouncedPendingStateResult = {
+  showPendingMessage: Signal<boolean>;
+  cleanup: () => void;
+};
 ```
 
-Call it in an injection context (a field initializer or the constructor). To create it later, for example in `ngOnInit`, pass an injector as the third argument:
+- On built-in `<ngx-control-wrapper>` and `<ngx-form-group-wrapper>`, configure timings via `[pendingDebounce]="{ showAfter: 300, minimumDisplay: 500 }"` (default `{ showAfter: 500, minimumDisplay: 500 }`) and translate the label via `NGX_PENDING_LABEL`.
+- Call `createDebouncedPendingState()` in an injection context (field initializer or constructor), or pass `{ injector }` as the third argument when calling it from `ngOnInit`.
 
-```typescript
-import { Component, Injector, OnInit, inject } from '@angular/core';
+## Low-level ARIA association utilities
+
+If you build custom ARIA wiring without `FormErrorControlDirective`, ngx-vest-forms exports the same helpers it uses internally:
+
+```ts
 import {
-  createDebouncedPendingState,
-  DebouncedPendingStateResult,
-  FormErrorDisplayDirective,
+  mergeAriaDescribedBy,
+  parseAriaIdTokens,
+  resolveAssociationTargets,
+  type AriaAssociationMode,
 } from 'ngx-vest-forms';
-
-@Component({
-  selector: 'app-late-pending-wrapper',
-  hostDirectives: [FormErrorDisplayDirective],
-  template: `
-    <ng-content />
-    @if (pendingState?.showPendingMessage()) {
-      <span role="status">Validating…</span>
-    }
-  `,
-})
-export class LatePendingWrapperComponent implements OnInit {
-  private readonly injector = inject(Injector);
-  private readonly errorDisplay = inject(FormErrorDisplayDirective, {
-    self: true,
-  });
-
-  protected pendingState?: DebouncedPendingStateResult;
-
-  ngOnInit(): void {
-    this.pendingState = createDebouncedPendingState(
-      this.errorDisplay.isPending,
-      { showAfter: 200 },
-      { injector: this.injector }
-    );
-  }
-}
 ```
 
-**Returns:**
-
-```typescript
-interface DebouncedPendingStateResult {
-  showPendingMessage: Signal<boolean>; // Debounced signal
-  cleanup: () => void; // Optional cleanup function
-}
-```
-
-## Advanced Custom Wrapper with Warnings
-
-The `FormErrorDisplayDirective` also exposes warning messages from Vest.js:
-
-```typescript
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { FormErrorDisplayDirective } from 'ngx-vest-forms';
-
-@Component({
-  selector: 'ngx-advanced-wrapper',
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  hostDirectives: [FormErrorDisplayDirective],
-  template: `
-    <div class="form-field">
-      <ng-content />
-
-      <!-- Errors -->
-      @if (errorDisplay.shouldShowErrors()) {
-        <div class="errors" role="status" aria-live="polite" aria-atomic="true">
-          @for (error of errorDisplay.errors(); track error) {
-            <p class="error">{{ error }}</p>
-          }
-        </div>
-      }
-
-      <!-- Warnings (non-blocking feedback) -->
-      @if (errorDisplay.warnings().length > 0) {
-        <div
-          class="warnings"
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
-        >
-          @for (warning of errorDisplay.warnings(); track warning) {
-            <p class="warning">{{ warning }}</p>
-          }
-        </div>
-      }
-
-      <!-- Pending state -->
-      @if (errorDisplay.isPending()) {
-        <div
-          class="pending"
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
-          aria-busy="true"
-        >
-          <span class="spinner"></span>
-          Validating...
-        </div>
-      }
-    </div>
-  `,
-})
-export class AdvancedWrapperComponent {
-  protected readonly errorDisplay = inject(FormErrorDisplayDirective, {
-    self: true,
-  });
-}
-```
-
-## Available Signals from FormErrorDisplayDirective
-
-The directive exposes these computed signals for building custom UIs:
-
-```typescript
-// Error display control
-shouldShowErrors(); // boolean - Whether to show errors based on mode and state
-errors(); // string[] - Errors to render (last settled ones while re-validating)
-warnings(); // string[] - Warnings to render (last settled ones while re-validating)
-isPending(); // boolean - Whether async validation is running
-
-// Raw state signals (from FormControlStateDirective)
-errorMessages(); // string[] - Current error messages (empty while pending)
-warningMessages(); // string[] - Current warning messages (see note below)
-controlState(); // FormControlState - Complete control state
-isTouched(); // boolean - Whether control has been touched
-isDirty(); // boolean - Whether control value has changed
-isValid(); // boolean - Whether control is valid
-isInvalid(); // boolean - Whether control is invalid
-hasPendingValidation(); // boolean - Whether validation is pending
-updateOn(); // string - The ngModelOptions.updateOn value
-formSubmitted(); // boolean - Whether form has been submitted
-```
-
-## Real-World Example: Material Design Style Wrapper
-
-```typescript
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { FormErrorDisplayDirective } from 'ngx-vest-forms';
-
-@Component({
-  selector: 'ngx-mat-field-wrapper',
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  hostDirectives: [
-    {
-      directive: FormErrorDisplayDirective,
-      inputs: ['errorDisplayMode'],
-    },
-  ],
-  host: {
-    class: 'mat-form-field',
-    '[class.mat-form-field-invalid]': 'errorDisplay.shouldShowErrors()',
-    '[attr.aria-busy]': "errorDisplay.isPending() ? 'true' : null",
-  },
-  template: `
-    <div class="mat-form-field-wrapper">
-      <div class="mat-form-field-flex">
-        <ng-content />
-      </div>
-
-      <div class="mat-form-field-subscript-wrapper">
-        @if (errorDisplay.shouldShowErrors()) {
-          <div
-            class="mat-error"
-            role="status"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            @for (error of errorDisplay.errors(); track error) {
-              <span>{{ error }}</span>
-            }
-          </div>
-        }
-
-        @if (
-          errorDisplay.warnings().length > 0 && !errorDisplay.shouldShowErrors()
-        ) {
-          <div
-            class="mat-hint mat-warn"
-            role="status"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            @for (warning of errorDisplay.warnings(); track warning) {
-              <span>{{ warning }}</span>
-            }
-          </div>
-        }
-
-        @if (errorDisplay.isPending()) {
-          <div
-            class="mat-hint"
-            role="status"
-            aria-live="polite"
-            aria-atomic="true"
-            aria-busy="true"
-          >
-            <mat-spinner diameter="16"></mat-spinner>
-            Validating...
-          </div>
-        }
-      </div>
-    </div>
-  `,
-  styles: [
-    `
-      :host {
-        display: block;
-        margin-bottom: 1rem;
-      }
-
-      .mat-error {
-        color: #f44336;
-        font-size: 0.875rem;
-      }
-
-      .mat-hint {
-        color: rgba(0, 0, 0, 0.6);
-        font-size: 0.875rem;
-      }
-
-      .mat-warn {
-        color: #ff9800;
-      }
-    `,
-  ],
-})
-export class MatFieldWrapperComponent {
-  protected readonly errorDisplay = inject(FormErrorDisplayDirective, {
-    self: true,
-  });
-}
-```
-
-## Using Your Custom Wrapper
-
-Once created, use your custom wrapper just like the built-in `ngx-control-wrapper`:
-
-```typescript
-@Component({
-  imports: [NgxVestForms, CustomControlWrapperComponent],
-  template: `
-    <form ngxVestForm [suite]="suite" (formValueChange)="formValue.set($event)">
-      <ngx-custom-control-wrapper>
-        <label>Email</label>
-        <input name="email" [ngModel]="formValue().email" type="email" />
-      </ngx-custom-control-wrapper>
-    </form>
-  `
-})
-```
+- `parseAriaIdTokens(value)` splits an `aria-describedby` string into unique tokens.
+- `mergeAriaDescribedBy(existing, activeIds, ownedIds)` replaces only `ownedIds` while preserving consumer hint IDs.
+- `resolveAssociationTargets(controls, mode)` filters controls according to `AriaAssociationMode`.
 
 ## Signal Forms controls inside a wrapper
 
-The control you put inside a wrapper does not have to be a native input or a `ControlValueAccessor`. A component that implements the Signal Forms control interfaces from `@angular/forms/signals` (`FormValueControl` with a `value` model, or `FormCheckboxControl` with a `checked` model, plus an optional `touch` output and `disabled` input) works with plain `[ngModel]`:
+A control inside `<ngx-control-wrapper>` does not have to be a native input or a `ControlValueAccessor`. Components implementing Angular Signal Forms `FormValueControl` (with a `value` model) or `FormCheckboxControl` (with a `checked` model) work directly with `[ngModel]` and `name`:
 
 ```html
 <ngx-control-wrapper>
@@ -614,39 +251,26 @@ The control you put inside a wrapper does not have to be a native input or a `Co
 </ngx-control-wrapper>
 ```
 
-Vest validation runs for that field with no extra directive. In Angular 22.2, `NgModel` binds such a control through its custom-control path, which does not attach the validators collected from `NG_VALIDATORS` / `NG_ASYNC_VALIDATORS` to the `FormControl`. ngx-vest-forms detects that after Angular's setup and attaches `NgModel`'s own composed validators (the same function references Angular attaches for a `ControlValueAccessor`), and revalidates the control so the first result reaches the form's `status()`, `valid()`, `errorsChange` and `submitSettled`. When Angular has already attached them, as for native inputs and `ControlValueAccessor` hosts, or in a future Angular version that wires them itself, nothing is added.
+In Angular 22.2, `NgModel`'s custom-control path does not attach `NG_VALIDATORS` / `NG_ASYNC_VALIDATORS` to the `FormControl`. ngx-vest-forms attaches `NgModel`'s composed validators automatically after setup and revalidates the control, so Vest rules, `status()`, `errorsChange`, and `(submitSettled)` work with no extra directive. If registration never completes, dev mode logs [`NGX-108`](./TROUBLESHOOTING.md#ngx-108-signal-forms-control-not-registered-in-time).
 
-Put every rule in the Vest suite, including "must be checked" for a `FormCheckboxControl`:
+Keep every rule in your Vest suite. In particular, on a `FormCheckboxControl`, Angular's `required` attribute does **not** mean "must be checked" (because `CheckboxRequiredValidator` only matches `input[type=checkbox]`). Write a Vest test instead:
 
-```typescript
+```ts
 test('acceptTerms', 'Accept the terms to continue', () => {
   enforce(model.acceptTerms).equals(true);
 });
 ```
 
-Angular's attribute validators on the same element are attached too, but they do not all mean what they mean on a native input:
+Give the control's inner interactive element a native input or an ARIA form-widget role (such as `role="switch"`) so `<ngx-control-wrapper>` attaches `aria-invalid` and `aria-describedby` automatically.
 
-- On a `FormValueControl`, `required` (also bound, as `[required]="isRequired()"`; toggling it revalidates the field) reports `required` for an empty value, as on a native input.
-- On a `FormCheckboxControl`, `required` does **not** mean "must be checked". Angular's `CheckboxRequiredValidator` only matches `input[type=checkbox]`, so the plain `RequiredValidator` applies, and it treats `false` as a value. Use the Vest test above instead.
+## Runnable examples
 
-ARIA wiring applies to the native element or ARIA form widget (such as `role="switch"`) inside the control, as described in [When you want automatic ARIA wiring](#when-you-want-automatic-aria-wiring-recommended).
+- `/accessible-wrapper` (`apps/examples/src/app/pages/accessible-wrapper-demo`) - Custom wrapper built on `FormErrorControlDirective`
+- `/custom-controls` (`apps/examples/src/app/pages/custom-controls-form`) - `ControlValueAccessor` custom controls
+- `/signal-forms-interop` (`apps/examples/src/app/pages/signal-forms-interop`) - `FormValueControl` and `FormCheckboxControl` with `[ngModel]`
 
-## Best Practices
+## Related guides
 
-1. **Use `hostDirectives`** - Always apply `FormErrorDisplayDirective` as a host directive for automatic state management
-2. **Respect accessibility** - Use proper ARIA attributes: `role="status"` with `aria-live="polite"` for field-level messages (reserve `role="alert"` for a form-level error summary), plus `aria-busy` while validating
-3. **Render the display signals, not the raw ones** - While a field re-validates, `errors()`, `warnings()`, `shouldShowErrors()` and `shouldShowWarnings()` keep the last settled result, so messages and `aria-invalid` don't flicker and the live region doesn't re-announce. They change when the new result settles, and clear at once on `reset()`/`resetForm()`/`resetField()`. `errorMessages()` and `warningMessages()` are the raw state and don't hold anything: `errorMessages()` is empty while pending, and `warningMessages()` keeps listing a field's last warnings from `FormDirective.fieldWarnings` (inside `ngxVestForm`) until the next result replaces them
-4. **Leverage computed signals** - All exposed signals are computed, so they update automatically
-5. **Style based on state** - Use host bindings to apply CSS classes based on error display state
-
-## When to Create Custom Wrappers
-
-Create custom control wrappers when you need to:
-
-- **Match design system** - Integrate with Material, PrimeNG, or custom design systems
-- **Custom error formatting** - Display errors in specific layouts (inline, tooltip, popover)
-- **Additional UI elements** - Add icons, help text, character counters
-- **Complex accessibility** - Implement specific ARIA patterns for your use case
-- **Framework integration** - Adapt to existing component libraries
-
-The `FormErrorDisplayDirective` handles all the validation state management, so you can focus entirely on the presentation layer.
+- [Accessibility](./ACCESSIBILITY.md)
+- [API tokens](./API-TOKENS.md)
+- [ControlWrapperComponent README](../packages/ngx-vest-forms/src/lib/components/control-wrapper/README.md)

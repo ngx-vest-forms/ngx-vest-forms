@@ -1,39 +1,25 @@
-# Accessibility Guide
+# Accessibility guide
 
-> **Vest 6 Compliant:** This guide documents accessibility patterns for ngx-vest-forms v3.0.0+ with Vest.js 6.x. All examples assume the modern Vest 6 pattern where suite callbacks take only the model and field focus is at the call site.
+ngx-vest-forms targets WCAG 2.2 Level AA for inline validation feedback, ARIA associations, and keyboard error recovery.
 
-ngx-vest-forms is built with accessibility in mind, following WCAG 2.2 Level AA guidelines.
+## Field-level live regions (polite)
 
-## Quick Reference
+`<ngx-control-wrapper>` and `<ngx-form-group-wrapper>` render inline errors, warnings, and pending indicators inside permanently mounted `role="status"` / `aria-live="polite"` regions so screen readers announce updates without interrupting typing:
 
-### Field-Level Messages (Polite)
+- **Merged `aria-describedby`:** wrapper region IDs are merged with any existing `aria-describedby` attribute so consumer hint text stays linked.
+- **Display-mode gated `aria-invalid`:** `aria-invalid="true"` is applied only when `shouldShowErrors()` is `true`.
+- **Held messages during re-validation:** while an async check re-runs, the last settled errors, warnings, `aria-invalid`, and `aria-describedby` stay in place alongside the pending message. Messages update only when the new result settles, avoiding duplicate screen reader announcements, and clear immediately on `resetForm()` or `resetField()`.
+- **Debounced pending text:** `<ngx-control-wrapper>` and `<ngx-form-group-wrapper>` debounce the pending indicator via `[pendingDebounce]` (default `{ showAfter: 500, minimumDisplay: 500 }`) and read the localized label from `NGX_PENDING_LABEL` (default `'Validating…'`).
+- **Warnings:** under the default `'on-validated-or-touch'` mode, warnings can appear after `validationConfig` runs on an untouched control. Use `warningDisplayMode="on-touch"` or `NGX_WARNING_DISPLAY_MODE_TOKEN` to wait for touch or submit.
 
-The `ngx-control-wrapper` component uses **polite announcements** for inline field errors, warnings, and pending states:
+### Supported ARIA form widgets
 
-- `role="status"` with `aria-live="polite"`
-- Avoids interrupting typing flow
-- Prevents excessive screen reader chatter
-
-Warnings may also appear after `validationConfig`-triggered validation, even if the
-field was not touched yet. Use `NGX_WARNING_DISPLAY_MODE_TOKEN` or
-`warningDisplayMode="on-touch"` to require touch-only warning visibility.
-
-The wrapper also:
-
-- merges its own `aria-describedby` tokens with any consumer-provided tokens (so existing hint text associations are preserved)
-- toggles `aria-invalid` only when errors are meant to be shown (based on the configured error display mode)
-- keeps the last settled errors and warnings, `aria-invalid` and `aria-describedby` while an async re-check is pending, next to the pending message. They change only when the new result settles, so a polite live region does not re-announce an unchanged message on every check. A control's first validation has nothing to keep, messages the display mode was still hiding stay hidden, and `reset()`, `resetForm()` or `resetField()` clears them at once.
-
-It sets these attributes on native `input`, `select` and `textarea` elements
-and on elements with an ARIA form-widget role: `checkbox`, `combobox`,
-`listbox`, `radiogroup`, `searchbox`, `slider`, `spinbutton`, `switch` and
-`textbox` (the roles MDN lists for `aria-invalid`). A custom control such as a
-button-based star rating therefore needs only the right role on its root:
+`<ngx-control-wrapper>` and `FormErrorControlDirective` stamp `aria-invalid` and `aria-describedby` on native `input`, `select`, and `textarea` elements, as well as elements with an ARIA form-widget role: `checkbox`, `combobox`, `listbox`, `radiogroup`, `searchbox`, `slider`, `spinbutton`, `switch`, and `textbox`.
 
 ```html
 <ngx-control-wrapper>
-  <span id="rating-label" class="label-text">Rating</span>
-  <!-- renders <div role="radiogroup" aria-labelledby="rating-label"> with radio buttons -->
+  <span id="rating-label">Rating</span>
+  <!-- Custom control renders <div role="radiogroup" aria-labelledby="rating-label"> -->
   <ngx-star-rating
     name="rating"
     ariaLabelledby="rating-label"
@@ -42,21 +28,13 @@ button-based star rating therefore needs only the right role on its root:
 </ngx-control-wrapper>
 ```
 
-Controls nested inside such a widget are skipped, because the widget is the
-element assistive technology reports. A fallback role list counts by its first
-token (`role="switch checkbox"` is a `switch`), and a role added after render
-is picked up. `aria-required` is not set on
-`role="slider"`, which does not support it. See
-[ADR-0010](./adr/0010-aria-association-targets-aria-form-widgets.md).
+Controls nested inside such a widget are skipped so assistive technology reports the widget itself. Fallback role lists match by their first token (for example `role="switch checkbox"` counts as `switch`). `aria-required` is never set on `role="slider"`, which does not support it. See [ADR-0010](./adr/0010-aria-association-targets-aria-form-widgets.md).
 
-### Required state
+## Required state
 
-Required-ness is **not inferred** from Vest validation rules.
+ngx-vest-forms does **not** infer `required` or `aria-required` from Vest rules, because requiredness is often conditional.
 
-Use one of these patterns for controls that are semantically always required:
-
-- native `required`
-- wrapper-owned `ariaRequired` on `ngx-control-wrapper`
+For controls that are unconditionally required, use either native `required` or `[ariaRequired]` on `<ngx-control-wrapper>`:
 
 ```html
 <ngx-control-wrapper ariaRequired>
@@ -65,45 +43,29 @@ Use one of these patterns for controls that are semantically always required:
 </ngx-control-wrapper>
 ```
 
-Use this only for controls that are always required. For conditionally required fields, keep the label/help text accurate and let validation messages describe the current state.
+For conditionally required fields, explain the condition in label or helper text and let validation messages describe the current state.
 
-### Submit focus recovery
+## Submit focus recovery
 
-When a form is submitted and invalid, `ngxVestForm` moves keyboard focus to the first invalid, visible field. This improves error recovery for keyboard users and people using assistive technology. Focus moves once async validation has settled and the errors have rendered, so a custom control inside `<ngx-control-wrapper>` is focused on the first submit too.
+When an invalid form is submitted, `ngxVestForm` waits for async validation to settle and errors to render, then scrolls to and focuses the first visible invalid control.
 
-If your application manages its own post-submit focus target — for example a WCAG-style error summary with `role="alert"` that receives focus on submit — disable the built-in behavior so the two don't compete:
+If your application focuses its own post-submit error summary (for example a `role="alert"` banner), disable automatic field focus so the two do not compete:
 
 ```html
 <form ngxVestForm [focusFirstInvalidOnSubmit]="false">...</form>
 ```
 
-You can still call `focusFirstInvalidControl()` / `scrollToFirstInvalidControl()` manually from your own submit flow.
+You can still call `vestForm().focusFirstInvalidControl()` or `vestForm().scrollToFirstInvalidControl()` manually.
 
-Practical guidance:
+### Security note on custom selectors
 
-- keep the most important invalid control visible after submit
-- avoid trapping the first invalid control inside collapsed regions
-- keep labels and error text associated so the focused field has enough context
+`focusFirstInvalidControl({ invalidSelector, focusSelector })` passes those strings to `querySelectorAll()` and `matches()`. Pass the exported `DEFAULT_INVALID_SELECTOR` / `DEFAULT_FOCUS_SELECTOR` constants or static CSS selectors only, never user-controlled input. Malformed selectors are caught safely. See [SECURITY.md](../SECURITY.md).
 
-#### Security: custom selectors
+## Group containers (`ngModelGroup`)
 
-`focusFirstInvalidControl({ invalidSelector, focusSelector })` passes those strings to `querySelectorAll()` / `matches()`. Always use the exported `DEFAULT_INVALID_SELECTOR` / `DEFAULT_FOCUS_SELECTOR` constants or your own static selector strings — never build a selector from user-controlled input. A malformed `invalidSelector` fails safe (the call returns `null`); a malformed `focusSelector` is also caught, but the call still returns and scrolls to the matched invalid element, just without moving focus. Either way, a selector assembled from untrusted data is the caller's responsibility. See [SECURITY.md](../SECURITY.md) for the reporting policy.
-
-### Group containers (NgModelGroup) — avoid stamping descendant controls
-
-When applying a wrapper to an `NgModelGroup` container (i.e. a region that contains multiple inputs), do **not** automatically set `aria-describedby`/`aria-invalid` on all descendant controls.
-
-Use one of these patterns:
-
-- Prefer per-field wrappers (each input has its own `<ngx-control-wrapper>`) and keep group-level messages separate.
-- Prefer using the dedicated `<ngx-form-group-wrapper>` for `NgModelGroup` containers (group-safe by default).
-- If you still want to use `<ngx-control-wrapper>` around a group container, set:
-  - `ariaAssociationMode="none"` (group-safe mode)
-
-**Recommended pattern** — `ngModelGroup` directly on the wrapper:
+Wrap `ngModelGroup` containers in `<ngx-form-group-wrapper>`, which renders group-level feedback without stamping `aria-describedby` or `aria-invalid` onto descendant controls:
 
 ```html
-<!-- ngModelGroup directly on ngx-form-group-wrapper (recommended) -->
 <ngx-form-group-wrapper ngModelGroup="address">
   <ngx-control-wrapper>
     <label for="street">Street</label>
@@ -117,87 +79,33 @@ Use one of these patterns:
 </ngx-form-group-wrapper>
 ```
 
-This keeps ARIA relationships predictable and avoids surprising changes across an entire group.
+If you wrap a multi-control container in `<ngx-control-wrapper>` instead, set `ariaAssociationMode="none"`.
 
-### Unique `id` attributes (avoid duplicates)
+## Unique IDs and SSR hydration
 
-Ensure form control `id` attributes are unique in the DOM.
+- Keep control `id` attributes unique in the DOM. When reusing a child component multiple times (for example billing and shipping addresses), derive IDs from the group name (`billingAddress-street`, `shippingAddress-street`). See [Child form components](./CHILD-COMPONENTS.md).
+- Built-in wrappers and `FormErrorControlDirective` generate region IDs per Angular application (incorporating non-default `APP_ID` values) so SSR requests do not leak counters and hydrated server/client IDs match. Never hard-code wrapper IDs; read `errorId`, `warningId`, and `pendingId` from `FormErrorControlDirective`.
 
-If you render the same child component multiple times on a page (for example, billing + shipping address),
-avoid hard-coded IDs like `id="street"`. Prefer an ID prefix derived from the group/property path
-(for example, `billingAddress-street`, `shippingAddress-street`).
+## Form-level error summaries (assertive)
 
-See: [Child Form Components](./CHILD-COMPONENTS.md).
-
-The wrappers' own message-region ids (`ngx-control-wrapper-0-error`, …) are
-numbered per application rather than per JavaScript module, so a server that
-renders many requests does not keep counting up. With full hydration the
-server and the client create the wrappers in the same order and get the same
-ids. If one page hosts several Angular applications, give each a distinct
-`APP_ID` (Angular requires this anyway); the wrappers include a non-default
-`APP_ID` in their ids, so the applications cannot produce the same id. Don't
-hard-code the ids: custom wrappers read them from `ngxErrorControl`'s
-`errorId`/`warningId`/`pendingId`.
-
-### Custom wrappers
-
-If you build a custom wrapper component, you can use `FormErrorControlDirective` to get:
-
-- stable region IDs (`errorId`, `warningId`, `pendingId`)
-- the same `aria-describedby` merging behavior
-- `aria-invalid` wiring
-
-See: [Custom Control Wrappers](./CUSTOM-CONTROL-WRAPPERS.md).
-
-### Form-Level Errors (Assertive)
-
-For blocking post-submit errors, implement a form-level summary with **assertive announcements**:
+Reserve `role="alert"` / `aria-live="assertive"` for blocking post-submit form summaries rather than inline typing feedback (WCAG ARIA19 / ARIA22):
 
 ```html
-<!-- Keep in DOM; update on submit -->
+<!-- Keep mounted in the DOM; populate when submission fails -->
 <div id="form-errors" role="alert" aria-live="assertive" aria-atomic="true">
-  <!-- Populate with error summary when form submission fails -->
+  @if (errors()[ROOT_FORM]) {
+    <p>{{ errors()[ROOT_FORM][0] }}</p>
+  }
 </div>
 ```
 
-## Why This Strategy?
+## Verification
 
-**Polite inline messages:**
+Validate accessibility changes with screen readers (VoiceOver, NVDA, JAWS), automated tools such as [Accessibility Insights](https://accessibilityinsights.io/), and keyboard-only navigation.
 
-- Update frequently as users type
-- Non-critical (users can continue typing)
-- Following WCAG guidance for continuously updating content
+## Related guides
 
-**Assertive form-level errors:**
-
-- Block critical actions (form submission)
-- Require immediate attention
-- Following WCAG ARIA19/ARIA22 guidance for blocking errors
-
-## Implementation Details
-
-See the `ControlWrapperComponent` docs for comprehensive accessibility features including:
-
-- Automatic ARIA ID generation
-- `aria-describedby` associations
-- `aria-invalid` state management
-- Unique region identification
-
-Component docs:
-
-- [`docs/CUSTOM-CONTROL-WRAPPERS.md`](./CUSTOM-CONTROL-WRAPPERS.md)
-
-For directive-only composition (no UI), see `FormErrorControlDirective`.
-
-## Validation & Testing
-
-Always validate with:
-
-- **Screen readers**: NVDA, JAWS, VoiceOver
-- **Automated tools**: [Accessibility Insights](https://accessibilityinsights.io/)
-- **Real users**: People who use assistive technologies
-
-## References
-
-- [WCAG ARIA19](https://www.w3.org/WAI/WCAG22/Techniques/aria/ARIA19) - Using role=alert
-- [WCAG ARIA22](https://www.w3.org/WAI/WCAG22/Techniques/aria/ARIA22) - Using role=status
+- [Custom control wrappers](./CUSTOM-CONTROL-WRAPPERS.md)
+- [ControlWrapperComponent README](../packages/ngx-vest-forms/src/lib/components/control-wrapper/README.md)
+- [WCAG ARIA19 (`role="alert"`)](https://www.w3.org/WAI/WCAG22/Techniques/aria/ARIA19)
+- [WCAG ARIA22 (`role="status"`)](https://www.w3.org/WAI/WCAG22/Techniques/aria/ARIA22)
