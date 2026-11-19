@@ -12,7 +12,9 @@ import {
   createValidationConfig,
   NgxVestForms,
   type NgxDeepPartial,
+  type NgxVestSuite,
 } from 'ngx-vest-forms';
+import { create, enforce, omitWhen, test } from 'vest';
 
 type SignupFormModel = NgxDeepPartial<{
   email: string;
@@ -21,6 +23,20 @@ type SignupFormModel = NgxDeepPartial<{
   country: string;
   state: string;
 }>;
+
+const signupSuite: NgxVestSuite<SignupFormModel> = create(
+  (model: SignupFormModel) => {
+    test('confirmPassword', 'Passwords must match', () => {
+      enforce(model.confirmPassword).equals(model.password);
+    });
+
+    omitWhen(model.country !== 'US', () => {
+      test('state', 'State is required for US addresses', () => {
+        enforce(model.state).isNotBlank();
+      });
+    });
+  }
+);
 
 @Component({
   selector: 'app-signup-form',
