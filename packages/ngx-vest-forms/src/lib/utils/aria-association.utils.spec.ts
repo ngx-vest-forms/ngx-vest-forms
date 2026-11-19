@@ -1,10 +1,20 @@
 import {
-  buildMessageDescribedBy,
   mergeAriaDescribedBy,
-  messageRegionIdList,
   parseAriaIdTokens,
   resolveAssociationTargets,
+  type AriaAssociationMode,
+} from 'ngx-vest-forms';
+import { expectTypeOf } from 'vitest';
+import {
+  buildMessageDescribedBy,
+  messageRegionIdList,
 } from './aria-association.utils';
+
+it('exports the supported ARIA association modes', () => {
+  expectTypeOf<AriaAssociationMode>().toEqualTypeOf<
+    'all-controls' | 'single-control' | 'none'
+  >();
+});
 
 describe('parseAriaIdTokens', () => {
   it('returns empty array for null', () => {
