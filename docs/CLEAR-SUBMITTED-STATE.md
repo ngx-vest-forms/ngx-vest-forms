@@ -82,8 +82,8 @@ async submitAll(): Promise<void> {
     form.ngForm.onSubmit(new Event('submit'));
   }
 
-  const outcomes = await Promise.all(settled);
-  if (!outcomes.every((outcome) => outcome.valid)) {
+  await Promise.all(settled);
+  if (!forms.every((form) => form.formState().valid)) {
     return;
   }
 

@@ -108,6 +108,8 @@ protected handleFieldBlur(event: NgxFieldBlurEvent<DraftFormModel>): void {
 }
 ```
 
+> **Note on `validationConfig` debounce:** Dependent fields revalidate after `NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN` (default `100` ms). If the user blurs a trigger field inside that window, `formState().valid` can still reflect the previous dependent verdict. When your form has cross-field dependencies and strict whole-form validation on blur, wait for the dependent debounce window and any pending validation to settle before reading `formState().valid` (do not call `triggerFormValidation()` from a blur handler), or use Policy A for drafts and validate the full form on `(submitSettled)`.
+
 For temporary client-only drafts, `sessionStorage` (per tab) or `localStorage` works well. For cross-device or collaborative workflows, persist drafts to your backend.
 
 ## Combining dependent validation with blur auto-save

@@ -35,7 +35,7 @@ export const suite = staticSuite((model, field?) => {
 Find affected suites (matches both single-line and multiline `if (field)` guards):
 
 ```bash
-grep -rn "if (field)" --include="*.ts"
+rg -U -n --glob '*.ts' 'if\s*\(\s*field\s*\)'
 ```
 
 ## 2. Replace `VALIDATION_CONFIG_DEBOUNCE_TIME` with `NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN`

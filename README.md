@@ -137,7 +137,7 @@ Theme the built-in wrappers with CSS custom properties, or build your own wrappe
 
 ### Submitting with async validation
 
-`(ngSubmit)` fires immediately, while async Vest rules may still be `PENDING`. Listen to `(submitSettled)` instead. It emits one `NgxSubmitSettledEvent<T>` (`{ valid, value, errors }`) per submit after dependent revalidation, `ROOT_FORM` rules, and async validators finish. If the user submits again while an earlier submit is still pending, the newer submit replaces the earlier one so only the latest emits. On an invalid submit, the form focuses the first invalid control automatically (`[focusFirstInvalidOnSubmit]="false"` disables this).
+`(ngSubmit)` fires immediately, while async Vest rules may still be `PENDING`. Listen to `(submitSettled)` instead. It triggers dependent revalidation and submit-mode `ROOT_FORM` rules, then emits one `NgxSubmitSettledEvent<T>` (`{ valid, value, errors }`) once the root form status is no longer `PENDING` (note: if a synchronous error already marks the root form `INVALID`, it emits with `valid: false` without waiting for still-pending child async validators). If the user submits again while an earlier submit is still pending, the newer submit replaces the earlier one so only the latest emits. On an invalid submit, the form focuses the first invalid control automatically (`[focusFirstInvalidOnSubmit]="false"` disables this).
 
 ### Cross-field and root-form rules
 

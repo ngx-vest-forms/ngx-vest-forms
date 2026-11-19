@@ -247,6 +247,7 @@ Hidden `<input>` elements register the real field paths with Angular's form tree
 <form
   ngxVestForm
   [suite]="suite"
+  [validationConfig]="validationConfig"
   [formValue]="formValue()"
   (formValueChange)="formValue.set($event)"
   (ngSubmit)="onSubmit()"
@@ -272,6 +273,8 @@ Hidden `<input>` elements register the real field paths with Angular's form tree
 ```
 
 ```ts
+protected readonly suite = travelValidationSuite;
+protected readonly validationConfig = travelValidationConfig;
 private readonly feedback = createFormFeedbackSignals(this.vestForm);
 protected readonly formState = this.feedback.formState;
 protected readonly warnings = this.feedback.warnings;
