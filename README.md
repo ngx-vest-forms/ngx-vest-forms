@@ -3,7 +3,7 @@
 
 # ngx-vest-forms
 
-A lightweight, type-safe adapter between Angular template-driven forms and [Vest.js](https://vestjs.dev) validation. Build complex forms with unidirectional data flow, sophisticated async validations, and minimal boilerplate.
+Type-safe adapter between Angular template-driven forms and [Vest.js](https://vestjs.dev) validation.
 
 [![npm version](https://img.shields.io/npm/v/ngx-vest-forms.svg?style=flat-square)](https://www.npmjs.com/package/ngx-vest-forms)
 [![npm beta](https://img.shields.io/npm/v/ngx-vest-forms/beta.svg?style=flat-square&label=beta&color=orange)](https://github.com/ngx-vest-forms/ngx-vest-forms/releases)
@@ -12,76 +12,68 @@ A lightweight, type-safe adapter between Angular template-driven forms and [Vest
 [![TypeScript](https://img.shields.io/badge/TypeScript-blue?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
 
-⭐ If you like this project, star it on GitHub — it helps a lot!
-
-[Quick Start](#installation--quick-start) • [Docs](#documentation) • [Key Features](#key-features) • [Migration](#migration) • [FAQ](#faq) • [Resources](#resources)
+[Quick start](#quick-start) · [Core concepts](#core-concepts) · [Documentation](#documentation) · [Migration](#migration) · [Examples](#examples)
 
 </div>
 
-> **Version notice:** This README documents **ngx-vest-forms v3**, developed on `master`. For v2.x, install `ngx-vest-forms@^2` (Angular >=19.0.0, Vest.js >=5.4.6) and read the [v2.x README](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/release/v2.x/README.md). See [Older versions](#older-versions) for the v2 docs.
+> **Version notice:** This README covers **ngx-vest-forms v3** on `master`. For v2.x (Angular >=19, Vest 5), install `ngx-vest-forms@^2` and read the [v2.x README](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/release/v2.x/README.md).
 
-> **New Maintainer**:
->
-> I'm [the-ult](https://bsky.app/profile/the-ult.bsky.social), now maintaining this project as Brecht Billiet has moved on to other priorities. Huge thanks to Brecht for creating this amazing library and his foundational work on Angular forms!
+> **Maintainer note:** [Arjen (@the-ult)](https://bsky.app/profile/the-ult.bsky.social) maintains this project since 2025, building on the original library created by Brecht Billiet.
 
 ## Why ngx-vest-forms?
 
-- Unidirectional state with Angular signals
-- Type-safe template-driven forms with development-time form contract diagnostics
-- Powerful Vest.js validations (sync/async, conditional, composable)
-- Minimal boilerplate: controls and validation wiring are automatic
+- **Unidirectional signal state.** Bind `[ngModel]` one way and update your signal from `(formValueChange)`.
+- **Vest 6 validation suites.** Keep sync, async, conditional, and cross-field rules in plain TypeScript functions, separated from your templates.
+- **Automatic control wiring.** `ngxVestForm` connects `ngModel` and `ngModelGroup` controls to your suite with field-level `suite.only(field).run(model)` runs.
+- **Accessible feedback out of the box.** Built-in `<ngx-control-wrapper>` and `<ngx-form-group-wrapper>` render errors, non-blocking warnings, and debounced pending states with WCAG 2.2 AA live regions.
+- **Development-mode form contracts.** Validate control paths against a Standard Schema (such as Zod or Valibot) or an `NgxDeepRequired<T>` object during development with zero production overhead.
 
-See the full guides under [Documentation](#documentation).
+## Prerequisites
 
-## Installation & Quick Start
+- **Angular:** `>=22.0.0 <23.0.0`
+- **Vest.js:** `>=6.3.4 <7.0.0`
+- **RxJS:** `>=7.8.0`
+- **Node.js:** `^22.23.4 || ^24.22.1 || ^26.12.1`
 
-### Prerequisites
-
-- **Angular**: >=22.0.0 <23.0.0
-- **Vest.js**: >=6.3.4 <7.0.0
-- **TypeScript**: ~6.0.3
-- **Node.js**: ^22.23.4 || ^24.22.1 || ^26.12.1
-
-### Installation
+## Installation
 
 ```bash
-npm install ngx-vest-forms@beta
+npm install ngx-vest-forms@beta vest@^6.3.4
 ```
 
-v3 is in prerelease on the npm `beta` tag; a plain `npm install ngx-vest-forms` still installs v2 until 3.0.0 is released. See the [releases](https://github.com/ngx-vest-forms/ngx-vest-forms/releases) for what changed.
+v3 ships on the npm `beta` tag until 3.0.0 is stable. Running `npm install ngx-vest-forms` without `@beta` installs v2. See [releases](https://github.com/ngx-vest-forms/ngx-vest-forms/releases) for release notes.
 
-> **v3 NOTE:**
->
-> Keep Vest suite callbacks model-only (`create((model) => { ... })`).
-> Run field-focused validation at the call site with `suite.only(field).run(model)`.
-> Do not call `only()` inside the suite callback.
->
-> Selector prefix: use `ngx-`. The legacy `sc-` prefix was removed in v3. See the [selector migration guide](./docs/SELECTOR-PREFIX-MIGRATION.md) if you are upgrading from v2.x.
-
-### Quick Start
-
-Start simple (with validations):
+## Quick start
 
 ```ts
 import { Component, signal } from '@angular/core';
 import {
   NgxVestForms,
   type NgxDeepPartial,
+  type NgxSubmitSettledEvent,
   type NgxVestSuite,
 } from 'ngx-vest-forms';
 import { create, enforce, test } from 'vest';
 
-type MyFormModel = NgxDeepPartial<{ email: string; name: string }>;
+type ContactFormModel = NgxDeepPartial<{
+  email: string;
+  name: string;
+}>;
 
-// Minimal Vest 6 suite. Field focus is handled by ngx-vest-forms at the call site
-// with suite.only(field).run(model), so the callback only receives the model.
-const suite: NgxVestSuite<MyFormModel> = create((model) => {
+// Vest 6 suite: the callback receives only the model.
+// ngx-vest-forms runs focused checks via suite.only(field).run(model).
+const contactSuite: NgxVestSuite<ContactFormModel> = create((model) => {
   test('email', 'Email is required', () => {
     enforce(model.email).isNotBlank();
+  });
+
+  test('name', 'Name is required', () => {
+    enforce(model.name).isNotBlank();
   });
 });
 
 @Component({
+  selector: 'app-contact-form',
   imports: [NgxVestForms],
   template: `
     <form
@@ -89,11 +81,11 @@ const suite: NgxVestSuite<MyFormModel> = create((model) => {
       [suite]="suite"
       [formValue]="formValue()"
       (formValueChange)="formValue.set($event)"
+      (submitSettled)="onSubmit($event)"
     >
       <ngx-control-wrapper>
         <label for="email">Email</label>
         <input id="email" name="email" [ngModel]="formValue().email" />
-        <!-- Errors display automatically below input -->
       </ngx-control-wrapper>
 
       <ngx-control-wrapper>
@@ -105,560 +97,135 @@ const suite: NgxVestSuite<MyFormModel> = create((model) => {
     </form>
   `,
 })
-export class MyComponent {
-  protected readonly formValue = signal<MyFormModel>({});
-  protected readonly suite = suite;
-}
-```
-
-Notes.
-
-- Use `[ngModel]` (not `[(ngModel)]`) for unidirectional data flow
-- The `?` operator is required because template-driven forms build values incrementally (`NgxDeepPartial`)
-- Keep Vest suite callbacks model-only (`create((model) => { ... })`); ngx-vest-forms performs focused runs with `suite.only(field).run(model)`
-- The `name` attribute MUST exactly match the property path used in `[ngModel]` — see [Field Paths](./docs/FIELD-PATHS.md)
-
-That's all you need. The directive automatically creates controls, wires validation, and manages state.
-
-## Key Features
-
-- **Unidirectional state with signals** — Models are `NgxDeepPartial<T>` so values build up incrementally
-- **Type-safe with development-time contract diagnostics** — Automatic control creation and validation wiring (dev mode checks)
-- **Vest.js validations** — Sync/async, conditional, composable patterns with `only(field)` optimization
-- **Error display modes** — Control when errors show: `on-blur`, `on-submit`, `on-blur-or-submit` (default), `on-dirty`, or `always`
-- **Warning display modes** — Control when warnings show: `on-touch`, `on-validated-or-touch` (default), `on-dirty`, or `always`
-- **Form state tracking** — Access touched, dirty, valid/invalid states for individual fields or entire form
-- **Error display helpers** — `ngx-control-wrapper` component (recommended) plus directive building blocks for custom wrappers:
-  - `ngx-form-group-wrapper` component (recommended for `ngModelGroup` containers)
-  - `FormErrorDisplayDirective` (state + display policy)
-  - `FormErrorControlDirective` (adds ARIA wiring + stable region IDs)
-- **Cross-field dependencies** — `validationConfig` for field-to-field triggers, `ROOT_FORM` for form-level rules
-- **Field blur events** — `fieldBlur` output for blur-driven draft auto-save, analytics, and field-level side effects
-- **Utilities** — Field paths, field clearing, validation config builder
-
-### Compatibility & Safety Notes (v3)
-
-- `ROOT_FORM` is the supported form-level key in v3.
-- `set` and `cloneDeep` are removed in v3; use `setValueAtPath` and `structuredClone`.
-
-### Error & Warning Display Modes
-
-Control when validation errors and warnings are shown to users with multiple built-in modes:
-
-#### Error Display Modes
-
-```typescript
-// Global configuration via DI token
-import { NGX_ERROR_DISPLAY_MODE_TOKEN } from 'ngx-vest-forms';
-
-providers: [
-  { provide: NGX_ERROR_DISPLAY_MODE_TOKEN, useValue: 'on-dirty' }
-]
-
-// Recommended: Use ngx-control-wrapper component
-<ngx-control-wrapper [errorDisplayMode]="'on-blur'">
-  <input name="email" [ngModel]="formValue().email" />
-</ngx-control-wrapper>
-```
-
-| Mode                  | Behavior                                             |
-| --------------------- | ---------------------------------------------------- |
-| `'on-blur-or-submit'` | Show after blur OR form submit (default)             |
-| `'on-blur'`           | Show only after blur/touch                           |
-| `'on-submit'`         | Show only after form submission                      |
-| `'on-dirty'`          | Show as soon as value changes (or after blur/submit) |
-| `'always'`            | Show immediately, even on pristine fields            |
-
-#### Warning Display Modes
-
-```typescript
-// Global configuration via DI token
-import { NGX_WARNING_DISPLAY_MODE_TOKEN } from 'ngx-vest-forms';
-
-providers: [
-  { provide: NGX_WARNING_DISPLAY_MODE_TOKEN, useValue: 'always' }
-]
-
-// Per-instance configuration
-<ngx-control-wrapper [warningDisplayMode]="'on-dirty'">
-  <input name="username" [ngModel]="formValue().username" />
-</ngx-control-wrapper>
-```
-
-| Mode                      | Behavior                                             |
-| ------------------------- | ---------------------------------------------------- |
-| `'on-validated-or-touch'` | Show after validation runs or touch (default)        |
-| `'on-touch'`              | Show only after blur/touch                           |
-| `'on-dirty'`              | Show as soon as value changes (or after blur/submit) |
-| `'always'`                | Show immediately, even on pristine fields            |
-
-#### Group-Safe Mode Example
-
-```html
-// Group-safe mode (use this on an ngModelGroup container)
-<ngx-form-group-wrapper ngModelGroup="address">
-  <ngx-control-wrapper>
-    <label for="street">Street</label>
-    <input id="street" name="street" [ngModel]="formValue().address?.street" />
-  </ngx-control-wrapper>
-
-  <ngx-control-wrapper>
-    <label for="city">City</label>
-    <input id="city" name="city" [ngModel]="formValue().address?.city" />
-  </ngx-control-wrapper>
-</ngx-form-group-wrapper>
-```
-
-#### ARIA association (advanced)
-
-`<ngx-control-wrapper>` can optionally apply `aria-describedby` / `aria-invalid` to **descendant** controls.
-This is controlled by `ariaAssociationMode`:
-
-- `"all-controls"` (default) — stamps all descendant `input/select/textarea` elements and elements with an ARIA form-widget role (`checkbox`, `combobox`, `listbox`, `radiogroup`, `searchbox`, `slider`, `spinbutton`, `switch`, `textbox`), so a custom control such as a button-based `role="radiogroup"` is covered. Controls inside such a widget are skipped; the widget is the one assistive technology reports.
-- `"single-control"` — stamps only if exactly one control exists (useful for input + extra buttons)
-- `"none"` — never mutates descendant controls (group-safe / manual wiring)
-
-For `ngModelGroup` containers, prefer using `<ngx-form-group-wrapper>` (group-safe by default).
-
-📖 See also:
-
-- [Accessibility Guide](./docs/ACCESSIBILITY.md)
-- [`ControlWrapperComponent` docs](./packages/ngx-vest-forms/src/lib/components/control-wrapper/README.md)
-
-> **Styling note**: `ngx-control-wrapper` and `ngx-form-group-wrapper` include built-in, framework-agnostic baseline styles.
-> They are themeable via CSS custom properties. See the [component docs](./packages/ngx-vest-forms/src/lib/components/control-wrapper/README.md#styling-and-theming).
->
-> **Upgrade note (wrappers)**: This is not a breaking API change for wrapper consumers (selectors/inputs/behavior remain stable).
-> If you previously targeted internal wrapper markup/classes with custom CSS, review and update those selectors as needed.
-> Preferred customization path: override exposed CSS custom properties before building a fully custom wrapper.
-
-📖 **[Complete Guide: Custom Control Wrappers](./docs/CUSTOM-CONTROL-WRAPPERS.md)**
-
-### Form State
-
-Access complete form and field state through the `FormErrorDisplayDirective` or `FormControlStateDirective`:
-
-```typescript
-@Component({
-  template: `
-    <ngx-control-wrapper #wrapper="ngxErrorDisplay">
-      <input name="email" [ngModel]="formValue().email" />
-
-      @if (wrapper.isTouched()) {
-        <span>Field was touched</span>
-      }
-      @if (wrapper.isPending()) {
-        <span>Validating...</span>
-      }
-    </ngx-control-wrapper>
-  `
-})
-```
-
-**Available state signals:**
-
-- `isTouched()` / `isDirty()` — User interaction state
-- `isValid()` / `isInvalid()` — Validation state
-- `isPending()` — Async validation in progress
-- `errorMessages()` / `warningMessages()` — Current validation messages
-- `shouldShowErrors()` / `shouldShowWarnings()` — Computed based on display mode and state
-
-**Warnings behavior:**
-
-- Warnings are **non-blocking** and do not make a field invalid.
-- They are stored separately from `control.errors` and are cleared on `resetForm()`.
-- These messages may appear after `validationConfig` triggers validation, even if the field was not touched yet.
-- Use `NGX_WARNING_DISPLAY_MODE_TOKEN` to control when warnings display (see [Warning Display Modes](#warning-display-modes)).
-
-**Tip**: For async validations, use `createDebouncedPendingState()` to prevent "Validating..." messages from flashing when validation completes quickly (< 200ms).
-
-📖 **[Complete Guide: Custom Control Wrappers](./docs/CUSTOM-CONTROL-WRAPPERS.md)**
-
-## Advanced Features
-
-### Validation Config
-
-Automatically re-validate dependent fields when another field changes. Essential when using Vest.js's `omitWhen`/`skipWhen` for conditional validations.
-
-**When to use**: Password confirmation, conditional required fields, or any field that depends on another field's value.
-
-```typescript
-protected readonly validationConfig = {
-  'password': ['confirmPassword'],  // When password changes, re-validate confirmPassword
-  'age': ['emergencyContact']       // When age changes, re-validate emergencyContact
-};
-```
-
-**Important**: `validationConfig` only triggers re-validation—validation logic is always defined in your Vest suite.
-
-For dependent fields that should become invalid immediately but stay visually quiet until the
-target field's own blur/display policy allows errors, combine `validationConfig` with
-`errorDisplayMode="on-blur"` on the target wrappers:
-
-```typescript
-protected readonly validationConfig = createValidationConfig<FormModel>()
-  .whenChanged('quantity', 'justification')
-  .build();
-```
-
-This pairs well with `<ngx-control-wrapper [errorDisplayMode]="'on-blur'">`.
-
-Avoid calling `triggerFormValidation()` from field-level blur handlers to force this UX.
-`validationConfig` already re-runs the dependent validation, and the wrapper's
-`errorDisplayMode` decides when the dependent field becomes visibly noisy.
-Extra blur-triggered validation can restart async validators unnecessarily and make
-the flow harder to reason about.
-
-If you also want draft auto-save on blur, keep persistence separate from validation and
-listen to the form's `fieldBlur` output. That gives you immediate dependent validity,
-quiet untouched dependents, and blur-triggered save orchestration without coupling the
-library to persistence policy.
-
-📖 **[Complete Guide: ValidationConfig vs Root-Form](./docs/VALIDATION-CONFIG-VS-ROOT-FORM.md)**
-
-### Field Blur Events & Draft Auto-Save
-
-Use the form's `fieldBlur` output to build blur-driven workflows such as draft auto-save.
-
-```typescript
-protected handleFieldBlur(event: NgxFieldBlurEvent<FormModel>): void {
-  if (!event.formValue || !event.dirty) {
-    return;
-  }
-
-  this.saveDraft(event.formValue);
-}
-```
-
-```html
-<form
-  ngxVestForm
-  [formValue]="formValue()"
-  (formValueChange)="formValue.set($event)"
-  (fieldBlur)="handleFieldBlur($event)"
->
-  <ngx-control-wrapper>
-    <label for="projectName">Project name</label>
-    <input
-      id="projectName"
-      name="projectName"
-      [ngModel]="formValue().projectName"
-    />
-  </ngx-control-wrapper>
-</form>
-```
-
-The output payload includes:
-
-- `field`
-- `value`
-- `formValue`
-- `dirty`
-- `touched`
-- `valid`
-- `pending`
-
-For draft persistence, prefer treating `pending` as informational metadata rather
-than a blocker. If you gate blur saves on `pending`, async validation can prevent
-the latest draft from being persisted even though the user has finished editing.
-
-Both blur-save policies are supported:
-
-- **Always save drafts** — recommended for draft persistence and recovery-oriented UX
-- **Only save if valid** — useful when blur triggers stricter side effects instead of draft saves
-
-For the valid-only variant, layer app policy on top of `fieldBlur`, for example:
-
-```typescript
-protected handleFieldBlur(event: NgxFieldBlurEvent<FormModel>): void {
-  if (!event.formValue || !event.dirty || !event.valid) {
-    return;
-  }
-
-  this.saveDraft(event.formValue);
-}
-```
-
-The examples app includes a complete blur-driven draft persistence implementation:
-
-- route: `/auto-save-demo`
-- source: `apps/examples/src/app/pages/auto-save-demo/`
-
-That example intentionally demonstrates the **always-save draft** policy.
-
-📖 **[Guide: Auto-Save on Blur](./docs/AUTO-SAVE-ON-BLUR.md)**
-
-### Root-Form Validation
-
-Form-level validation rules that don't belong to any specific field (e.g., "at least one contact method required").
-
-**When to use**: Business rules that evaluate multiple fields but errors should appear at form level, not on individual fields.
-
-```typescript
-import { ROOT_FORM } from 'ngx-vest-forms';
-
-// In your Vest suite
-test(ROOT_FORM, 'At least one contact method is required', () => {
-  enforce(model.email || model.phone).isTruthy();
-});
-```
-
-```html
-<!-- In template -->
-<form
-  ngxVestForm
-  ngxValidateRootForm
-  [suite]="suite"
-  [formValue]="formValue()"
-  (errorsChange)="errors.set($event)"
->
-  @if (errors()[ROOT_FORM]) {
-  <div role="alert">{{ errors()[ROOT_FORM][0] }}</div>
-  }
-</form>
-```
-
-📖 **[Complete Guide: ValidationConfig vs Root-Form](./docs/VALIDATION-CONFIG-VS-ROOT-FORM.md)**
-
-### Dynamic Form Structure
-
-Manually trigger validation when form structure changes between **input fields and non-input content** (like `<p>` tags) without value changes.
-
-**When to use**: When switching from form controls to informational text/paragraphs where no control values change.
-
-**NOT needed when**: Switching between different input fields (value changes trigger validation automatically).
-
-**IMPORTANT**: `triggerFormValidation()` only re-runs validation logic—it does NOT mark fields as touched or show errors.
-
-> **Note on form submission**: With the default `on-blur-or-submit` error display mode, errors are shown automatically when you submit via `(ngSubmit)`. The form automatically calls `markAllAsTouched()` internally. You only need to call `markAllAsTouched()` manually for special cases like multiple forms with one submit button.
-
-```typescript
-// Structure change: Re-run validation
-@if (type() === 'typeA') {
-  <input name="fieldA" [ngModel]="formValue().fieldA" />
-} @else {
-  <p>No input required</p>  // ← No form control, needs triggerFormValidation()
-}
-
-onTypeChange(newType: string) {
-  this.formValue.update(v => ({ ...v, type: newType }));
-  this.vestForm.triggerFormValidation();  // Re-runs validation, doesn't show errors
-}
-
-// Standard form submission - NO manual call needed!
-// Errors shown automatically via (ngSubmit) with default on-blur-or-submit mode
-<form ngxVestForm (ngSubmit)="save()">
-  <!-- ... -->
-  <button type="submit">Submit</button>
-</form>
-
-// Multiple forms with one button - NEED manual markAllAsTouched()
-submitBoth() {
-  this.form1().markAllAsTouched();
-  this.form2().markAllAsTouched();
-  if (this.form1().valid && this.form2().valid) {
-    // Submit logic
+export class ContactFormComponent {
+  protected readonly formValue = signal<ContactFormModel>({});
+  protected readonly suite = contactSuite;
+
+  protected onSubmit(event: NgxSubmitSettledEvent<ContactFormModel>): void {
+    if (!event.valid) {
+      return;
+    }
+
+    console.log('Submitted:', event.value);
   }
 }
 ```
 
-📖 **[Complete Guide: Structure Change Detection](./docs/STRUCTURE_CHANGE_DETECTION.md)**
+### Four rules to follow
+
+1. **Use `[ngModel]`, not `[(ngModel)]`.** Update the model signal through `(formValueChange)` on `<form ngxVestForm>`.
+2. **Type form models with `NgxDeepPartial<T>`.** Template-driven forms populate values incrementally, so read nested paths with optional chaining (`formValue().address?.street`).
+3. **Match `name` and `ngModelGroup` to the model path.** A `name="street"` inside `ngModelGroup="address"` maps to `address.street`.
+4. **Keep Vest 6 suite callbacks model-only.** Write `create((model) => { ... })` and do not call `only()` inside the callback.
+
+For a fuller step-by-step walkthrough, see [Complete example](./docs/COMPLETE-EXAMPLE.md) or run the `/starter` demo in `apps/examples`.
+
+## Core concepts
+
+### Wrappers and display modes
+
+Wrap single controls in `<ngx-control-wrapper>` and `ngModelGroup` containers in `<ngx-form-group-wrapper>`. Both render inline errors, non-blocking warnings (`warn()` in Vest), and a debounced pending indicator for async tests.
+
+Configure visibility per wrapper or app-wide with `NGX_ERROR_DISPLAY_MODE_TOKEN` and `NGX_WARNING_DISPLAY_MODE_TOKEN`:
+
+- **Error display modes:** `'on-blur-or-submit'` (default), `'on-blur'`, `'on-submit'`, `'on-dirty'`, `'always'`.
+- **Warning display modes:** `'on-validated-or-touch'` (default), `'on-touch'`, `'on-dirty'`, `'always'`.
+
+Theme the built-in wrappers with CSS custom properties, or build your own wrapper on `FormErrorDisplayDirective` (`ngxErrorDisplay`) and `FormErrorControlDirective` (`ngxErrorControl`). See [Built-in control wrapper](./packages/ngx-vest-forms/src/lib/components/control-wrapper/README.md) and [Custom control wrappers](./docs/CUSTOM-CONTROL-WRAPPERS.md).
 
 ### Submitting with async validation
 
-`(ngSubmit)` fires right away, so with async Vest tests (for example a username availability check) the form can still be `PENDING` when your handler runs. Use `(submitSettled)` instead: it emits once per submit, after validation has finished, with the outcome.
+`(ngSubmit)` fires immediately, while async Vest rules may still be `PENDING`. Listen to `(submitSettled)` instead. It emits one `NgxSubmitSettledEvent<T>` (`{ valid, value, errors }`) per submit after dependent revalidation, `ROOT_FORM` rules, and async validators finish. On an invalid submit, the form focuses the first invalid control automatically (`[focusFirstInvalidOnSubmit]="false"` disables this).
 
-```html
-<form
-  ngxVestForm
-  [suite]="suite"
-  [formValue]="formValue()"
-  (formValueChange)="formValue.set($event)"
-  (submitSettled)="onSubmit($event)"
->
-  <!-- controls -->
-  <button type="submit">Save</button>
-</form>
-```
+### Cross-field and root-form rules
 
-```typescript
-onSubmit(event: NgxSubmitSettledEvent<MyFormModel>) {
-  if (event.valid) {
-    this.save(event.value);
-  }
-}
-```
+- Use `[validationConfig]` (with `createValidationConfig<T>()`) when changing one field must revalidate another, such as password confirmation or conditional `omitWhen`/`skipWhen` rules.
+- Use `ngxValidateRootForm` with `ROOT_FORM` when an error belongs to the whole form rather than a single input (for example, "provide either an email or a phone number").
 
-`event.errors` holds the blocking errors by field path, as `(errorsChange)` reports them. Focusing the first invalid control on a failed submit still happens automatically.
+See [ValidationConfig vs root-form](./docs/VALIDATION-CONFIG-VS-ROOT-FORM.md) and [ValidationConfig builder](./docs/VALIDATION-CONFIG-BUILDER.md).
 
-With a `[validationConfig]`, every submit revalidates the dependent fields once your `(ngSubmit)` handlers have run, and both `(submitSettled)` and the `(errorsChange)` emission for that submit wait for it. A submit made right after editing a trigger field (for example `password`, just before `confirmPassword` is rechecked) can't pass on a stale result.
+### Development-mode form contracts
 
-### Form Contract Diagnostics (Development Mode)
+Pass a [Standard Schema v1](https://standardschema.dev) schema (such as Zod v4 or Valibot) or an `NgxDeepRequired<T>` object via `provideFormContract(...)` (or `[formContract]` when it varies per instance). In development mode, ngx-vest-forms warns in the console when a control `name` or value shape drifts from the contract, without affecting runtime validity or production bundles.
 
-In development mode, ngx-vest-forms can lint the live form value against a form contract, catching common mistakes early. New code should prefer reusing an existing Standard Schema (for example Zod or Valibot) via `provideFormContract(schema)`. Legacy `NgxDeepRequired<T>` object contracts still work as a migration-friendly fallback:
-
-```typescript
-// Your model
-type MyFormModel = NgxDeepPartial<{
-  email: string;
-  address: { street: string; city: string };
-}>;
-
-// Legacy fallback contract for development-time diagnostics
-const legacyContract: NgxDeepRequired<MyFormModel> = {
-  email: '',
-  address: { street: '', city: '' },
-};
-
-// Model-only Vest 6 suite (see Quick Start)
-const suite: NgxVestSuite<MyFormModel> = create((model) => {
-  test('email', 'Email is required', () => {
-    enforce(model.email).isNotBlank();
-  });
-});
-```
-
-```typescript
+```ts
 @Component({
   imports: [NgxVestForms],
-  providers: [provideFormContract(legacyContract)],
+  providers: [provideFormContract(myZodSchema)],
   template: `
-    <form ngxVestForm [suite]="suite">
-      <!-- ✅ Correct: matches contract -->
+    <form
+      ngxVestForm
+      [suite]="suite"
+      [formValue]="formValue()"
+      (formValueChange)="formValue.set($event)"
+    >
       <input name="email" [ngModel]="formValue().email" />
-      <input name="address.street" [ngModel]="formValue().address?.street" />
-
-      <!-- ❌ Error in dev mode: typo detected -->
-      <input name="emial" [ngModel]="formValue().email" />
-
-      <!-- ❌ Error in dev mode: path doesn't exist in contract -->
-      <input name="address.zipcode" [ngModel]="formValue().address?.zipcode" />
+      <div ngModelGroup="address">
+        <input name="street" [ngModel]="formValue().address?.street" />
+      </div>
     </form>
   `,
 })
-export class MyFormComponent {
+export class AddressFormComponent {
   protected readonly formValue = signal<MyFormModel>({});
-  protected readonly suite = suite;
+  protected readonly suite = mySuite;
 }
 ```
 
-If the contract genuinely varies per usage site, `[formContract]` still works as an explicit override.
+### Dynamic forms and Signal Forms controls
 
-**Benefits:**
-
-- Catch typos in `name` attributes immediately during development
-- Reuse an existing schema instead of maintaining a separate contract object
-- Ensure template structure matches your contract or schema
-- Zero runtime cost in production (checks disabled automatically)
-- Works with nested objects and arrays
-
-**Important**:
-
-- Contract diagnostics only run in development mode (`isDevMode()` returns `true`).
-- Unknown-key warnings depend on the strictness of the supplied Standard Schema. Legacy `NgxDeepRequired<T>` contracts keep the old extra-property typo checks.
-- The directive only consumes **synchronous** contract results for diagnostics. Async schemas are ignored by this development-only pass.
-
-📖 **[Complete Guide: Field Paths](./docs/FIELD-PATHS.md)**
+- **Dynamic fields:** Clear hidden model fields inside `(formValueChange)` with `clearFieldsWhen()`, purge removed fields from Vest 6 state with `vestForm().removeField(path)`, and call `triggerFormValidation()` when switching between form controls and static text without a value change. See [Field clearing utilities](./docs/FIELD-CLEARING-UTILITIES.md) and [Structure change detection](./docs/STRUCTURE_CHANGE_DETECTION.md).
+- **Signal Forms custom controls:** Components implementing Angular Signal Forms `FormValueControl` or `FormCheckboxControl` work with `[ngModel]` inside `<form ngxVestForm>` without a `ControlValueAccessor`. See [Custom control wrappers](./docs/CUSTOM-CONTROL-WRAPPERS.md#signal-forms-controls-inside-a-wrapper) and `/signal-forms-interop` in `apps/examples`.
 
 ## Documentation
 
-### Getting Started
+### Getting started
 
-- **[Complete Example](./docs/COMPLETE-EXAMPLE.md)** - Step-by-step walkthrough from basic form to advanced patterns
-- **[Composable Validations](./docs/COMPOSABLE-VALIDATIONS.md)** - Break validation logic into reusable, testable functions
+- [Complete example](./docs/COMPLETE-EXAMPLE.md) - Step-by-step form setup, contract diagnostics, and derived feedback signals
+- [Composable validations](./docs/COMPOSABLE-VALIDATIONS.md) - Reusable Vest 6 validation helpers, `memo()`, async `AbortSignal`, and `validationFocus`
 
-### Advanced Patterns
+### Validation and form lifecycle
 
-- **[ValidationConfig vs Root-Form](./docs/VALIDATION-CONFIG-VS-ROOT-FORM.md)** - Cross-field dependencies and form-level rules
-- **[Auto-Save on Blur](./docs/AUTO-SAVE-ON-BLUR.md)** - Build draft persistence with `fieldBlur` and calm dependent validation
-- **[Clear Submitted State](./docs/CLEAR-SUBMITTED-STATE.md)** - End a submit cycle without resetting values or control metadata
-- **[Field Path Types](./docs/FIELD-PATHS.md)** - Type-safe dot-notation paths for nested properties
-- **[Structure Change Detection](./docs/STRUCTURE_CHANGE_DETECTION.md)** - Handle dynamic form structure updates
-- **[Field Clearing Utilities](./docs/FIELD-CLEARING-UTILITIES.md)** - Type-safe utilities for clearing nested form values
+- [ValidationConfig vs root-form](./docs/VALIDATION-CONFIG-VS-ROOT-FORM.md) - Choose between `validationConfig`, `ROOT_FORM`, and `triggerFormValidation()`
+- [ValidationConfig builder](./docs/VALIDATION-CONFIG-BUILDER.md) - Type-safe fluent API for dependent-field revalidation
+- [Field clearing utilities](./docs/FIELD-CLEARING-UTILITIES.md) - Clear hidden fields with `clearFieldsWhen`, `clearFields`, `keepFieldsWhen`, and `removeField()`
+- [Structure change detection](./docs/STRUCTURE_CHANGE_DETECTION.md) - Re-evaluate validity when templates switch between controls and static content
+- [Clear submitted state](./docs/CLEAR-SUBMITTED-STATE.md) - End a submit cycle without resetting values or touched state
 
-### UI & Integration
+### UI, composition, and patterns
 
-- **[Child Components](./docs/CHILD-COMPONENTS.md)** - Split large forms into smaller, maintainable components
-- **[Composite Adapter Recipe](./docs/COMPOSITE-ADAPTER-RECIPE.md)** - Map one composite widget to multiple real form field paths
-- **[Custom Control Wrappers](./docs/CUSTOM-CONTROL-WRAPPERS.md)** - Build consistent error display patterns
-- **[API Tokens](./docs/API-TOKENS.md)** - Configure error display modes and other global settings
-- **[Troubleshooting Diagnostics](./docs/TROUBLESHOOTING.md)** - Understand and fix development-mode diagnostics such as `NGX-100`, `NGX-103`, and `NGX-105`
+- [Built-in control wrapper](./packages/ngx-vest-forms/src/lib/components/control-wrapper/README.md) - Inputs, display modes, ARIA modes, and CSS theming tokens
+- [Custom control wrappers](./docs/CUSTOM-CONTROL-WRAPPERS.md) - Build custom wrappers with `ngxErrorDisplay`, `ngxErrorControl`, debounced pending states, and Signal Forms controls
+- [Accessibility](./docs/ACCESSIBILITY.md) - WCAG 2.2 AA live regions, ARIA widget association, and first-invalid focus
+- [Child components](./docs/CHILD-COMPONENTS.md) - Split large forms with `vestFormsViewProviders` and `ngModelGroup`
+- [Composite adapter recipe](./docs/COMPOSITE-ADAPTER-RECIPE.md) - Map one composite widget (such as a date-range picker) to multiple field paths
+- [Auto-save on blur](./docs/AUTO-SAVE-ON-BLUR.md) - Build draft persistence with `(fieldBlur)` and quiet dependent validation
 
-### Reference
+### Configuration and reference
 
-- **[Utilities README](./packages/ngx-vest-forms/src/lib/utils/README.md)** - Canonical reference for all utility functions
-- **[Suite Type Compatibility](./docs/TYPE-COMPATIBILITY.md)** - Typing suites with `NgxVestSuite<T>`
-- **[Security Policy](./SECURITY.md)** - How to report a vulnerability, supported versions, and scope
-
-### Examples
-
-- **[Examples Project](./apps/examples)** - Working code examples with business hours forms, purchase forms, validation config demos, and blur-driven draft auto-save
-  - Run locally: `corepack enable && pnpm install && pnpm start`
-  - Includes smart components, UI components, and complete validation patterns
-
-### Older versions
-
-- **[v2.x README](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/release/v2.x/README.md)** - Install with `npm install ngx-vest-forms@^2`
-- **[v2.x docs folder](https://github.com/ngx-vest-forms/ngx-vest-forms/tree/release/v2.x/docs)** - All v2 guides. The most used:
-  - **[Complete Example](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/release/v2.x/docs/COMPLETE-EXAMPLE.md)** - Step-by-step walkthrough from basic form to advanced patterns
-  - **[ValidationConfig vs Root-Form](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/release/v2.x/docs/VALIDATION-CONFIG-VS-ROOT-FORM.md)** - Cross-field dependencies and form-level rules
-  - **[Field Path Types](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/release/v2.x/docs/FIELD-PATHS.md)** - Type-safe dot-notation paths for nested properties
-  - **[Custom Control Wrappers](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/release/v2.x/docs/CUSTOM-CONTROL-WRAPPERS.md)** - Build consistent error display patterns
-  - **[API Tokens](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/release/v2.x/docs/API-TOKENS.md)** - Error display modes and other global settings
-- **[v1.x README](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/release/v1.x/README.md)** - Legacy 1.x. Upgrade notes are in [Migration](#migration)
+- [API tokens](./docs/API-TOKENS.md) - Global and component-level DI tokens (`NGX_ERROR_DISPLAY_MODE_TOKEN`, `NGX_WARNING_DISPLAY_MODE_TOKEN`, `NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN`, `NGX_FORM_CONTRACT`, `NGX_PENDING_LABEL`, `NGX_EQUALITY_FN`)
+- [Field path types](./docs/FIELD-PATHS.md) - Compile-time path types (`FieldPath<T>`, `ValidationConfigMap<T>`, `FormFieldName<T>`)
+- [Suite type compatibility](./docs/TYPE-COMPATIBILITY.md) - Typing suites with `NgxVestSuite<T>` and schema-typed suites
+- [Utilities reference](./packages/ngx-vest-forms/src/lib/utils/README.md) - Canonical reference for public and `ngx-vest-forms/internal` utilities
+- [Troubleshooting diagnostics](./docs/TROUBLESHOOTING.md) - Every `NGX-xxx` development-mode warning and how to fix it
+- [Security policy](./SECURITY.md) - Vulnerability reporting and supported versions
 
 ## Migration
 
-- v1.x → v2.0.0: **[Migration Guide](./docs/migration/MIGRATION-v1.x-to-v2.0.0.md)**
-- v2.x → v3.0.0: **[Migration Guide](./docs/migration/MIGRATION-v2.x-to-v3.0.0.md)**
+- [v2.x to v3.0.0 migration guide](./docs/migration/MIGRATION-v2.x-to-v3.0.0.md)
+- [Selector prefix migration (`sc-` to `ngx-`)](./docs/SELECTOR-PREFIX-MIGRATION.md)
+- [v1.x to v2.0.0 migration guide](./docs/migration/MIGRATION-v1.x-to-v2.0.0.md)
 
-Staying on v2.x? Use the v2 docs listed in [Older versions](#older-versions).
+### Older versions
 
-### `[formShape]` → `[formContract]` (v3)
+- [v2.x README](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/release/v2.x/README.md) and [v2.x docs](https://github.com/ngx-vest-forms/ngx-vest-forms/tree/release/v2.x/docs) (`npm install ngx-vest-forms@^2`)
+- [v1.x README](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/release/v1.x/README.md)
 
-The `[formShape]` input on `<form ngxVestForm>` is replaced by `[formContract]`, which accepts any [Standard Schema v1](https://standardschema.dev) value (Zod v4, Valibot, hand-rolled, …) **or** a legacy `NgxDeepRequired<T>` shape for back-compat:
+## Examples
 
-```html
-<!-- v2 -->
-<form ngxVestForm [suite]="suite" [formShape]="shape"></form>
+The workspace includes a runnable [Examples App](./apps/examples) covering starter forms, async validation, warnings, Zod and native Vest schemas, nested repeatable forms, custom `ControlValueAccessor` and Signal Forms controls, composite adapters, auto-save on blur, and a multi-form wizard.
 
-<!-- v3: legacy shape fallback still works -->
-<form ngxVestForm [suite]="suite" [formContract]="shape"></form>
-
-<!-- v3: explicit conversion to StandardSchemaV1. A template cannot call
-     toFormContract itself; convert once in the component:
-     protected readonly contract = toFormContract(shape); -->
-<form ngxVestForm [suite]="suite" [formContract]="contract"></form>
-
-<!-- v3: real Standard Schema (recommended for new code) -->
-<form ngxVestForm [suite]="suite" [formContract]="zodSchema"></form>
-```
-
-`@standard-schema/spec` provides the `StandardSchemaV1` types and is a regular dependency of ngx-vest-forms, so it is installed automatically. The internal `validateShape()` helper has been removed; use `toFormContract()` if you need explicit shape→schema conversion.
-
-Browser support follows Angular 22+ targets (no `structuredClone` polyfill required).
-
-## FAQ
-
-### Do I need validations to use ngx-vest-forms?
-
-No—but you’ll almost always want them. Common cases to start without a suite:
-
-- Prototyping UI while deferring rules
-- Gradual migration: adopt unidirectional state and type-safe models first
-- Server-driven validation: display backend errors while you add a client suite later
-
-You can add a Vest suite at any time by binding `[suite]` on the form.
-
-## Resources
-
-### Documentation & Tutorials
-
-- **[Angular Official Documentation](https://angular.dev/guide/forms)** - Template-driven forms guide
-- **[Vest.js Documentation](https://vestjs.dev)** - Validation framework used by ngx-vest-forms
-- **[Live Examples Repository](https://github.com/ngx-vest-forms/ngx-vest-forms/tree/master/apps/examples)** - Complex form examples and patterns
-
-### Running Examples Locally
+Run it locally:
 
 ```bash
 corepack enable
@@ -666,72 +233,45 @@ pnpm install
 pnpm start
 ```
 
-### Learning Resources
+For end-to-end Playwright test setup, see [apps/examples-e2e/README.md](./apps/examples-e2e/README.md).
 
-**[Complex Angular Template-Driven Forms Course](https://www.simplified.courses/complex-angular-template-driven-forms)** - Master advanced form patterns and become a form expert.
+## FAQ
 
-### Founding Articles by Brecht Billiet
+### Do I need a Vest suite to use ngx-vest-forms?
 
-This library was originally created by [Brecht Billiet](https://twitter.com/brechtbilliet). Here are his foundational blog posts that inspired and guided the development:
+No. You can bind `<form ngxVestForm [formValue]="formValue()" (formValueChange)="formValue.set($event)">` without `[suite]` while prototyping, migrating incrementally, or relying on server-side errors, and attach `[suite]` later.
 
-- **[Introducing ngx-vest-forms](https://blog.simplified.courses/introducing-ngx-vest-forms/)** - The original introduction and motivation
-- **[Making Angular Template-Driven Forms Type-Safe](https://blog.simplified.courses/making-angular-template-driven-forms-typesafe/)** - Deep dive into type safety
-- **[Asynchronous Form Validators in Angular with Vest](https://blog.simplified.courses/asynchronous-form-validators-in-angular-with-vest/)** - Advanced async validation patterns
-- **[Template-Driven Forms with Form Arrays](https://blog.simplified.courses/template-driven-forms-with-form-arrays/)** - Dynamic form arrays implementation
+## Developer resources
 
-## Developer Resources
+### Agent skills
 
-### Agent Skills
-
-This repository includes local Agent Skills under `.agents/skills/`.
-
-Compatible agent clients (including VS Code Agent mode) can discover these skills automatically when you open the repository. In VS Code, run `/skills` to confirm that `ngx-vest-forms` and `vestjs` are available.
-
-This repository also ships installable skills for users who want to add them from GitHub rather than copy the repository locally.
-
-Install the `ngx-vest-forms` skill from the repository root with the `skills` CLI:
+Install the published Agent Skills for AI coding assistants:
 
 ```bash
 npx skills add ngx-vest-forms/ngx-vest-forms --skill ngx-vest-forms
-```
-
-The skill reads the ngx-vest-forms version installed in your project before it writes code, answers v2 projects from the v2 docs, and includes a step-by-step v2 → v3 migration workflow.
-
-Install the **Vest.js guidance** skill from the repository root with the `skills` CLI:
-
-```bash
 npx skills add ngx-vest-forms/ngx-vest-forms --skill vestjs
 ```
 
-See also: **[Vest.js Agent Skill Guide](./docs/VESTJS-SKILL.md)**
+The `ngx-vest-forms` skill checks the version installed in your project, answers v2 projects from the v2 docs, and includes a v2-to-v3 migration workflow. See [Vest.js agent skill guide](./docs/VESTJS-SKILL.md) and [AGENTS.md](./AGENTS.md).
 
-### Agent instructions
+### External learning resources
 
-- **[`AGENTS.md`](AGENTS.md)** - Workspace instructions shared by GitHub Copilot and Claude Code
+- [Angular template-driven forms guide](https://angular.dev/guide/forms)
+- [Vest.js documentation](https://vestjs.dev)
+- [Complex Angular Template-Driven Forms course](https://www.simplified.courses/complex-angular-template-driven-forms)
+- Founding articles by Brecht Billiet:
+  - [Introducing ngx-vest-forms](https://blog.simplified.courses/introducing-ngx-vest-forms/)
+  - [Making Angular Template-Driven Forms Type-Safe](https://blog.simplified.courses/making-angular-template-driven-forms-typesafe/)
+  - [Asynchronous Form Validators in Angular with Vest](https://blog.simplified.courses/asynchronous-form-validators-in-angular-with-vest/)
+  - [Template-Driven Forms with Form Arrays](https://blog.simplified.courses/template-driven-forms-with-form-arrays/)
 
 ## Acknowledgments
 
-🙏 **Special thanks to [Brecht Billiet](https://twitter.com/brechtbilliet)** for creating the original version of this library and his pioneering work on Angular forms. His vision and expertise laid the foundation for what ngx-vest-forms has become today.
-
-### Maintainers
-
-**[Arjen (@the-ult)](https://github.com/the-ult)** - Lead maintainer since 2025
-
-### Core Contributors & Inspirations
-
-**[Evyatar Alush](https://twitter.com/evyataral)** - Creator of [Vest.js](https://vestjs.dev/)
-
-- 🎯 **The validation engine** that powers ngx-vest-forms
-- 🎙️ **Featured on PodRocket**: [Vest with Evyatar Alush](https://dev.to/podrocket/vest-with-evyatar-alush) - Deep dive into the philosophy and architecture of Vest.js
-
-**[Ward Bell](https://twitter.com/wardbell)** - Template-Driven Forms Advocate
-
-- 📢 **Evangelized Template-Driven Forms**: [Prefer Template-Driven Forms](https://devconf.net/talk/prefer-template-driven-forms-ward-bell-ng-conf-2021) (ng-conf 2021)
-- 🎥 **Original Vest.js + Angular Integration**: [Form validation done right](https://www.youtube.com/watch?v=EMUAtQlh9Ko) - The foundational talk that inspired this approach
-- 💻 **Early Implementation**: [ngc-validate](https://github.com/wardbell/ngc-validate) - The initial version of template-driven forms with Vest.js
-
-These pioneers laid the groundwork that made ngx-vest-forms possible, combining the power of declarative validation with the elegance of Angular's template-driven approach.
+- **[Brecht Billiet](https://twitter.com/brechtbilliet)** - Original creator of ngx-vest-forms.
+- **[Arjen (@the-ult)](https://github.com/the-ult)** - Lead maintainer since 2025.
+- **[Evyatar Alush](https://twitter.com/evyataral)** - Creator of [Vest.js](https://vestjs.dev/) ([PodRocket interview](https://dev.to/podrocket/vest-with-evyatar-alush)).
+- **[Ward Bell](https://twitter.com/wardbell)** - Creator of [ngc-validate](https://github.com/wardbell/ngc-validate) and speaker on template-driven forms ([Prefer Template-Driven Forms](https://devconf.net/talk/prefer-template-driven-forms-ward-bell-ng-conf-2021), [Form validation done right](https://www.youtube.com/watch?v=EMUAtQlh9Ko)).
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT. See [LICENSE](LICENSE).
