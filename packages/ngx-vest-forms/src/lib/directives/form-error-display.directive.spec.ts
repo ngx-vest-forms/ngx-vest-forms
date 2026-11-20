@@ -1005,24 +1005,23 @@ describe('FormErrorDisplayDirective and FormDirective.resetField', () => {
 
 @Component({
   template: `
-    <form ngxVestForm [suite]="suite" [formValue]="formValue()">
+    <form #f="ngForm">
       <div ngxErrorDisplay [warningDisplayMode]="'on-touch'">
-        <input name="username" [ngModel]="formValue().username" />
+        <input name="username" [ngModel]="username()" />
       </div>
       <button id="submit-btn" type="submit">Submit</button>
     </form>
   `,
-  imports: [FormsModule, FormDirective, FormErrorDisplayDirective],
+  imports: [FormsModule, FormErrorDisplayDirective],
 })
 class WarningOnTouchSubmitHostComponent {
-  readonly formValue = signal<{ username?: string }>({ username: 'x' });
-  readonly suite = noTestsSuite;
-  readonly vestForm = viewChild.required(FormDirective);
+  readonly username = signal('x');
+  readonly ngForm = viewChild.required(NgForm);
   readonly display = viewChild.required(FormErrorDisplayDirective);
 }
 
 describe('FormErrorDisplayDirective - on-touch warning mode on submit', () => {
-  it('shows warnings for an untouched control after form submission', async () => {
+  it('shows warnings via formSubmitted even when the control stays untouched', async () => {
     await TestBed.configureTestingModule({
       imports: [WarningOnTouchSubmitHostComponent],
     }).compileComponents();
@@ -1031,9 +1030,12 @@ describe('FormErrorDisplayDirective - on-touch warning mode on submit', () => {
     fixture.detectChanges();
     await TestBed.inject(ApplicationRef).whenStable();
 
-    host.vestForm().fieldWarnings.set(new Map([['username', ['Short name']]]));
+    const control = host.ngForm().form.get('username');
+    if (!control) throw new Error('username control missing');
+    control.setErrors({ warnings: ['Short name'] });
     fixture.detectChanges();
 
+    expect(host.display().isTouched()).toBe(false);
     expect(host.display().shouldShowWarnings()).toBe(false);
 
     const submitBtn: HTMLButtonElement =
@@ -1043,6 +1045,8 @@ describe('FormErrorDisplayDirective - on-touch warning mode on submit', () => {
     await TestBed.inject(ApplicationRef).whenStable();
 
     await expect.poll(() => host.display().shouldShowWarnings()).toBe(true);
+    expect(host.display().isTouched()).toBe(false);
+    expect(host.display().formSubmitted()).toBe(true);
     expect(host.display().warnings()).toEqual(['Short name']);
   });
 });

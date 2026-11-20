@@ -22,20 +22,20 @@ A control wrapper around a whole group stamps one error onto every descendant in
 
 Set per wrapper with `[errorDisplayMode]` / `[warningDisplayMode]`, or app-wide with `NGX_ERROR_DISPLAY_MODE_TOKEN` / `NGX_WARNING_DISPLAY_MODE_TOKEN`.
 
-| Error mode                      | Shows errors                                                            |
-| ------------------------------- | ----------------------------------------------------------------------- |
-| `'on-blur-or-submit'` (default) | after blur or submit; the right default for most forms                  |
-| `'on-blur'`                     | deprecated alias for `'on-blur-or-submit'` (removal in v4)              |
-| `'on-submit'`                   | after submit only                                                       |
-| `'on-dirty'`                    | as soon as the value changes, or after touch/submit                     |
-| `'always'`                      | immediately, even when pristine; use deliberately                       |
+| Error mode                      | Shows errors                                                                       |
+| ------------------------------- | ---------------------------------------------------------------------------------- |
+| `'on-blur-or-submit'` (default) | after blur or submit; the right default for most forms                             |
+| `'on-blur'`                     | deprecated alias for `'on-blur-or-submit'` (removal in v4)                         |
+| `'on-submit'`                   | after submit only                                                                  |
+| `'on-dirty'`                    | as soon as the value changes, or after touch/submit (when `updateOn !== 'submit'`) |
+| `'always'`                      | immediately, even when pristine (when `updateOn !== 'submit'`); use deliberately   |
 
-| Warning mode                        | Shows warnings                        |
-| ----------------------------------- | ------------------------------------- |
-| `'on-validated-or-touch'` (default) | after a validation run, touch or submit |
-| `'on-touch'`                        | after blur or submit                  |
+| Warning mode                        | Shows warnings                                      |
+| ----------------------------------- | --------------------------------------------------- |
+| `'on-validated-or-touch'` (default) | after a validation run, touch or submit             |
+| `'on-touch'`                        | after touch or submit                               |
 | `'on-dirty'`                        | as soon as the value changes, or after touch/submit |
-| `'always'`                          | immediately                           |
+| `'always'`                          | immediately                                         |
 
 Warnings (Vest `warn()`) never make a control invalid, and they can appear on an untouched field after `validationConfig` revalidates it. `'on-blur'` with `[ngModelOptions]="{ updateOn: 'submit' }"` shows no blur-time errors and raises `NGX-105`; pair `updateOn: 'submit'` with `'on-submit'`.
 
