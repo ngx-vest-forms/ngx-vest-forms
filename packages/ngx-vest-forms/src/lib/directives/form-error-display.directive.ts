@@ -87,7 +87,7 @@ export class FormErrorDisplayDirective {
 
   /**
    * Input signal for error display mode.
-   * Works seamlessly with hostDirectives in Angular 19+.
+   * Works with `hostDirectives`.
    */
   readonly errorDisplayMode = input<NgxErrorDisplayMode>(
     inject(NGX_ERROR_DISPLAY_MODE_TOKEN, { optional: true }) ??

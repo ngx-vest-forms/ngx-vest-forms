@@ -25,11 +25,12 @@ import { ValidateRootFormDirective } from './directives/validate-root-form.direc
  * Required for Reactive Forms as well (unless you write CVA)
  *
  * @example
- * ```
- *   @Component({
- *     ...
- *    viewProviders[ formViewProvider ]
- *   })
+ * ```typescript
+ * @Component({
+ *   // ...
+ *   viewProviders: [vestFormsViewProviders],
+ * })
+ * export class AddressSectionComponent {}
  * ```
  * @see Kara's AngularConnect 2017 talk: https://youtu.be/CD_t3m2WMM8?t=1826
  *
@@ -58,7 +59,19 @@ const formViewProvider: Provider = {
 };
 
 /**
- * The providers we need in every child component that holds an ngModelGroup
+ * View providers required on child form components that host `ngModel` or
+ * `ngModelGroup` controls so Angular registers them with the parent form.
+ *
+ * @example
+ * ```typescript
+ * import { vestFormsViewProviders } from 'ngx-vest-forms';
+ *
+ * @Component({
+ *   selector: 'app-address-section',
+ *   viewProviders: [vestFormsViewProviders],
+ * })
+ * export class AddressSectionComponent {}
+ * ```
  */
 export const vestFormsViewProviders = [
   formViewProvider, // very important if we want nested components with ngModelGroup
@@ -75,11 +88,10 @@ export const vestFormsViewProviders = [
  * import { NgxVestForms } from 'ngx-vest-forms';
  *
  * @Component({
- *
  *   imports: [NgxVestForms],
- *   /// ...
+ *   // ...
  * })
- * export class MyComponent { }
+ * export class MyComponent {}
  * ```
  */
 export const NgxVestForms = [

@@ -15,9 +15,14 @@ import type { NgxDeepRequired } from '../utils/deep-required';
 export type NgxFormContract<T> = StandardSchemaV1<T> | NgxDeepRequired<T>;
 
 /**
- * The value accepted by `[formContract]` and `provideFormContract`.
- * Can be a static contract, a signal that emits a contract (or `null` to
- * temporarily disable shape checking), or `null` to opt out entirely.
+ * The value accepted by `NGX_FORM_CONTRACT`, `provideFormContract`, and
+ * `provideFormContractFactory`. Can be a static contract, a signal that emits
+ * a contract (or `null` to temporarily disable contract checking), or `null` to
+ * opt out entirely.
+ *
+ * Note: The `[formContract]` template input accepts an unwrapped
+ * `NgxFormContract<T> | null | undefined` value (bind a signal as
+ * `[formContract]="contractSignal()"`).
  */
 export type NgxFormContractSource<T> =
   | NgxFormContract<T>

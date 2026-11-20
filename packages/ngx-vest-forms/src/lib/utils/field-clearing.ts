@@ -47,7 +47,7 @@
  *
  * @example
  * ```typescript
- * ///  REQUIRED: Form input switching to non-form content
+ * // REQUIRED: Form input switching to non-form content
  * onProcedureTypeChange(newValue: string) {
  *   this.formValue.update((current) =>
  *     clearFieldsWhen(current, {
@@ -57,15 +57,15 @@
  *   );
  * }
  *
- * ///  Template structure that REQUIRES clearing:
- * ///  @if (type === 'typeA') { <input name="fieldA" /> }
- * ///  @else if (type === 'typeB') { <input name="fieldB" /> }
- * ///  @else { <p>No input needed</p> }  // ← NON-form element!
+ * // Template structure that REQUIRES clearing:
+ * // @if (type === 'typeA') { <input name="fieldA" [ngModel]="formValue().fieldA" /> }
+ * // @else if (type === 'typeB') { <input name="fieldB" [ngModel]="formValue().fieldB" /> }
+ * // @else { <p>No input needed</p> }  // NON-form element
  * ```
  *
  * @example
  * ```typescript
- * ///  Complex conditional clearing with mixed form/non-form scenarios
+ * // Complex conditional clearing with mixed form/non-form scenarios
  * const cleanedState = clearFieldsWhen(form, {
  *   shippingAddress: !form.useShippingAddress,    // Clear when not using shipping
  *   emergencyContact: (form.age || 0) >= 18,      // Clear when adult (no emergency contact form)
@@ -75,19 +75,19 @@
  *
  * @example
  * ```typescript
- * ///  State inconsistency example - WHY manual clearing is needed:
+ * // State inconsistency example - WHY manual clearing is needed:
  *
- * ///  BEFORE switching from input to non-form content (typeA → typeC):
- * formValue() = { procedureType: 'typeA', fieldA: 'user-input' }
- * ngForm.form.value = { procedureType: 'typeA', fieldA: 'user-input' }
+ * // BEFORE switching from input to non-form content (typeA -> typeC):
+ * // formValue() = { procedureType: 'typeA', fieldA: 'user-input' }
+ * // ngForm.form.value = { procedureType: 'typeA', fieldA: 'user-input' }
  *
- * ///  AFTER switching WITHOUT clearing (PROBLEMATIC):
- * formValue() = { procedureType: 'typeC', fieldA: 'user-input' }  // ❌ Stale fieldA!
- * ngForm.form.value = { procedureType: 'typeC' }                  // ✅ Clean (Angular removed FormControl)
+ * // AFTER switching WITHOUT clearing (stale value stays in model):
+ * // formValue() = { procedureType: 'typeC', fieldA: 'user-input' }
+ * // ngForm.form.value = { procedureType: 'typeC' }
  *
- * ///  AFTER switching WITH clearing (CONSISTENT):
- * formValue() = { procedureType: 'typeC' }  // ✅ Clean component state
- * ngForm.form.value = { procedureType: 'typeC' }  // ✅ Clean form state
+ * // AFTER switching WITH clearing (cleared key is set to undefined):
+ * // formValue() = { procedureType: 'typeC', fieldA: undefined }
+ * // ngForm.form.value = { procedureType: 'typeC' }
  * ```
  *
  */
@@ -126,17 +126,17 @@ export function clearFieldsWhen<T extends Record<string, unknown>>(
  *
  * @example
  * ```typescript
- * ///  Clear specific fields during form mode transitions
+ * // Clear specific fields during form mode transitions
  * const cleanedState = clearFields(currentFormValue, ['fieldA', 'fieldB']);
  *
- * ///  Reset wizard or temporary data
+ * // Reset wizard or temporary data
  * onFormModeChange() {
  *   this.formValue.update((current) =>
  *     clearFields(current, ['temporaryData', 'wizardStep', 'draftSaved'])
  *   );
  * }
  *
- * ///  Clear all optional fields on form submission
+ * // Clear all optional fields on form submission
  * save() {
  *   const finalData = clearFields(this.formValue(), ['draftField', 'tempNotes']);
  *   this.submitForm(finalData);
@@ -177,7 +177,7 @@ export function clearFields<T extends Record<string, unknown>>(
  *
  * @example
  * ```typescript
- * ///  Keep only relevant fields based on form mode
+ * // Keep only relevant fields based on form mode
  * const filteredState = keepFieldsWhen(currentFormValue, {
  *   procedureType: true, // always keep
  *   fieldA: procedureType === 'typeA',
@@ -185,7 +185,7 @@ export function clearFields<T extends Record<string, unknown>>(
  *   // Note: fieldC is omitted when procedureType === 'typeC' (non-form content)
  * });
  *
- * ///  Build clean data for API submission (exclude UI-only fields)
+ * // Build clean data for API submission (exclude UI-only fields)
  * const apiData = keepFieldsWhen(formValue(), {
  *   // Business data - keep these
  *   userName: true,
@@ -194,7 +194,7 @@ export function clearFields<T extends Record<string, unknown>>(
  *   // UI state fields omitted: wizardStep, draftSaved, validationErrors, etc.
  * });
  *
- * ///  Dynamic form sections based on user permissions
+ * // Dynamic form sections based on user permissions
  * const relevantData = keepFieldsWhen(form, {
  *   basicInfo: true,
  *   addressInfo: form.needsAddress && userCanEditAddress,

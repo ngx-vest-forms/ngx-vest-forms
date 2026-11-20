@@ -106,7 +106,7 @@ export function fieldWarningsToRecord(
  *
  * @example
  * ```typescript
- * /// With specific typing
+ * // With specific typing
  * interface MyFormModel {
  *   name: string;
  *   email: string;

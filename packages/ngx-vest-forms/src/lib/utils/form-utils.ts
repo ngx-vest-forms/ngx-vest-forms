@@ -138,7 +138,7 @@ export function getFormControlField(
  * **Not intended for external use.** This function is used internally by the library
  * to determine field names for nested form groups.
  *
- * Calcuates the field name of a form group Eg: addresses.shippingAddress
+ * Calculates the field name of a form group, e.g. `addresses.shippingAddress`
  * @param rootForm
  * @param control
  */

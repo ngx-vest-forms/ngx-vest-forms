@@ -72,10 +72,10 @@ function rememberPair(seen: VisitedPairs, a: object, b: object): void {
  *
  * **Performance Comparison:**
  * ```typescript
- * /// ❌ Slow: JSON.stringify approach
+ * // Slow: JSON.stringify approach
  * JSON.stringify(obj1) === JSON.stringify(obj2)
  *
- * /// ✅ Fast: Direct property comparison
+ * // Fast: Direct property comparison
  * shallowEqual(obj1, obj2)
  * ```
  *
@@ -164,22 +164,22 @@ export function shallowEqual(obj1: unknown, obj2: unknown): boolean {
  *
  * **Performance Characteristics:**
  * ```typescript
- * /// Performance comparison on typical form objects:
- * /// JSON.stringify:    ~100ms for complex nested forms
- * /// fastDeepEqual:     ~1-5ms for the same objects
- * ///
- * /// Memory usage:
- * /// JSON.stringify:    Creates temporary strings (high GC pressure)
- * /// fastDeepEqual:     One small Map of visited object pairs is allocated lazily on
- * ///                    first nested-container descent; primitive-only comparisons allocate nothing.
+ * // Performance comparison on typical form objects:
+ * // JSON.stringify:    ~100ms for complex nested forms
+ * // fastDeepEqual:     ~1-5ms for the same objects
+ * //
+ * // Memory usage:
+ * // JSON.stringify:    Creates temporary strings (high GC pressure)
+ * // fastDeepEqual:     One small Map of visited object pairs is allocated lazily on
+ * //                    first nested-container descent; primitive-only comparisons allocate nothing.
  * ```
  *
  * **Typical Usage in Forms:**
  * ```typescript
- * /// Detect when form values actually change
+ * // Detect when form values actually change
  * distinctUntilChanged(fastDeepEqual)
  *
- * /// Prevent unnecessary re-renders
+ * // Prevent unnecessary re-renders
  * if (!fastDeepEqual(oldFormValue, newFormValue)) {
  *   updateUI();
  * }
