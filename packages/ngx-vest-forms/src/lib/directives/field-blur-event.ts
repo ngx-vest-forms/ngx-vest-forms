@@ -22,11 +22,12 @@ export function fieldBlurEvent<T>(
   const { field, control, element } = resolved;
 
   // Read the latest value directly from the DOM element when it can be
-  // trusted. For radio groups Angular keeps the bound `control.value` in
-  // sync with the *selected* option, while a focused-but-unchecked radio
-  // would expose its own option value via the DOM — so radios must always
-  // fall back to `control.value`. For text/textarea/select we prefer the
-  // element value to avoid `ngModelOptions.updateOn: 'submit'` staleness.
+  // trusted. Radio groups and `<select>` controls fall back to `control.value`
+  // because Angular keeps the bound control value in sync with the selected
+  // option(s), whereas raw DOM values break unchecked radios, `[ngValue]`
+  // options (such as `"0: Object"`), and `<select multiple>`. For text inputs
+  // and textareas we prefer the element value to avoid
+  // `ngModelOptions.updateOn: 'submit'` staleness.
   const domValue = readElementValueForBlur(element);
   const value = domValue !== undefined ? domValue : control.value;
 

@@ -439,13 +439,17 @@ describe('resolveFieldFromBlur', () => {
     select.append(option);
     select.value = 'b';
 
+    const multiSelect = document.createElement('select');
+    multiSelect.multiple = true;
+
     const div = document.createElement('div');
 
     expect(readElementValueForBlur(checkbox)).toBe(true);
     expect(readElementValueForBlur(number)).toBe(42);
     expect(readElementValueForBlur(radio)).toBeUndefined();
     expect(readElementValueForBlur(textarea)).toBe('Notes');
-    expect(readElementValueForBlur(select)).toBe('b');
+    expect(readElementValueForBlur(select)).toBeUndefined();
+    expect(readElementValueForBlur(multiSelect)).toBeUndefined();
     expect(readElementValueForBlur(div)).toBeUndefined();
   });
 });

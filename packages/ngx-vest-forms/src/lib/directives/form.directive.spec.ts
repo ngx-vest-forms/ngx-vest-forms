@@ -1436,6 +1436,164 @@ describe('FormDirective - Signals/Outputs', () => {
     });
   });
 
+  it('should emit bound objects for <select [ngValue]> on blur', async () => {
+    type Country = { code: string; label: string };
+    type Model = { country?: Country };
+
+    const netherlands: Country = { code: 'NL', label: 'Netherlands' };
+    const belgium: Country = { code: 'BE', label: 'Belgium' };
+    const countries: Country[] = [netherlands, belgium];
+
+    @Component({
+      selector: 'test-field-blur-select-ngvalue-host',
+      template: `
+        <form
+          ngxVestForm
+          [formValue]="formValue()"
+          (formValueChange)="formValue.set($event)"
+          (fieldBlur)="handleFieldBlur($event)"
+        >
+          <label for="country">Country</label>
+          <select id="country" name="country" [ngModel]="formValue().country">
+            @for (option of countries; track option.code) {
+              <option [ngValue]="option">{{ option.label }}</option>
+            }
+          </select>
+        </form>
+      `,
+      imports: [NgxVestForms],
+    })
+    class TestFieldBlurSelectNgValueHost {
+      readonly countries = countries;
+      readonly formValue = signal<Model>({ country: netherlands });
+      readonly blurEvents = signal<Array<NgxFieldBlurEvent<Model>>>([]);
+
+      handleFieldBlur(event: NgxFieldBlurEvent<Model>): void {
+        this.blurEvents.update((events) => [...events, event]);
+      }
+    }
+
+    const { fixture } = await render(TestFieldBlurSelectNgValueHost);
+    await whenStable();
+
+    const select = screen.getByLabelText('Country') as HTMLSelectElement;
+    const user = userEvent.setup();
+    await user.selectOptions(
+      select,
+      screen.getByRole('option', { name: 'Belgium' })
+    );
+    await user.tab();
+
+    await expect
+      .poll(() => fixture.componentInstance.blurEvents().length)
+      .toBe(1);
+
+    const [blurEvent] = fixture.componentInstance.blurEvents();
+    expect(blurEvent?.field).toBe('country');
+    expect(blurEvent?.value).toEqual(belgium);
+    expect(blurEvent?.formValue).toEqual({ country: belgium });
+  });
+
+  it('should emit the full selected array for <select multiple> on blur', async () => {
+    type Model = { tags?: string[] };
+
+    @Component({
+      selector: 'test-field-blur-select-multiple-host',
+      template: `
+        <form
+          ngxVestForm
+          [formValue]="formValue()"
+          (formValueChange)="formValue.set($event)"
+          (fieldBlur)="handleFieldBlur($event)"
+        >
+          <label for="tags">Tags</label>
+          <select id="tags" name="tags" multiple [ngModel]="formValue().tags">
+            <option value="angular">Angular</option>
+            <option value="vest">Vest</option>
+            <option value="forms">Forms</option>
+          </select>
+        </form>
+      `,
+      imports: [NgxVestForms],
+    })
+    class TestFieldBlurSelectMultipleHost {
+      readonly formValue = signal<Model>({ tags: [] });
+      readonly blurEvents = signal<Array<NgxFieldBlurEvent<Model>>>([]);
+
+      handleFieldBlur(event: NgxFieldBlurEvent<Model>): void {
+        this.blurEvents.update((events) => [...events, event]);
+      }
+    }
+
+    const { fixture } = await render(TestFieldBlurSelectMultipleHost);
+    await whenStable();
+
+    const select = screen.getByLabelText('Tags') as HTMLSelectElement;
+    const user = userEvent.setup();
+    await user.selectOptions(select, [
+      screen.getByRole('option', { name: 'Angular' }),
+      screen.getByRole('option', { name: 'Forms' }),
+    ]);
+    await user.tab();
+
+    await expect
+      .poll(() => fixture.componentInstance.blurEvents().length)
+      .toBe(1);
+
+    const [blurEvent] = fixture.componentInstance.blurEvents();
+    expect(blurEvent?.field).toBe('tags');
+    expect(blurEvent?.value).toEqual(['angular', 'forms']);
+    expect(blurEvent?.formValue).toEqual({ tags: ['angular', 'forms'] });
+  });
+
+  it('should emit the selected string for plain <select> on blur', async () => {
+    type Model = { role?: string };
+
+    @Component({
+      selector: 'test-field-blur-select-plain-host',
+      template: `
+        <form
+          ngxVestForm
+          [formValue]="formValue()"
+          (formValueChange)="formValue.set($event)"
+          (fieldBlur)="handleFieldBlur($event)"
+        >
+          <label for="role">Role</label>
+          <select id="role" name="role" [ngModel]="formValue().role">
+            <option value="viewer">Viewer</option>
+            <option value="editor">Editor</option>
+          </select>
+        </form>
+      `,
+      imports: [NgxVestForms],
+    })
+    class TestFieldBlurSelectPlainHost {
+      readonly formValue = signal<Model>({ role: 'viewer' });
+      readonly blurEvents = signal<Array<NgxFieldBlurEvent<Model>>>([]);
+
+      handleFieldBlur(event: NgxFieldBlurEvent<Model>): void {
+        this.blurEvents.update((events) => [...events, event]);
+      }
+    }
+
+    const { fixture } = await render(TestFieldBlurSelectPlainHost);
+    await whenStable();
+
+    const select = screen.getByLabelText('Role') as HTMLSelectElement;
+    const user = userEvent.setup();
+    await user.selectOptions(select, 'editor');
+    await user.tab();
+
+    await expect
+      .poll(() => fixture.componentInstance.blurEvents().length)
+      .toBe(1);
+
+    const [blurEvent] = fixture.componentInstance.blurEvents();
+    expect(blurEvent?.field).toBe('role');
+    expect(blurEvent?.value).toBe('editor');
+    expect(blurEvent?.formValue).toEqual({ role: 'editor' });
+  });
+
   it('should expose pending/valid/invalid helpers and validatedFields alias', async () => {
     @Component({
       selector: 'test-state-helpers-host',
