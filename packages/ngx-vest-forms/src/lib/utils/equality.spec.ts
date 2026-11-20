@@ -86,9 +86,14 @@ describe('Equality Utils', () => {
       const date1 = new Date('2023-01-01');
       const date2 = new Date('2023-01-01');
       const date3 = new Date('2023-01-02');
+      const invalid1 = new Date('invalid');
+      const invalid2 = new Date('invalid');
 
       expect(fastDeepEqual(date1, date2)).toBe(true);
       expect(fastDeepEqual(date1, date3)).toBe(false);
+      expect(fastDeepEqual(invalid1, invalid2)).toBe(true);
+      expect(fastDeepEqual(date1, invalid1)).toBe(false);
+      expect(fastDeepEqual(invalid1, date1)).toBe(false);
     });
 
     it('should handle RegExp objects correctly', () => {

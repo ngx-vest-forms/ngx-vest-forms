@@ -186,6 +186,7 @@ Six `@internal` helpers moved from `'ngx-vest-forms'` to `'ngx-vest-forms/intern
 
 - `FormDirective.idle$` (use `status` / `pending` signals or `ngForm.form.statusChanges`).
 - `FormDirective.createAsyncValidator` (internal library plumbing).
+- `ValidateRootFormDirective.createAsyncValidator` (internal library plumbing).
 
 ## Known limitations
 

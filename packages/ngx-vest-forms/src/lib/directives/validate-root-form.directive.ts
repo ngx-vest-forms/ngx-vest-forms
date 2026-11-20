@@ -298,6 +298,12 @@ export class ValidateRootFormDirective<T>
     return validationResult;
   }
 
+  /**
+   * Creates an async validator function for root-form validation.
+   *
+   * @deprecated Library plumbing for `ValidateRootFormDirective`, not meant to
+   * be called from applications. It will leave the public API in v4.
+   */
   createAsyncValidator(
     field: typeof ROOT_FORM,
     validationOptions: ValidationOptions
