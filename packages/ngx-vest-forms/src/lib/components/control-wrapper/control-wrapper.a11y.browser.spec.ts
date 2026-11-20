@@ -96,4 +96,101 @@ describe('ControlWrapperComponent - aria wiring (browser mode)', () => {
       'true'
     );
   });
+
+  it('animates the pending spinner by default and stops rotation under prefers-reduced-motion: reduce', async () => {
+    const pendingSuite = create(() => {
+      vestTest(
+        'username',
+        'Checking username',
+        () =>
+          new Promise<void>(() => {
+            // Keep pending active while checking styles.
+          })
+      );
+    });
+
+    @Component({
+      selector: 'ngx-test-control-wrapper-pending-motion-browser',
+      imports: [NgxVestForms, ControlWrapperComponent],
+      template: `
+        <form
+          ngxVestForm
+          [suite]="suite"
+          [formValue]="formValue()"
+          (formValueChange)="formValue.set($event)"
+        >
+          <ngx-control-wrapper
+            [pendingDebounce]="{ showAfter: 0, minimumDisplay: 0 }"
+          >
+            <label for="pending-username">Pending username</label>
+            <input
+              id="pending-username"
+              name="username"
+              [ngModel]="formValue().username"
+            />
+          </ngx-control-wrapper>
+        </form>
+      `,
+    })
+    class PendingMotionHostComponent {
+      readonly formValue = signal({ username: '' });
+      readonly suite = pendingSuite;
+    }
+
+    await render(PendingMotionHostComponent);
+
+    const input = page.getByRole('textbox', { name: 'Pending username' });
+    await userEvent.click(input);
+    await userEvent.fill(input, 'arjen');
+
+    await expect.element(page.getByText('Validating…')).toBeVisible();
+
+    const spinner = document.querySelector<HTMLElement>(
+      '.ngx-control-wrapper__spinner'
+    );
+    expect(spinner).toBeTruthy();
+
+    if (!spinner) {
+      throw new Error('Expected .ngx-control-wrapper__spinner to be rendered');
+    }
+
+    const computed = getComputedStyle(spinner);
+    expect(computed.display).not.toBe('none');
+    expect(computed.animationName).toContain('ngx-control-wrapper-spin');
+    expect(computed.animationIterationCount).toBe('infinite');
+
+    const reducedMotionRules: CSSStyleRule[] = [];
+    for (const sheet of Array.from(document.styleSheets)) {
+      let rules: CSSRuleList;
+      try {
+        rules = sheet.cssRules;
+      } catch {
+        continue;
+      }
+      for (const rule of Array.from(rules)) {
+        if (
+          rule instanceof CSSMediaRule &&
+          rule.conditionText.includes('prefers-reduced-motion') &&
+          rule.conditionText.includes('reduce')
+        ) {
+          for (const inner of Array.from(rule.cssRules)) {
+            if (
+              inner instanceof CSSStyleRule &&
+              inner.selectorText.includes('.ngx-control-wrapper__spinner')
+            ) {
+              reducedMotionRules.push(inner);
+            }
+          }
+        }
+      }
+    }
+
+    expect(reducedMotionRules.length).toBeGreaterThan(0);
+    expect(
+      reducedMotionRules.some((rule) => rule.style.animationName === 'none')
+    ).toBe(true);
+    expect(
+      reducedMotionRules.some((rule) => rule.style.display === 'none')
+    ).toBe(false);
+  });
 });
