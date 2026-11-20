@@ -1678,6 +1678,23 @@ describe('FormDirective - triggerFormValidation', () => {
     vestForm.triggerFormValidation();
     expect(emissions.at(-1)).toEqual({});
   });
+
+  it('logs [NGX-003] as a plain diagnostic without form-contract hints when path is unknown', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    onTestFinished(() => warnSpy.mockRestore());
+
+    const { fixture } = await render(TestTriggerValidationHost);
+    const vestForm = fixture.componentInstance.vestForm();
+
+    vestForm.triggerFormValidation('missing.path');
+
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    const message = String(warnSpy.mock.calls[0]?.[0] ?? '');
+    expect(message).toContain('[NGX-003]');
+    expect(message).toContain("path 'missing.path'");
+    expect(message).not.toContain('[formContract]');
+    expect(message).not.toContain('provideFormContract');
+  });
 });
 
 describe('FormDirective - clearSubmittedState', () => {

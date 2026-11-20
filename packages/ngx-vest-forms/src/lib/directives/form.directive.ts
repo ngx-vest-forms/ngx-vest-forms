@@ -33,7 +33,7 @@ import {
   scan,
   startWith,
 } from 'rxjs';
-import { logWarning, NGX_VEST_FORMS_ERRORS } from '../errors/error-catalog';
+import { logDiagnostic, NGX_VEST_FORMS_ERRORS } from '../errors/error-catalog';
 import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from '../tokens/debounce.token';
 import { NGX_EQUALITY_FN } from '../tokens/equality.token';
 import {
@@ -625,7 +625,7 @@ export class FormDirective<T extends Record<string, unknown>> {
       if (control) {
         control.updateValueAndValidity({ emitEvent: true });
       } else if (isDevMode()) {
-        logWarning(NGX_VEST_FORMS_ERRORS.CONTROL_NOT_FOUND, path);
+        logDiagnostic(NGX_VEST_FORMS_ERRORS.CONTROL_NOT_FOUND, path);
       }
     } else {
       // Update all form controls validity which will trigger all form events

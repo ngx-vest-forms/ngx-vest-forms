@@ -233,7 +233,7 @@ function fastDeepEqualInternal(
     return (
       obj1 instanceof Date &&
       obj2 instanceof Date &&
-      obj1.getTime() === obj2.getTime()
+      Object.is(obj1.getTime(), obj2.getTime())
     );
   }
 
