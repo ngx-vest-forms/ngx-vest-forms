@@ -55,6 +55,9 @@ export type DebouncedPendingStateResult = {
   cleanup: () => void;
 };
 
+const DEFAULT_SHOW_AFTER = 200;
+const DEFAULT_MINIMUM_DISPLAY = 500;
+
 /**
  * Creates a debounced pending state signal that prevents flashing validation messages.
  *
@@ -101,16 +104,23 @@ export function createDebouncedPendingState(
   // Memoize primitive timing numbers via computed() so inline object literals
   // such as `[pendingDebounce]="{ showAfter: 200, minimumDisplay: 500 }"` do
   // not re-run the effect and reset active timers on unrelated CD passes.
-  const showAfterSignal = isSignal(options)
-    ? computed(() => options().showAfter ?? 200)
-    : null;
-  const minimumDisplaySignal = isSignal(options)
-    ? computed(() => options().minimumDisplay ?? 500)
-    : null;
-  const staticShowAfter = isSignal(options) ? 200 : (options.showAfter ?? 200);
-  const staticMinimumDisplay = isSignal(options)
-    ? 500
-    : (options.minimumDisplay ?? 500);
+  let readShowAfter: () => number;
+  let readMinimumDisplay: () => number;
+  if (isSignal(options)) {
+    const showAfterSignal = computed(
+      () => options().showAfter ?? DEFAULT_SHOW_AFTER
+    );
+    const minimumDisplaySignal = computed(
+      () => options().minimumDisplay ?? DEFAULT_MINIMUM_DISPLAY
+    );
+    readShowAfter = showAfterSignal;
+    readMinimumDisplay = minimumDisplaySignal;
+  } else {
+    const showAfter = options.showAfter ?? DEFAULT_SHOW_AFTER;
+    const minimumDisplay = options.minimumDisplay ?? DEFAULT_MINIMUM_DISPLAY;
+    readShowAfter = () => showAfter;
+    readMinimumDisplay = () => minimumDisplay;
+  }
 
   // Create writable signal for debounced state
   const showPendingMessageSignal = signal(false);
@@ -136,7 +146,7 @@ export function createDebouncedPendingState(
     const pending = isPending();
 
     if (pending) {
-      const showAfter = showAfterSignal ? showAfterSignal() : staticShowAfter;
+      const showAfter = readShowAfter();
 
       // Clear any existing minimum display timeout
       if (minimumDisplayTimeout) {
@@ -162,9 +172,7 @@ export function createDebouncedPendingState(
       // hiding when it is visible. Read visibility untracked so clearing it
       // when minimumDisplay elapses does not trigger a redundant effect run.
       if (untracked(showPendingMessageSignal)) {
-        const minimumDisplay = minimumDisplaySignal
-          ? minimumDisplaySignal()
-          : staticMinimumDisplay;
+        const minimumDisplay = readMinimumDisplay();
 
         // Message was shown - keep it visible for minimum duration
         minimumDisplayTimeout = setTimeout(() => {

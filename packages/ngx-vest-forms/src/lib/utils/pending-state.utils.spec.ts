@@ -504,6 +504,34 @@ describe('pending-state.utils', () => {
           expect(reads).toBe(readsBeforeHide);
         });
       });
+
+      it('applies updated minimumDisplay values when the options signal changes', async () => {
+        await TestBed.runInInjectionContext(async () => {
+          const isPending = signal(false);
+          const opts = signal({ showAfter: 100, minimumDisplay: 200 });
+          const result = createDebouncedPendingState(isPending, opts);
+
+          isPending.set(true);
+          await vi.advanceTimersByTimeAsync(100);
+          expect(result.showPendingMessage()).toBe(true);
+
+          isPending.set(false);
+          await vi.advanceTimersByTimeAsync(100);
+          expect(result.showPendingMessage()).toBe(true);
+
+          // Extend minimumDisplay while the message is in its hold window.
+          opts.set({ showAfter: 100, minimumDisplay: 600 });
+          await vi.advanceTimersByTimeAsync(0);
+
+          // Crossing the old 200ms window is no longer enough to hide it.
+          await vi.advanceTimersByTimeAsync(200);
+          expect(result.showPendingMessage()).toBe(true);
+
+          // Crossing the new 600ms duration from the update hides it.
+          await vi.advanceTimersByTimeAsync(400);
+          expect(result.showPendingMessage()).toBe(false);
+        });
+      });
     });
   });
 });
