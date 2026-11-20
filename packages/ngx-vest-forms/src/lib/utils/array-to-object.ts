@@ -4,16 +4,30 @@ import { isUnsafePathSegment } from './field-path.utils';
  * Recursively maps array element types to records keyed by numeric index.
  *
  * This is the type-level counterpart of {@link deepArrayToObject}: arrays
- * become `Record<number, ...>` while non-array objects keep their keys.
+ * become `Record<number, ...>` while plain objects keep their keys and common
+ * built-in non-plain objects (`Date`, `RegExp`, `Error`, `Map`, `Set`,
+ * `WeakMap`, `WeakSet`, `Promise`, and functions) are preserved as-is.
+ *
+ * Note: TypeScript's structural type system cannot distinguish a plain-shaped
+ * custom class instance (such as `class Box { values = ['a']; }`) from a plain
+ * object literal at the type level, even though `deepArrayToObject` returns
+ * non-plain instances by reference at runtime.
  */
 export type DeepArrayToObject<T> =
   T extends ReadonlyArray<infer U>
     ? Record<number, DeepArrayToObject<U>>
-    : T extends Date | RegExp | ((...args: never[]) => unknown)
+    : T extends Date | RegExp | Error | ((...args: never[]) => unknown)
       ? T
-      : T extends object
-        ? { [K in keyof T]: DeepArrayToObject<T[K]> }
-        : T;
+      : T extends
+            | ReadonlyMap<infer _K, infer _V>
+            | WeakMap<infer _WK, infer _WV>
+            | ReadonlySet<infer _S>
+            | WeakSet<infer _WS>
+            | Promise<infer _P>
+        ? T
+        : T extends object
+          ? { [K in keyof T]: DeepArrayToObject<T[K]> }
+          : T;
 
 /**
  * Converts a flat array to an object with numeric keys.

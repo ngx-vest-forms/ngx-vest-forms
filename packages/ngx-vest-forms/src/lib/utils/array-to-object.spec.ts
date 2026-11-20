@@ -1,5 +1,7 @@
+import { expectTypeOf } from 'vitest';
 import {
   arrayToObject,
+  type DeepArrayToObject,
   deepArrayToObject,
   objectToArray,
 } from './array-to-object';
@@ -722,5 +724,25 @@ describe('selective array/object conversion', () => {
         ],
       },
     });
+  });
+});
+
+describe('DeepArrayToObject type', () => {
+  it('maps nested arrays while preserving built-in non-plain object types', () => {
+    type Model = {
+      createdAt: Date;
+      pattern: RegExp;
+      lookup: Map<string, string[]>;
+      flags: Set<string>;
+      tags: string[];
+    };
+
+    expectTypeOf<DeepArrayToObject<Model>>().toEqualTypeOf<{
+      createdAt: Date;
+      pattern: RegExp;
+      lookup: Map<string, string[]>;
+      flags: Set<string>;
+      tags: Record<number, string>;
+    }>();
   });
 });
