@@ -122,9 +122,15 @@ function recursivelyConvertArrays<T>(value: T): DeepArrayToObject<T> {
  *
  * @example
  * ```ts
- * const model = { addresses: { 0: { city: 'A' }, 1: { city: 'B' } } };
- * objectToArray(model, ['addresses']) as { addresses: { city: string }[] };
- * // => { addresses: [{ city: 'A' }, { city: 'B' }] }
+ * const model = {
+ *   name: 'Ada',
+ *   addresses: { 0: { city: 'A' }, 1: { city: 'B' } },
+ * };
+ * objectToArray(model, ['addresses']) as {
+ *   name: string;
+ *   addresses: { city: string }[];
+ * };
+ * // => { name: 'Ada', addresses: [{ city: 'A' }, { city: 'B' }] }
  *
  * // Single-entry wrapper is unwrapped to the bare array:
  * objectToArray({ list: { 0: { id: 1 } } }, ['list']);
