@@ -42,6 +42,7 @@ import {
   getFormSubmittedSignal,
   isSubmitValidationPass,
 } from './form-submitted-state';
+import { announceOnSilentRevalidation } from './revalidation-triggers';
 import type { ValidationOptions } from './validation-options';
 
 /**
@@ -295,7 +296,11 @@ export class ValidateRootFormDirective<T>
       immediate
     )(control);
 
-    return validationResult;
+    return announceOnSilentRevalidation(
+      control,
+      validationResult,
+      this.#destroyRef
+    );
   }
 
   /**

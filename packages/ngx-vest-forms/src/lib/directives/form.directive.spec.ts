@@ -11,13 +11,20 @@ import {
 } from '@angular/core';
 import { outputToObservable } from '@angular/core/rxjs-interop';
 import { TestBed } from '@angular/core/testing';
-import { type ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import {
+  type ControlValueAccessor,
+  FormArray,
+  FormControl,
+  FormGroup,
+  NG_VALUE_ACCESSOR,
+} from '@angular/forms';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { isObservable, type Observable } from 'rxjs';
 import {
   create,
   enforce,
+  group,
   omitWhen,
   skipWhen,
   test as vestTest,
@@ -1694,6 +1701,335 @@ describe('FormDirective - triggerFormValidation', () => {
     expect(message).toContain("path 'missing.path'");
     expect(message).not.toContain('[formContract]');
     expect(message).not.toContain('provideFormContract');
+  });
+
+  it.each([
+    { label: 'no path (whole form)', path: undefined },
+    { label: 'a group path', path: 'profile' },
+  ])(
+    'reruns descendant field validators deepest-first when called with $label',
+    async ({ path }) => {
+      type FocusModel = {
+        account?: { username?: string };
+        profile?: { firstName?: string };
+      };
+
+      const focusSuite = create((model: FocusModel = {}) => {
+        group('account', () => {
+          vestTest('account.username', 'Username is required', () => {
+            enforce(model.account?.username).isNotBlank();
+          });
+        });
+        group('profile', () => {
+          vestTest('profile.firstName', 'First name is required', () => {
+            enforce(model.profile?.firstName).isNotBlank();
+          });
+        });
+      });
+
+      @Component({
+        selector: 'test-trigger-validation-descendants-host',
+        template: `
+          <form
+            ngxVestForm
+            [suite]="suite"
+            [formValue]="formValue()"
+            [validationFocus]="focus()"
+            (formValueChange)="formValue.set($event)"
+            #vest="ngxVestForm"
+          >
+            <div ngModelGroup="account">
+              <input
+                name="username"
+                [ngModel]="formValue().account?.username"
+              />
+            </div>
+            <div ngModelGroup="profile">
+              <input
+                name="firstName"
+                [ngModel]="formValue().profile?.firstName"
+              />
+            </div>
+          </form>
+        `,
+        imports: [NgxVestForms],
+      })
+      class TestTriggerValidationDescendantsHost {
+        readonly suite = focusSuite;
+        readonly formValue = signal<FocusModel>({
+          account: { username: 'ada' },
+          profile: { firstName: '' },
+        });
+        readonly focus = signal<{ onlyGroup: string }>({
+          onlyGroup: 'account',
+        });
+        readonly vestForm =
+          viewChild.required<FormDirective<FocusModel>>('vest');
+      }
+
+      const { fixture } = await render(TestTriggerValidationDescendantsHost);
+      await whenStable();
+      const host = fixture.componentInstance;
+
+      expect(host.suite.get().isTested('profile.firstName')).toBe(false);
+      expect(
+        host.vestForm().formState().errors['profile.firstName']
+      ).toBeUndefined();
+
+      host.focus.set({ onlyGroup: 'profile' });
+      fixture.detectChanges();
+      await whenStable();
+
+      host.vestForm().triggerFormValidation(path);
+
+      await expect
+        .poll(() => host.vestForm().formState().errors['profile.firstName'])
+        .toEqual(['First name is required']);
+      expect(host.suite.get().isTested('profile.firstName')).toBe(true);
+      expect(host.vestForm().invalid()).toBe(true);
+    }
+  );
+
+  it('does not emit valueChanges or trigger out-of-subtree validationConfig dependents', async () => {
+    type ConfigModel = {
+      profile?: { firstName?: string };
+      billing?: { zip?: string };
+    };
+
+    let profileRuns = 0;
+    let billingRuns = 0;
+    const configSuite = create((model: ConfigModel = {}) => {
+      vestTest('profile.firstName', 'First name is required', () => {
+        profileRuns += 1;
+        enforce(model.profile?.firstName).isNotBlank();
+      });
+      vestTest('billing.zip', 'ZIP is required', () => {
+        billingRuns += 1;
+        enforce(model.billing?.zip).isNotBlank();
+      });
+    });
+
+    @Component({
+      selector: 'test-trigger-validation-no-value-event-host',
+      template: `
+        <form
+          ngxVestForm
+          [suite]="suite"
+          [formValue]="formValue()"
+          [validationConfig]="validationConfig"
+          (formValueChange)="formValue.set($event)"
+          #vest="ngxVestForm"
+        >
+          <div ngModelGroup="profile">
+            <input
+              name="firstName"
+              [ngModel]="formValue().profile?.firstName"
+            />
+          </div>
+          <div ngModelGroup="billing">
+            <input name="zip" [ngModel]="formValue().billing?.zip" />
+          </div>
+        </form>
+      `,
+      imports: [NgxVestForms],
+      providers: [
+        { provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 0 },
+      ],
+    })
+    class TestTriggerValidationNoValueEventHost {
+      readonly suite = configSuite;
+      readonly formValue = signal<ConfigModel>({
+        profile: { firstName: 'Ada' },
+        billing: { zip: '10001' },
+      });
+      readonly validationConfig = {
+        'profile.firstName': ['billing.zip'],
+      };
+      readonly vestForm =
+        viewChild.required<FormDirective<ConfigModel>>('vest');
+    }
+
+    const { fixture } = await render(TestTriggerValidationNoValueEventHost);
+    await whenStable();
+    await expect.poll(() => profileRuns).toBeGreaterThan(0);
+    await expect.poll(() => billingRuns).toBeGreaterThan(0);
+    const vestForm = fixture.componentInstance.vestForm();
+
+    const firstNameControl = vestForm.ngForm.form.get('profile.firstName');
+    expect(firstNameControl).toBeTruthy();
+
+    let valueChangesCount = 0;
+    const sub = firstNameControl!.valueChanges.subscribe(() => {
+      valueChangesCount += 1;
+    });
+    onTestFinished(() => sub.unsubscribe());
+
+    const profileRunsBefore = profileRuns;
+    const billingRunsBefore = billingRuns;
+
+    vestForm.triggerFormValidation('profile');
+    await expect.poll(() => profileRuns).toBeGreaterThan(profileRunsBefore);
+    await new Promise((resolve) => setTimeout(resolve, 30));
+
+    expect(valueChangesCount).toBe(0);
+    expect(billingRuns).toBe(billingRunsBefore);
+  });
+
+  it('recursively revalidates nested FormGroups and FormArrays deepest-first', async () => {
+    const order: string[] = [];
+    let requireCity = false;
+    let requireTag = false;
+
+    const { fixture } = await render(TestTriggerValidationHost);
+    await whenStable();
+    const vestForm = fixture.componentInstance.vestForm();
+
+    const cityControl = new FormControl('', {
+      validators: () => {
+        order.push('profile.address.city');
+        return requireCity ? { errors: ['City is required'] } : null;
+      },
+    });
+    const addressGroup = new FormControl('');
+    const nestedGroup = vestForm.ngForm.form;
+    const tagsArray = new FormArray(
+      [
+        new FormControl('', {
+          validators: () => {
+            order.push('tags.0');
+            return requireTag ? { errors: ['Tag is required'] } : null;
+          },
+        }),
+      ],
+      {
+        validators: () => {
+          order.push('tags');
+          return null;
+        },
+      }
+    );
+
+    const innerAddress = new FormGroup(
+      { city: cityControl, line2: addressGroup },
+      {
+        validators: () => {
+          order.push('profile.address');
+          return null;
+        },
+      }
+    );
+    const profileGroup = new FormGroup(
+      { address: innerAddress },
+      {
+        validators: () => {
+          order.push('profile');
+          return null;
+        },
+      }
+    );
+    nestedGroup.addControl('profile', profileGroup);
+    nestedGroup.addControl('tags', tagsArray);
+
+    order.length = 0;
+    requireCity = true;
+    requireTag = true;
+
+    vestForm.triggerFormValidation();
+
+    expect(order.indexOf('profile.address.city')).toBeGreaterThanOrEqual(0);
+    expect(order.indexOf('profile.address.city')).toBeLessThan(
+      order.indexOf('profile.address')
+    );
+    expect(order.indexOf('profile.address')).toBeLessThan(
+      order.indexOf('profile')
+    );
+    expect(order.indexOf('tags.0')).toBeGreaterThanOrEqual(0);
+    expect(order.indexOf('tags.0')).toBeLessThan(order.indexOf('tags'));
+    expect(vestForm.formState().errors['profile.address.city']).toEqual([
+      'City is required',
+    ]);
+    expect(vestForm.formState().errors['tags.0']).toEqual(['Tag is required']);
+    expect(vestForm.invalid()).toBe(true);
+  });
+
+  it('restarts async field validators and announces settled errors without valueChanges', async () => {
+    type AsyncModel = { profile?: { username?: string } };
+
+    let isTaken = false;
+    let asyncRuns = 0;
+    const resolvers: Array<() => void> = [];
+
+    const asyncSuite = create((model: AsyncModel = {}) => {
+      vestTest('profile.username', 'Username is taken', async () => {
+        asyncRuns += 1;
+        await new Promise<void>((resolve) => {
+          resolvers.push(resolve);
+        });
+        enforce(isTaken && model.profile?.username === 'ada').isFalsy();
+      });
+    });
+
+    @Component({
+      selector: 'test-trigger-validation-async-host',
+      template: `
+        <form
+          ngxVestForm
+          [suite]="suite"
+          [formValue]="formValue()"
+          (formValueChange)="formValue.set($event)"
+          #vest="ngxVestForm"
+        >
+          <div ngModelGroup="profile">
+            <input name="username" [ngModel]="formValue().profile?.username" />
+          </div>
+        </form>
+      `,
+      imports: [NgxVestForms],
+    })
+    class TestTriggerValidationAsyncHost {
+      readonly suite = asyncSuite;
+      readonly formValue = signal<AsyncModel>({
+        profile: { username: 'ada' },
+      });
+      readonly vestForm = viewChild.required<FormDirective<AsyncModel>>('vest');
+    }
+
+    const { fixture } = await render(TestTriggerValidationAsyncHost);
+    await expect.poll(() => resolvers.length).toBeGreaterThan(0);
+    while (resolvers.length > 0) {
+      resolvers.shift()?.();
+    }
+
+    const vestForm = fixture.componentInstance.vestForm();
+    await expect.poll(() => vestForm.valid()).toBe(true);
+    const usernameControl = vestForm.ngForm.form.get('profile.username');
+    expect(usernameControl).toBeTruthy();
+
+    let valueChangesCount = 0;
+    const sub = usernameControl!.valueChanges.subscribe(() => {
+      valueChangesCount += 1;
+    });
+    onTestFinished(() => sub.unsubscribe());
+
+    const runsBefore = asyncRuns;
+    isTaken = true;
+
+    vestForm.triggerFormValidation('profile');
+
+    expect(vestForm.pending()).toBe(true);
+    expect(valueChangesCount).toBe(0);
+
+    await expect.poll(() => asyncRuns).toBeGreaterThan(runsBefore);
+    while (resolvers.length > 0) {
+      resolvers.shift()?.();
+    }
+
+    await expect
+      .poll(() => vestForm.formState().errors['profile.username'])
+      .toEqual(['Username is taken']);
+    expect(vestForm.pending()).toBe(false);
+    expect(vestForm.invalid()).toBe(true);
+    expect(valueChangesCount).toBe(0);
   });
 });
 

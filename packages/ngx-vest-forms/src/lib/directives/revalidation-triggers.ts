@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { type AbstractControl, FormArray, FormGroup } from '@angular/forms';
-import { distinctUntilChanged, switchMap } from 'rxjs';
+import { distinctUntilChanged, type Observable, switchMap, tap } from 'rxjs';
 import { scheduleMicrotask } from '../utils/destroy-scheduler';
 import { fastDeepEqual } from '../utils/equality';
 import {
@@ -32,27 +32,95 @@ const PIPELINE_OPTIONS = {
 >;
 
 /**
+ * Controls currently inside a status-only `updateValueAndValidity({ emitEvent: false })`
+ * pass from {@link revalidateControlTree}. Used by {@link announceOnSilentRevalidation}
+ * so async validators started during that pass still announce their settled status.
+ */
+const silentRevalidating = new Set<AbstractControl>();
+
+/**
  * @internal
- * Re-runs validation for every control in the form tree, depth-first.
+ * Wraps an async validator observable so that when it was started by
+ * {@link revalidateControlTree} (with `emitEvent: false` to suppress
+ * `valueChanges`), an asynchronous completion still announces `statusChanges`
+ * and `StatusChangeEvent` via `control.setErrors(control.errors)`.
+ */
+export function announceOnSilentRevalidation<V>(
+  control: AbstractControl,
+  result$: Observable<V>,
+  destroyRef: DestroyRef
+): Observable<V> {
+  if (!silentRevalidating.has(control)) {
+    return result$;
+  }
+  return result$.pipe(
+    tap(() => {
+      // Synchronous emissions run while `control` is still inside
+      // `revalidateControlWithoutValueEvent`, which announces status directly
+      // once `updateValueAndValidity` returns. Only async completions need a
+      // microtask announcement after Angular stores the errors silently.
+      if (!silentRevalidating.has(control)) {
+        scheduleMicrotask(() => {
+          if (!control.pending) {
+            control.setErrors(control.errors);
+          }
+        }, destroyRef);
+      }
+    })
+  );
+}
+
+/**
+ * @internal
+ * Re-runs validation for every control in the subtree, deepest first, then
+ * updates `control` itself (bubbling up to any ancestors of `control`),
+ * announcing status changes without emitting spurious `valueChanges` events.
  *
  * Angular's `updateValueAndValidity()` on a container only re-runs the
  * container's own validators and recalculates ancestors — it never descends
- * into children. When the Vest suite changes, every field-level async
- * validator must re-run, so each control is updated individually
- * (`onlySelf: true` avoids redundant ancestor recalculation per child; the
- * container's own update afterwards aggregates the fresh child statuses).
+ * into children — and `emitEvent: true` emits `valueChanges` even when no
+ * value changed (which `validationConfig` treats as a user edit). Running each
+ * control with `emitEvent: false` and then announcing status via
+ * `markAsPending`/`setErrors` keeps `validationConfig` quiet while keeping
+ * `statusChanges`, `errorsChange`, and wrappers in sync.
  */
-function revalidateControlTree(control: AbstractControl): void {
+export function revalidateControlTree(control: AbstractControl): void {
+  revalidateDescendants(control);
+  revalidateControlWithoutValueEvent(control, false);
+}
+
+function revalidateDescendants(control: AbstractControl): void {
   if (control instanceof FormGroup) {
     for (const child of Object.values(control.controls)) {
-      revalidateControlTree(child);
+      revalidateDescendants(child);
+      revalidateControlWithoutValueEvent(child, true);
     }
   } else if (control instanceof FormArray) {
     for (const child of control.controls) {
-      revalidateControlTree(child);
+      revalidateDescendants(child);
+      revalidateControlWithoutValueEvent(child, true);
     }
   }
-  control.updateValueAndValidity({ onlySelf: true, emitEvent: true });
+}
+
+function revalidateControlWithoutValueEvent(
+  control: AbstractControl,
+  onlySelf: boolean
+): void {
+  if (control.disabled) {
+    return;
+  }
+  silentRevalidating.add(control);
+  try {
+    control.updateValueAndValidity({ onlySelf, emitEvent: false });
+  } finally {
+    silentRevalidating.delete(control);
+  }
+  if (control.pending) {
+    control.markAsPending({ onlySelf, emitEvent: true });
+  } else {
+    control.setErrors(control.errors, { emitEvent: true });
+  }
 }
 
 /**
