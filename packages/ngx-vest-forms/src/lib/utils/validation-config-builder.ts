@@ -72,13 +72,13 @@ export class ValidationConfigBuilder<T> {
    * @example Single dependent
    * ```typescript
    * builder.whenChanged('password', 'confirmPassword');
-   * /// Result: { password: ['confirmPassword'] }
+   * // Result: { password: ['confirmPassword'] }
    * ```
    *
    * @example Multiple dependents
    * ```typescript
    * builder.whenChanged('country', ['state', 'zipCode', 'postalCode']);
-   * /// Result: { country: ['state', 'zipCode', 'postalCode'] }
+   * // Result: { country: ['state', 'zipCode', 'postalCode'] }
    * ```
    *
    * @example Cumulative calls
@@ -86,7 +86,7 @@ export class ValidationConfigBuilder<T> {
    * builder
    *   .whenChanged('password', 'confirmPassword')
    *   .whenChanged('password', 'securityScore');
-   * /// Result: { password: ['confirmPassword', 'securityScore'] }
+   * // Result: { password: ['confirmPassword', 'securityScore'] }
    * ```
    */
   whenChanged(
@@ -151,19 +151,19 @@ export class ValidationConfigBuilder<T> {
    * @example Password confirmation
    * ```typescript
    * builder.bidirectional('password', 'confirmPassword');
-   * /// Result: {
-   * ///   password: ['confirmPassword'],
-   * ///   confirmPassword: ['password']
-   * /// }
+   * // Result: {
+   * //   password: ['confirmPassword'],
+   * //   confirmPassword: ['password']
+   * // }
    * ```
    *
    * @example Date range
    * ```typescript
    * builder.bidirectional('startDate', 'endDate');
-   * /// Result: {
-   * ///   startDate: ['endDate'],
-   * ///   endDate: ['startDate']
-   * /// }
+   * // Result: {
+   * //   startDate: ['endDate'],
+   * //   endDate: ['startDate']
+   * // }
    * ```
    */
   bidirectional(field1: FieldPath<T>, field2: FieldPath<T>): this {
@@ -232,11 +232,11 @@ export class ValidationConfigBuilder<T> {
    * @example Contact information group
    * ```typescript
    * builder.group(['firstName', 'lastName', 'email']);
-   * /// Result: {
-   * ///   firstName: ['lastName', 'email'],
-   * ///   lastName: ['firstName', 'email'],
-   * ///   email: ['firstName', 'lastName']
-   * /// }
+   * // Result: {
+   * //   firstName: ['lastName', 'email'],
+   * //   lastName: ['firstName', 'email'],
+   * //   email: ['firstName', 'lastName']
+   * // }
    * ```
    *
    * @example Address validation group

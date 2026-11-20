@@ -601,14 +601,14 @@ export class FormDirective<T extends Record<string, unknown>> {
    *
    * @example
    * ```typescript
-   * /// After changing form structure
+   * // After changing form structure
    * onProcedureTypeChange(newType: string) {
    *   this.procedureType.set(newType);
-   *   /// Structure changed but no control values changed
+   *   // Structure changed but no control values changed
    *   this.formDirective.triggerFormValidation();
    * }
    *
-   * /// For submit with multiple forms (show all errors)
+   * // For submit with multiple forms (show all errors)
    * submitAll() {
    *   // Mark all as touched to show errors
    *   this.form1Ref().markAllAsTouched();
@@ -657,18 +657,18 @@ export class FormDirective<T extends Record<string, unknown>> {
    *
    * @example
    * ```typescript
-   * /// Standard form submission - NO need to call markAllAsTouched()
-   * /// The directive handles this automatically on ngSubmit
-   * <form ngxVestForm (ngSubmit)="save()">
-   *   <button type="submit">Submit</button>
-   * </form>
+   * // Standard form submission - no need to call markAllAsTouched()
+   * // The directive handles this automatically on ngSubmit
+   * // <form ngxVestForm (ngSubmit)="save()">
+   * //   <button type="submit">Submit</button>
+   * // </form>
    *
-   * /// Multiple forms with one submit button
+   * // Multiple forms with one submit button
    * submitAll() {
    *   this.form1().markAllAsTouched();
    *   this.form2().markAllAsTouched();
    *   if (this.form1().formState().valid && this.form2().formState().valid) {
-   *     /// Submit all forms
+   *     // Submit all forms
    *   }
    * }
    * ```

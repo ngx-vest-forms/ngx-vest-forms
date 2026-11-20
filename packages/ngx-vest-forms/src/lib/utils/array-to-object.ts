@@ -94,12 +94,6 @@ function recursivelyConvertArrays<T>(value: T): DeepArrayToObject<T> {
 }
 
 /**
- * Converts selected numeric-keyed object properties back to arrays.
- * Only properties listed in keys will be converted; others remain untouched.
- * Useful for converting form models back to array format before saving/sending to backend.
- */
-
-/**
  * Public API: Convert selected numeric-keyed object properties back to arrays.
  *
  * Conversion is *explicit by key*. A numeric-keyed object becomes an array

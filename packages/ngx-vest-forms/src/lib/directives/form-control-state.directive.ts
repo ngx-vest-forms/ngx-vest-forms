@@ -305,7 +305,7 @@ export class FormControlStateDirective {
       // Initial update
       this.#refreshFromControl(control);
 
-      // Proper cleanup using onCleanup callback (Angular 21 best practice)
+      // Clean up subscription via effect onCleanup callback
       onCleanup(() => {
         sub.unsubscribe();
         this.#subscribedControl = null;
@@ -327,7 +327,7 @@ export class FormControlStateDirective {
       untracked(() => this.#refreshFromControl(control));
     });
 
-    // Robustly sync touched/dirty/pending after every render (Angular 18+ best practice)
+    // Sync touched/dirty/pending after every render
     // This handles cases where statusChanges events are missed or delayed
     afterEveryRender(
       () => {

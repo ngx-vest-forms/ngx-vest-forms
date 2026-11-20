@@ -135,7 +135,7 @@ type ArrayElementPaths<
  * };
  *
  * type Paths = FieldPath<Model>;
- * /// Result: 'name' | 'profile' | 'profile.age' | 'profile.address' | 'profile.address.city'
+ * // Result: 'name' | 'profile' | 'profile.age' | 'profile.address' | 'profile.address.city'
  * ```
  *
  * @example With NgxDeepPartial
@@ -148,7 +148,7 @@ type ArrayElementPaths<
  * }>;
  *
  * type Paths = FieldPath<FormModel>;
- * /// Result: 'user' | 'user.email' | 'user.phone'
+ * // Result: 'user' | 'user.email' | 'user.phone'
  * ```
  */
 export type FieldPath<T> = FieldPathInternal<T, false>;
@@ -179,13 +179,13 @@ export type FieldPath<T> = FieldPathInternal<T, false>;
  *   }
  * }>;
  *
- * /// ✅ Type-safe configuration with autocomplete
+ * // Type-safe configuration with autocomplete
  * const config: ValidationConfigMap<FormModel> = {
  *   password: ['confirmPassword'],
  *   'addresses.billing.city': ['password'],
  * };
  *
- * /// ❌ TypeScript error - invalid field name
+ * // TypeScript error - invalid field name
  * const badConfig: ValidationConfigMap<FormModel> = {
  *   passwordd: ['confirmPassword'], // Typo caught at compile time
  * };
@@ -220,7 +220,7 @@ export type ValidationConfigMap<T> = Partial<
  *
  * export const suite = create(
  *   (data: FormModel) => {
- *     /// ✅ Autocomplete works
+ *     // Autocomplete works
  *     test('email', 'Required', () => {
  *       enforce(data.email).isNotBlank();
  *     });
@@ -229,7 +229,7 @@ export type ValidationConfigMap<T> = Partial<
  *       enforce(data.user?.name).isNotBlank();
  *     });
  *
- *     /// Form-level validation
+ *     // Form-level validation
  *     test(ROOT_FORM, 'At least one contact method', () => {
  *       enforce(data.email || data.user?.name).isTruthy();
  *     });
@@ -257,18 +257,18 @@ export type FormFieldName<T> = FieldPath<T> | typeof ROOT_FORM;
  * };
  *
  * type AgeType = FieldPathValue<Model, 'user.profile.age'>;
- * /// Result: number
+ * // Result: number
  * ```
  *
  * @example Array paths
  * ```typescript
  * type Model = { addresses: { street: string }[] };
  *
- * /// Indexed dot form (as produced by FieldPath and at runtime):
+ * // Indexed dot form (as produced by FieldPath and at runtime):
  * type S1 = FieldPathValue<Model, 'addresses.0.street'>; // string
- * /// Bracket form (also accepted):
+ * // Bracket form (also accepted):
  * type S2 = FieldPathValue<Model, 'addresses[0].street'>; // string
- * /// Index-free form (also accepted; not a FieldPath):
+ * // Index-free form (also accepted; not a FieldPath):
  * type S3 = FieldPathValue<Model, 'addresses.street'>; // string
  * ```
  */
@@ -370,8 +370,8 @@ export type ValidateFieldPath<T, Path extends string> =
  * };
  *
  * type Leaves = LeafFieldPath<Model>;
- * /// Result: 'user.name' | 'user.profile.age'
- * /// Note: 'user' and 'user.profile' are excluded (not leaves)
+ * // Result: 'user.name' | 'user.profile.age'
+ * // Note: 'user' and 'user.profile' are excluded (not leaves)
  * ```
  */
 export type LeafFieldPath<T> = FieldPathInternal<T, true>;

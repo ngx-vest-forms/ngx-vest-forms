@@ -25,7 +25,7 @@ export const NGX_VALIDATION_CONFIG_DEBOUNCE_DEFAULT =
  *   NGX_VALIDATION_DEBOUNCE_PRESETS,
  * } from 'ngx-vest-forms';
  *
- * /// Global configuration
+ * // Global configuration
  * export const appConfig: ApplicationConfig = {
  *   providers: [
  *     {
@@ -35,7 +35,7 @@ export const NGX_VALIDATION_CONFIG_DEBOUNCE_DEFAULT =
  *   ]
  * };
  *
- * /// Per-route configuration
+ * // Per-route configuration
  * {
  *   path: 'checkout',
  *   component: CheckoutComponent,
@@ -47,7 +47,7 @@ export const NGX_VALIDATION_CONFIG_DEBOUNCE_DEFAULT =
  *   ]
  * }
  *
- * /// Per-component override
+ * // Per-component override
  * @Component({
  *   providers: [
  *     {

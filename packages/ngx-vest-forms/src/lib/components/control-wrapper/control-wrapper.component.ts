@@ -86,20 +86,11 @@ import { createDebouncedPendingState } from '../../utils/pending-state.utils';
  * - **Pending**: Status update while async validation runs
  *
  * For **form-level blocking errors** (e.g., submission failed), implement a separate
- * error summary component with `role="alert"` and `aria-live="assertive"`.
- *
- *
- *   Form-Level Blocking Errors:
- *   - For post-submit validation errors that block submission, implement a separate
- *     form-level error summary with role="alert" and aria-live="assertive"
- *   - This component uses role="status" for field-level errors (non-disruptive)
- *   - Example for form-level errors:
- *     ```html
- *     <!-- Keep in DOM; update text content on submit -->
- *     <div id="form-errors" role="alert" aria-live="assertive" aria-atomic="true"></div>
- *     ```
- *   - This separation provides immediate announcements for blocking form errors while
- *     keeping inline field errors non-disruptive. Follows WCAG ARIA21/ARIA22 guidance.
+ * error summary component with `role="alert"` and `aria-live="assertive"`:
+ * ```html
+ * <!-- Keep in DOM; update text content on submit -->
+ * <div id="form-errors" role="alert" aria-live="assertive" aria-atomic="true"></div>
+ * ```
  *
  * Error & Warning Display Behavior:
  *   - The error display mode can be configured globally using the NGX_ERROR_DISPLAY_MODE_TOKEN injection token, or per instance using the `errorDisplayMode` input on FormErrorDisplayDirective (which this component uses as a hostDirective).
@@ -108,21 +99,25 @@ import { createDebouncedPendingState } from '../../utils/pending-state.utils';
  *   - Possible warning display values: 'on-touch' | 'on-validated-or-touch' | 'on-dirty' | 'always' (default: 'on-validated-or-touch')
  *
  * Example (per instance):
- *   <div ngxControlWrapper>
- *     <label>
- *       <span>First name</span>
- *       <input type="text" name="firstName" [ngModel]="formValue().firstName" />
- *     </label>
- *   </div>
- *   /// To customize errorDisplayMode for this instance, use the errorDisplayMode input.
+ * ```html
+ * <div ngxControlWrapper [errorDisplayMode]="'on-submit'">
+ *   <label>
+ *     <span>First name</span>
+ *     <input type="text" name="firstName" [ngModel]="formValue().firstName" />
+ *   </label>
+ * </div>
+ * ```
  *
  * Example (with warnings and pending):
- *   <ngx-control-wrapper>
- *     <input name="username" ngModel />
- *   </ngx-control-wrapper>
- *   /// If async validation is running for >500ms, a spinner and the pending label (`NGX_PENDING_LABEL`, default 'Validating…') will be shown.
- *   /// Once shown, the validation message stays visible for minimum 500ms to prevent flashing.
- *   /// If Vest warnings are present, they will be shown below errors.
+ * ```html
+ * <ngx-control-wrapper>
+ *   <input name="username" [ngModel]="formValue().username" />
+ * </ngx-control-wrapper>
+ * ```
+ * // If async validation runs longer than `pendingDebounce.showAfter` (default 500ms),
+ * // a spinner and `NGX_PENDING_LABEL` (default 'Validating…') appear and stay visible
+ * // for at least `pendingDebounce.minimumDisplay` (default 500ms).
+ * // Vest warnings appear below errors.
  *
  * Example (global config):
  *   import { NGX_ERROR_DISPLAY_MODE_TOKEN } from 'ngx-vest-forms';
