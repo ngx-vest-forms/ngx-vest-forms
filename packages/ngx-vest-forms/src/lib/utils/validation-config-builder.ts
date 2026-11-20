@@ -1,9 +1,12 @@
+import {
+  logDiagnostic,
+  NGX_VEST_FORMS_DIAGNOSTICS,
+} from '../errors/error-catalog';
 import type { FieldPath, ValidationConfigMap } from './field-path-types';
 
 // NOTE: `typeof ngDevMode !== 'undefined' && ngDevMode` is kept inline
 // (not extracted to a helper) because Angular's build optimizer relies on
 // this exact pattern for tree-shaking dev-only code from production bundles.
-const LOG_PREFIX = '[ngx-vest-forms] ValidationConfigBuilder';
 
 /**
  * Fluent builder for creating type-safe validation configurations.
@@ -97,11 +100,10 @@ export class ValidationConfigBuilder<T> {
     if (typeof ngDevMode !== 'undefined' && ngDevMode) {
       const duplicates = deps.filter((d) => existing.includes(d));
       if (duplicates.length > 0) {
-        console.warn(
-          `${LOG_PREFIX}: Duplicate dependencies detected.\n` +
-            `  Trigger: '${trigger}'\n` +
-            `  Duplicates: ${duplicates.map((d) => `'${d}'`).join(', ')}\n` +
-            `  These will be automatically deduplicated.`
+        logDiagnostic(
+          NGX_VEST_FORMS_DIAGNOSTICS.VALIDATION_CONFIG_DUPLICATE_DEPENDENCIES,
+          trigger,
+          duplicates
         );
       }
     }
@@ -173,10 +175,10 @@ export class ValidationConfigBuilder<T> {
         this.config[field2]?.includes(field1 as string) ?? false;
 
       if (hasField1ToField2 && hasField2ToField1) {
-        console.warn(
-          `${LOG_PREFIX}: Duplicate bidirectional relationship detected.\n` +
-            `  Fields: '${field1}' ↔ '${field2}'\n` +
-            `  This bidirectional relationship was already configured.`
+        logDiagnostic(
+          NGX_VEST_FORMS_DIAGNOSTICS.VALIDATION_CONFIG_DUPLICATE_BIDIRECTIONAL,
+          field1,
+          field2
         );
       }
     }

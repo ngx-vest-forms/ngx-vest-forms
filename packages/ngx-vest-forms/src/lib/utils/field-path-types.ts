@@ -1,3 +1,7 @@
+import { ROOT_FORM } from '../constants';
+
+export { ROOT_FORM };
+
 /**
  * Primitive types that should not be traversed for nested paths.
  *
@@ -234,10 +238,6 @@ export type ValidationConfigMap<T> = Partial<
  * ```
  */
 export type FormFieldName<T> = FieldPath<T> | typeof ROOT_FORM;
-
-// Re-export ROOT_FORM for convenience
-import { ROOT_FORM } from '../constants';
-export { ROOT_FORM };
 
 /**
  * Helper type to infer the value type at a given field path.

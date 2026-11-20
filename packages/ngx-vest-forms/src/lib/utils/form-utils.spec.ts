@@ -63,7 +63,19 @@ describe('getFormControlField function', () => {
     const form = new FormGroup({ personal });
     personal.removeControl('name');
 
-    expect(getFormControlField(form, nameControl)).not.toBe('personal.name');
+    expect(getFormControlField(form, nameControl)).toBe('');
+  });
+
+  it('should not return a truncated path when a nested control is removed from its parent', () => {
+    const streetControl = new FormControl('Main St');
+    const billing = new FormGroup<Record<string, AbstractControl>>({
+      street: streetControl,
+    });
+    const addresses = new FormGroup({ billing });
+    const form = new FormGroup({ addresses });
+    billing.removeControl('street');
+
+    expect(getFormControlField(form, streetControl)).toBe('');
   });
 
   it('should fallback to control.name for detached controls', () => {

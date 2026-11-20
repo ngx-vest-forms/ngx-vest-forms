@@ -104,23 +104,6 @@ function getControlPath(
     }
   }
 
-  // Fallback: walk up the parent chain from control to root
-  let current: AbstractControl | null | undefined = control;
-  const segments: string[] = [];
-  while (current?.parent) {
-    const parent: FormContainer = current.parent;
-    for (const [key, controlInParent] of getChildEntries(parent)) {
-      if (controlInParent === current) {
-        segments.unshift(key);
-        break;
-      }
-    }
-    current = parent;
-    if (current === formGroup) {
-      return segments.join('.');
-    }
-  }
-
   // Last resort: try control.name if available
   const name = (control as ControlWithOptionalName).name;
   if (typeof name === 'string') {

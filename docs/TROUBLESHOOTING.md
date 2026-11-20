@@ -19,6 +19,9 @@ ngx-vest-forms logs development-mode diagnostics via `console.warn`. They are si
 | [`NGX-106`](#ngx-106--ngx-107-validationconfig-timeout-warnings) | `validationConfig` timed out waiting for `PENDING` to settle |
 | [`NGX-107`](#ngx-106--ngx-107-validationconfig-timeout-warnings) | `validationConfig` timed out waiting for dependent controls |
 | [`NGX-108`](#ngx-108-signal-forms-control-not-registered-in-time) | Signal Forms custom control not registered in its form in time |
+| [`NGX-109`](#ngx-109-invalid-field-path) | Malformed field path passed to `parseFieldPath` or `setValueAtPath` |
+| [`NGX-110`](#ngx-110--ngx-111-duplicate-validationconfigbuilder-entries) | Duplicate dependent fields added to `ValidationConfigBuilder` |
+| [`NGX-111`](#ngx-110--ngx-111-duplicate-validationconfigbuilder-entries) | Duplicate bidirectional pair added to `ValidationConfigBuilder` |
 
 ---
 
@@ -109,9 +112,15 @@ protected handleFormChange(value: ProfileFormModel): void {
 
 **Fix:** Give the control a stable, non-empty `name` inside the form and avoid tearing down or renaming it mid-registration. Standalone controls (`[ngModelOptions]="{ standalone: true }"`) do not trigger this warning. See [Custom control wrappers](./CUSTOM-CONTROL-WRAPPERS.md#signal-forms-controls-inside-a-wrapper).
 
-## Duplicate `ValidationConfigBuilder` warnings
+## `NGX-109`: invalid field path
 
-**Meaning:** The same trigger-to-dependent pair was added twice to `createValidationConfig()`. The builder deduplicates automatically and warns in dev mode.
+**Meaning:** `parseFieldPath` (also used by `setValueAtPath`) received a malformed path with a leading dot, trailing dot, consecutive dots, or a `.[` separator (such as `.email`, `user..name`, or `items.[0]`). The call returns `[]` and makes no write.
+
+**Fix:** Pass a valid dot or bracket path such as `user.name`, `items.0.street`, or `items[0].street`.
+
+## `NGX-110` / `NGX-111`: duplicate `ValidationConfigBuilder` entries
+
+**Meaning:** The same trigger-to-dependent pair (`NGX-110`) or bidirectional pair (`NGX-111`) was added twice to `createValidationConfig()`. The builder deduplicates automatically and warns in dev mode.
 
 **Fix:** Remove duplicate calls, or combine reusable fragments with `.merge(...)`.
 
