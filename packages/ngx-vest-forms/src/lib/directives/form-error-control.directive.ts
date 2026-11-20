@@ -90,7 +90,9 @@ export class FormErrorControlDirective implements AfterContentInit {
    */
   readonly ariaDescribedBy = computed(() =>
     buildMessageDescribedBy(this.#regionIds, {
-      errors: this.errorDisplay.shouldShowErrors(),
+      errors:
+        this.errorDisplay.shouldShowErrors() &&
+        this.errorDisplay.errors().length > 0,
       warnings: this.errorDisplay.shouldShowWarnings(),
       pending: this.showPendingMessage(),
     })
