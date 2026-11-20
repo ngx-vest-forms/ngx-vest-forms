@@ -6,7 +6,7 @@ ngx-vest-forms provides three complementary mechanisms for cross-field and dynam
 | --- | --- | --- | --- |
 | `[validationConfig]` | Revalidate dependent fields when a trigger field changes | On the dependent field (`errors['confirmPassword']`) | Automatically on trigger value change and before `(submitSettled)` |
 | `ngxValidateRootForm` (`ROOT_FORM`) | Validate form-wide rules that belong to no single field | On the root form (`errors[ROOT_FORM]`) | On submit (`'submit'`, default) or on every change (`'live'`) |
-| `triggerFormValidation(path?)` | Recalculate root validity (or revalidate one `path`) after structure changes without a value change | Root form or target control | Manually from component code |
+| `triggerFormValidation(path?)` | Re-run validators for the whole form, one group subtree, or one field path after structure or focus changes without a value change | All fields and root form, or target subtree | Manually from component code |
 
 ## 1. `[validationConfig]` for dependent fields
 
@@ -129,8 +129,8 @@ protected onSubmit(event: NgxSubmitSettledEvent<ContactModel>): void {
 
 When a template switches between form controls and static content (such as replacing an `<input>` with a `<p>`), no control emits a value change, so root form validity can remain stale.
 
-- `triggerFormValidation()` (no argument) calls `ngForm.form.updateValueAndValidity({ emitEvent: true })`. It re-runs root-level validators and recalculates aggregate form validity from the remaining controls. It does **not** re-run individual child field validators and does **not** mark fields as touched.
-- `triggerFormValidation('address.street')` calls `updateValueAndValidity({ emitEvent: true })` on that specific control path (and logs `[NGX-003]` in dev mode if the path does not exist).
+- `triggerFormValidation()` (no argument) re-runs validators on every control in the form deepest-first, then updates the root form. All field validators (including async tests) and root-level validators re-run, and fields are **not** marked as touched.
+- `triggerFormValidation('address')` or `triggerFormValidation('address.street')` re-runs validators on every descendant under that path (deepest first), then updates the target control and its ancestors up to the root. Pass a group or field path when only one section needs revalidation (for example after changing `[validationFocus]`). An unknown path logs `[NGX-003]` in dev mode.
 
 Always clear hidden values inside `(formValueChange)`, not in a separate `(ngModelChange)` handler alongside `(formValueChange)` (which causes `NGX-100` same-tick sync conflicts):
 

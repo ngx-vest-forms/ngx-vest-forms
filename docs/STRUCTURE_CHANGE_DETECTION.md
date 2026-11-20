@@ -24,8 +24,8 @@ You do **not** need `triggerFormValidation()` when switching between two inputs 
 triggerFormValidation(path?: string): void
 ```
 
-- **Without `path`:** calls `ngForm.form.updateValueAndValidity({ emitEvent: true })`. Root-level validators re-run and the form's aggregate status recalculates from the controls currently mounted in the DOM. It does **not** re-run individual child field validators.
-- **With `path`:** calls `updateValueAndValidity({ emitEvent: true })` on that specific control (for example `'address.street'`), and its ancestors recalculate up to the root. Passing an unknown path logs `[NGX-003]` in development mode and does nothing.
+- **Without `path`:** re-runs validators on every descendant control in the form tree (deepest first), then runs `updateValueAndValidity({ emitEvent: true })` on the root form. Every field and root validator re-evaluates, including async tests.
+- **With `path`:** re-runs validators on every descendant under `path` (deepest first) if `path` points to an `ngModelGroup` or `FormArray`, then runs `updateValueAndValidity({ emitEvent: true })` on that target so its ancestors recalculate up to the root. Pass a field or group path (for example `'address'` or `'address.street'`) when only one section needs revalidation, such as after switching `[validationFocus]`. Passing an unknown path logs `[NGX-003]` in development mode and does nothing.
 
 `triggerFormValidation()` never marks controls as touched and never reveals errors. To show errors programmatically (for example, submitting multiple forms with one button), call `markAllAsTouched()`. With the default `'on-blur-or-submit'` display mode, regular `(ngSubmit)` / `(submitSettled)` submissions call `markAllAsTouched()` automatically.
 

@@ -33,26 +33,32 @@ const PIPELINE_OPTIONS = {
 
 /**
  * @internal
- * Re-runs validation for every control in the form tree, depth-first.
+ * Re-runs validation for every control in the subtree, deepest first, then
+ * updates `control` itself (bubbling up to any ancestors of `control`).
  *
  * Angular's `updateValueAndValidity()` on a container only re-runs the
  * container's own validators and recalculates ancestors — it never descends
- * into children. When the Vest suite changes, every field-level async
- * validator must re-run, so each control is updated individually
- * (`onlySelf: true` avoids redundant ancestor recalculation per child; the
- * container's own update afterwards aggregates the fresh child statuses).
+ * into children. Each descendant runs with `onlySelf: true` to avoid
+ * redundant ancestor recalculation per child, and the target `control` runs
+ * last without `onlySelf` so its status propagates to its parent chain.
  */
-function revalidateControlTree(control: AbstractControl): void {
+export function revalidateControlTree(control: AbstractControl): void {
+  revalidateDescendants(control);
+  control.updateValueAndValidity({ emitEvent: true });
+}
+
+function revalidateDescendants(control: AbstractControl): void {
   if (control instanceof FormGroup) {
     for (const child of Object.values(control.controls)) {
-      revalidateControlTree(child);
+      revalidateDescendants(child);
+      child.updateValueAndValidity({ onlySelf: true, emitEvent: true });
     }
   } else if (control instanceof FormArray) {
     for (const child of control.controls) {
-      revalidateControlTree(child);
+      revalidateDescendants(child);
+      child.updateValueAndValidity({ onlySelf: true, emitEvent: true });
     }
   }
-  control.updateValueAndValidity({ onlySelf: true, emitEvent: true });
 }
 
 /**

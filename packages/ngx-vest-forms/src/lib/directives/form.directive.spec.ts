@@ -18,6 +18,7 @@ import { isObservable, type Observable } from 'rxjs';
 import {
   create,
   enforce,
+  group,
   omitWhen,
   skipWhen,
   test as vestTest,
@@ -1695,6 +1696,93 @@ describe('FormDirective - triggerFormValidation', () => {
     expect(message).not.toContain('[formContract]');
     expect(message).not.toContain('provideFormContract');
   });
+
+  it.each([
+    { label: 'no path (whole form)', path: undefined },
+    { label: 'a group path', path: 'profile' },
+  ])(
+    'reruns descendant field validators deepest-first when called with $label',
+    async ({ path }) => {
+      type FocusModel = {
+        account?: { username?: string };
+        profile?: { firstName?: string };
+      };
+
+      const focusSuite = create((model: FocusModel = {}) => {
+        group('account', () => {
+          vestTest('account.username', 'Username is required', () => {
+            enforce(model.account?.username).isNotBlank();
+          });
+        });
+        group('profile', () => {
+          vestTest('profile.firstName', 'First name is required', () => {
+            enforce(model.profile?.firstName).isNotBlank();
+          });
+        });
+      });
+
+      @Component({
+        selector: 'test-trigger-validation-descendants-host',
+        template: `
+          <form
+            ngxVestForm
+            [suite]="suite"
+            [formValue]="formValue()"
+            [validationFocus]="focus()"
+            (formValueChange)="formValue.set($event)"
+            #vest="ngxVestForm"
+          >
+            <div ngModelGroup="account">
+              <input
+                name="username"
+                [ngModel]="formValue().account?.username"
+              />
+            </div>
+            <div ngModelGroup="profile">
+              <input
+                name="firstName"
+                [ngModel]="formValue().profile?.firstName"
+              />
+            </div>
+          </form>
+        `,
+        imports: [NgxVestForms],
+      })
+      class TestTriggerValidationDescendantsHost {
+        readonly suite = focusSuite;
+        readonly formValue = signal<FocusModel>({
+          account: { username: 'ada' },
+          profile: { firstName: '' },
+        });
+        readonly focus = signal<{ onlyGroup: string }>({
+          onlyGroup: 'account',
+        });
+        readonly vestForm =
+          viewChild.required<FormDirective<FocusModel>>('vest');
+      }
+
+      const { fixture } = await render(TestTriggerValidationDescendantsHost);
+      await whenStable();
+      const host = fixture.componentInstance;
+
+      expect(host.suite.get().isTested('profile.firstName')).toBe(false);
+      expect(
+        host.vestForm().formState().errors['profile.firstName']
+      ).toBeUndefined();
+
+      host.focus.set({ onlyGroup: 'profile' });
+      fixture.detectChanges();
+      await whenStable();
+
+      host.vestForm().triggerFormValidation(path);
+
+      await expect
+        .poll(() => host.vestForm().formState().errors['profile.firstName'])
+        .toEqual(['First name is required']);
+      expect(host.suite.get().isTested('profile.firstName')).toBe(true);
+      expect(host.vestForm().invalid()).toBe(true);
+    }
+  );
 });
 
 describe('FormDirective - clearSubmittedState', () => {
