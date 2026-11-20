@@ -9,9 +9,11 @@ import { isUnsafePathSegment } from './field-path.utils';
 export type DeepArrayToObject<T> =
   T extends ReadonlyArray<infer U>
     ? Record<number, DeepArrayToObject<U>>
-    : T extends object
-      ? { [K in keyof T]: DeepArrayToObject<T[K]> }
-      : T;
+    : T extends Date | RegExp | ((...args: never[]) => unknown)
+      ? T
+      : T extends object
+        ? { [K in keyof T]: DeepArrayToObject<T[K]> }
+        : T;
 
 /**
  * Converts a flat array to an object with numeric keys.
@@ -59,7 +61,7 @@ export function deepArrayToObject<T>(
       index,
       Array.isArray(value)
         ? deepArrayToObject(value as unknown[])
-        : value && typeof value === 'object'
+        : isPlainObject(value)
           ? recursivelyConvertArrays(value)
           : value,
     ])
@@ -67,19 +69,19 @@ export function deepArrayToObject<T>(
 }
 
 /**
- * Recursively traverses an object and converts any nested arrays to objects.
+ * Recursively traverses a plain object and converts any nested arrays to objects.
  */
 function recursivelyConvertArrays<T>(object: T): DeepArrayToObject<T> {
   if (Array.isArray(object)) {
     return deepArrayToObject(object as unknown[]) as DeepArrayToObject<T>;
   }
-  if (object && typeof object === 'object') {
+  if (isPlainObject(object)) {
     return Object.fromEntries(
       Object.entries(object).map(([key, value]) => [
         key,
         Array.isArray(value)
           ? deepArrayToObject(value as unknown[])
-          : value && typeof value === 'object'
+          : isPlainObject(value)
             ? recursivelyConvertArrays(value)
             : value,
       ])
@@ -137,10 +139,8 @@ export function objectToArray(
   keys: readonly string[]
 ): unknown {
   const { value: processed } = objectToArrayInternal(object, keys);
-  if (processed && typeof processed === 'object' && !Array.isArray(processed)) {
-    const entries: Array<[string, unknown]> = Object.entries(
-      processed as Record<string, unknown>
-    );
+  if (isPlainObject(processed)) {
+    const entries: Array<[string, unknown]> = Object.entries(processed);
     if (entries.length === 1) {
       const firstEntry = entries[0];
       if (!firstEntry) {
@@ -188,7 +188,7 @@ function objectToArrayInternal(
     };
   }
 
-  if (object && typeof object === 'object') {
+  if (isPlainObject(object)) {
     if (isNumericObject(object)) {
       // First, recursively process the contents
       const processedContents: Record<string, unknown> = {};
@@ -243,9 +243,21 @@ function objectToArrayInternal(
 }
 
 /**
- * Checks if a value is an object with only numeric keys (not an array).
+ * Checks whether a value is a plain object (null-prototype or Object.prototype
+ * from any realm), excluding arrays, Date, RegExp, and custom class instances.
+ */
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+  const prototype: unknown = Object.getPrototypeOf(value);
+  return prototype === null || Object.getPrototypeOf(prototype) === null;
+}
+
+/**
+ * Checks if a value is a plain object with only numeric keys (not an array).
  */
 function isNumericObject(value: unknown): value is Record<string, unknown> {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  if (!isPlainObject(value)) return false;
   return Object.keys(value).every((k) => /^\d+$/.test(k));
 }

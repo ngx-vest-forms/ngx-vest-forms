@@ -234,15 +234,40 @@ describe('deepArrayToObject', () => {
     expect(result[1]?.[0]).not.toBe(nestedObj);
   });
 
-  it('should handle arrays with complex objects', () => {
-    const date = new Date('2025-01-01');
-    const array = [date, { nested: [date] }];
+  it('should preserve Date, RegExp, and custom class instances inside arrays and nested objects', () => {
+    class Money {
+      constructor(
+        readonly amount: number,
+        readonly currency: string
+      ) {}
+    }
+
+    const date = new Date('2025-01-01T00:00:00.000Z');
+    const pattern = /^abc$/gi;
+    const price = new Money(42, 'EUR');
+    const array = [
+      date,
+      pattern,
+      price,
+      {
+        createdAt: date,
+        pattern,
+        price,
+        nested: [date, pattern, price],
+      },
+    ];
     const result = deepArrayToObject(array) as Record<number, any>;
 
-    // deepArrayToObject recursively processes objects, Date objects are handled
-    expect(typeof result[0]).toBe('object');
-    expect(typeof result[1].nested).toBe('object');
-    expect(result[1].nested[0]).toBeDefined();
+    expect(result[0]).toBe(date);
+    expect(result[1]).toBe(pattern);
+    expect(result[2]).toBe(price);
+    expect(result[3].createdAt).toBe(date);
+    expect(result[3].pattern).toBe(pattern);
+    expect(result[3].price).toBe(price);
+    expect(result[3].nested).toEqual({ 0: date, 1: pattern, 2: price });
+    expect(result[3].nested[0]).toBe(date);
+    expect(result[3].nested[1]).toBe(pattern);
+    expect(result[3].nested[2]).toBe(price);
   });
 
   it('should handle arrays with function properties in objects', () => {
@@ -479,6 +504,87 @@ describe('objectToArray', () => {
       expect(Object.keys(result)).toEqual(['name', 'nested', 'list']);
     }
   );
+
+  it('should preserve Date, RegExp, and custom class instances during conversion and round-trip', () => {
+    class Money {
+      constructor(
+        readonly amount: number,
+        readonly currency: string
+      ) {}
+    }
+
+    const createdAt = new Date('2025-06-15T12:00:00.000Z');
+    const pattern = /^[a-z]+$/i;
+    const price = new Money(99, 'USD');
+
+    const originalItems = [
+      { label: 'Item 1', createdAt, pattern, price },
+      { label: 'Item 2', createdAt, pattern, price },
+    ];
+    const formModel = {
+      createdAt,
+      pattern,
+      price,
+      items: deepArrayToObject(originalItems),
+    };
+
+    const result = objectToArray(formModel, ['items']) as {
+      createdAt: Date;
+      pattern: RegExp;
+      price: Money;
+      items: Array<{
+        label: string;
+        createdAt: Date;
+        pattern: RegExp;
+        price: Money;
+      }>;
+    };
+
+    expect(result.createdAt).toBe(createdAt);
+    expect(result.pattern).toBe(pattern);
+    expect(result.price).toBe(price);
+    expect(result.items).toHaveLength(2);
+    expect(result.items[0]?.createdAt).toBe(createdAt);
+    expect(result.items[0]?.pattern).toBe(pattern);
+    expect(result.items[0]?.price).toBe(price);
+    expect(result.items[1]?.createdAt).toBe(createdAt);
+    expect(result.items[1]?.pattern).toBe(pattern);
+    expect(result.items[1]?.price).toBe(price);
+  });
+
+  it('should not classify Date, RegExp, or custom class instances as numeric objects even when their key is listed', () => {
+    class Tag {
+      readonly 0 = 'zero';
+    }
+
+    const date = new Date('2025-01-01T00:00:00.000Z');
+    const pattern = /test/g;
+    const tag = new Tag();
+
+    const model = {
+      date,
+      pattern,
+      tag,
+      items: {},
+    };
+
+    const result = objectToArray(model, [
+      'date',
+      'pattern',
+      'tag',
+      'items',
+    ]) as {
+      date: Date;
+      pattern: RegExp;
+      tag: Tag;
+      items: unknown[];
+    };
+
+    expect(result.date).toBe(date);
+    expect(result.pattern).toBe(pattern);
+    expect(result.tag).toBe(tag);
+    expect(result.items).toEqual([]);
+  });
 });
 
 describe('selective array/object conversion', () => {
