@@ -1,4 +1,5 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   Directive,
   forwardRef,
@@ -2182,5 +2183,72 @@ describe('ControlWrapperComponent while re-validating', () => {
     await vi.advanceTimersByTimeAsync(50);
     fixture.detectChanges();
     expect(screen.queryByText('Validating…')).not.toBeInTheDocument();
+  });
+
+  it('omits errorId from aria-describedby when invalid with no rendered error text while keeping aria-invalid', async () => {
+    const { fixture } = await render(HeldMessagesHostComponent);
+    const host = fixture.componentInstance;
+    const input = screen.getByLabelText('Handle');
+    const control = host.ngForm().form.get('handle');
+    if (!control) throw new Error('handle control missing');
+
+    control.markAsTouched();
+    control.markAsDirty();
+    control.setValue('bad');
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Control becomes INVALID, but with an empty messages array so no error text renders.
+    host.validator().settle({ errors: [] });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    await waitFor(() => {
+      expect(input).toHaveAttribute('aria-invalid', 'true');
+      expect(input).toHaveAttribute('aria-describedby', 'handle-hint');
+    });
+  });
+
+  it('updates rendered errors and clears them under ChangeDetectionStrategy.OnPush', async () => {
+    @Component({
+      imports: [NgxVestForms],
+      changeDetection: ChangeDetectionStrategy.OnPush,
+      template: `
+        <form
+          ngxVestForm
+          [suite]="suite"
+          [formValue]="model()"
+          (formValueChange)="model.set($event)"
+        >
+          <ngx-control-wrapper>
+            <label for="onpush-email">OnPush Email</label>
+            <input id="onpush-email" name="email" [ngModel]="model().email" />
+          </ngx-control-wrapper>
+        </form>
+      `,
+    })
+    class OnPushControlWrapperHostComponent {
+      readonly model = signal({ email: '' });
+      readonly suite = testSuite;
+    }
+
+    await render(OnPushControlWrapperHostComponent);
+    const input = screen.getByLabelText('OnPush Email');
+
+    await userEvent.click(input);
+    await userEvent.tab();
+
+    await waitFor(() => {
+      expect(screen.getByText('Email is required')).toBeInTheDocument();
+      expect(input).toHaveAttribute('aria-invalid', 'true');
+    });
+
+    await userEvent.type(input, 'ada@example.com');
+    await userEvent.tab();
+
+    await waitFor(() => {
+      expect(screen.queryByText('Email is required')).not.toBeInTheDocument();
+      expect(input).not.toHaveAttribute('aria-invalid');
+    });
   });
 });

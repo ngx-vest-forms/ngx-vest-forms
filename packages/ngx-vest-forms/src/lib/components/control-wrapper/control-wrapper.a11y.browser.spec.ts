@@ -1,5 +1,11 @@
-import { ApplicationRef, Component, signal } from '@angular/core';
+import { ApplicationRef, Component, Directive, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import {
+  FormsModule,
+  NG_VALIDATORS,
+  type ValidationErrors,
+  type Validator,
+} from '@angular/forms';
 import { render } from '@testing-library/angular';
 import { create, enforce, test as vestTest } from 'vest';
 import { describe, expect, it } from 'vitest';
@@ -192,5 +198,61 @@ describe('ControlWrapperComponent - aria wiring (browser mode)', () => {
     expect(
       reducedMotionRules.some((rule) => rule.style.display === 'none')
     ).toBe(false);
+  });
+
+  it('omits the error region id from aria-describedby when invalid with no rendered error text', async () => {
+    @Directive({
+      selector: '[ngxBrowserEmptyError]',
+      providers: [
+        {
+          provide: NG_VALIDATORS,
+          useExisting: BrowserEmptyErrorValidatorDirective,
+          multi: true,
+        },
+      ],
+    })
+    class BrowserEmptyErrorValidatorDirective implements Validator {
+      validate(): ValidationErrors {
+        return { errors: [] };
+      }
+    }
+
+    @Component({
+      selector: 'ngx-test-control-wrapper-empty-error-browser',
+      imports: [
+        FormsModule,
+        ControlWrapperComponent,
+        BrowserEmptyErrorValidatorDirective,
+      ],
+      template: `
+        <form>
+          <ngx-control-wrapper>
+            <label for="empty-error-input">Code</label>
+            <input
+              id="empty-error-input"
+              name="code"
+              [(ngModel)]="code"
+              ngxBrowserEmptyError
+              aria-describedby="code-hint"
+            />
+            <span id="code-hint">Enter your code</span>
+          </ngx-control-wrapper>
+        </form>
+      `,
+    })
+    class EmptyErrorBrowserHostComponent {
+      code = '';
+    }
+
+    await render(EmptyErrorBrowserHostComponent);
+
+    const input = page.getByRole('textbox', { name: 'Code' });
+    await userEvent.click(input);
+    await userEvent.tab();
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    const inputElement = await input.element();
+    expect(inputElement.getAttribute('aria-invalid')).toBe('true');
+    expect(inputElement.getAttribute('aria-describedby')).toBe('code-hint');
   });
 });

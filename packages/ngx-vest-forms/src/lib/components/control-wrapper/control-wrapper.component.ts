@@ -1,6 +1,7 @@
 import {
   type AfterContentInit,
   booleanAttribute,
+  ChangeDetectionStrategy,
   Component,
   computed,
   ElementRef,
@@ -146,6 +147,7 @@ import { createDebouncedPendingState } from '../../utils/pending-state.utils';
   selector: 'ngx-control-wrapper, [ngxControlWrapper]',
   templateUrl: './control-wrapper.component.html',
   styleUrls: ['./control-wrapper.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     class: 'ngx-control-wrapper',
     '[class.ngx-control-wrapper--invalid]': 'errorDisplay.shouldShowErrors()',
@@ -240,7 +242,9 @@ export class ControlWrapperComponent implements AfterContentInit {
    */
   protected readonly ariaDescribedBy = computed(() =>
     buildMessageDescribedBy(this.regionIds, {
-      errors: this.errorDisplay.shouldShowErrors(),
+      errors:
+        this.errorDisplay.shouldShowErrors() &&
+        this.errorDisplay.errors().length > 0,
       warnings: this.shouldShowWarnings(),
       pending: this.showPendingMessage(),
     })

@@ -1,4 +1,9 @@
-import { Component, signal, viewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { FormsModule, type NgForm } from '@angular/forms';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
@@ -213,5 +218,70 @@ describe('FormGroupWrapperComponent', () => {
     await vi.advanceTimersByTimeAsync(50);
     fixture.detectChanges();
     expect(screen.queryByText('Validating…')).not.toBeInTheDocument();
+  });
+
+  it('omits errorId from describedByIds when invalid without group error messages and updates under OnPush', async () => {
+    const groupSuite = create((model: { group?: { a?: string } }) => {
+      vestTest('group', 'Group requires value', () => {
+        if (model.group?.a === 'fail-group') {
+          throw new Error('Group requires value');
+        }
+      });
+    });
+
+    @Component({
+      imports: [NgxVestForms],
+      changeDetection: ChangeDetectionStrategy.OnPush,
+      template: `
+        <form
+          ngxVestForm
+          [suite]="suite"
+          [formValue]="model()"
+          (formValueChange)="model.set($event)"
+        >
+          <ngx-form-group-wrapper
+            ngModelGroup="group"
+            #groupWrapper="ngxFormGroupWrapper"
+          >
+            <label for="onpush-a">A</label>
+            <input
+              id="onpush-a"
+              name="a"
+              [ngModel]="model().group.a"
+              required
+            />
+          </ngx-form-group-wrapper>
+        </form>
+      `,
+    })
+    class OnPushGroupHostComponent {
+      readonly model = signal({ group: { a: '' } });
+      readonly suite = groupSuite;
+      readonly groupWrapper =
+        viewChild.required<FormGroupWrapperComponent>('groupWrapper');
+    }
+
+    const { fixture } = await render(OnPushGroupHostComponent);
+    const wrapper = fixture.componentInstance.groupWrapper();
+    const inputA = screen.getByLabelText('A');
+
+    // Child is invalid (required), so the group is invalid with no group-level error messages.
+    await userEvent.click(inputA);
+    await userEvent.tab();
+
+    await waitFor(() => {
+      const hostEl = document.querySelector('ngx-form-group-wrapper');
+      expect(hostEl).toHaveClass('ngx-form-group-wrapper--invalid');
+      expect(wrapper.describedByIds()).toBeNull();
+    });
+
+    // Trigger a real group-level error message: errorId should now be linked and rendered under OnPush.
+    await userEvent.type(inputA, 'fail-group');
+    await userEvent.tab();
+
+    await waitFor(() => {
+      expect(screen.getByText('Group requires value')).toBeInTheDocument();
+      expect(wrapper.describedByIds()).toBe(wrapper.errorId);
+    });
   });
 });
