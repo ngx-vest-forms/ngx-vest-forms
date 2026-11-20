@@ -40,9 +40,9 @@ import { createDebouncedPendingState } from '../../utils/pending-state.utils';
  * ### Error Display Modes
  * Control when errors appear using the `errorDisplayMode` input:
  * - `'on-blur-or-submit'` (default): Show errors after blur OR form submit
- * - `'on-blur'`: Show errors only after blur
+ * - `'on-blur'`: Deprecated alias for `'on-blur-or-submit'` (shows after blur or form submit; scheduled for removal in v4)
  * - `'on-submit'`: Show errors only after form submit
- * - `'on-dirty'`: Show errors as soon as the field value changes
+ * - `'on-dirty'`: Show errors as soon as the field value changes, or after touch/submit
  * - `'always'`: Show errors immediately, even on pristine fields
  *
  * ```html
@@ -53,9 +53,9 @@ import { createDebouncedPendingState } from '../../utils/pending-state.utils';
  *
  * ### Warning Display Modes
  * Control when warnings appear using the `warningDisplayMode` input:
- * - `'on-validated-or-touch'` (default): Show warnings after validation runs or touch
- * - `'on-touch'`: Show warnings only after touch/blur
- * - `'on-dirty'`: Show warnings as soon as the field value changes
+ * - `'on-validated-or-touch'` (default): Show warnings after validation runs, touch, or form submit
+ * - `'on-touch'`: Show warnings after touch/blur or form submit
+ * - `'on-dirty'`: Show warnings as soon as the field value changes, or after touch/submit
  * - `'always'`: Show warnings immediately, even on pristine fields
  *
  * ```html

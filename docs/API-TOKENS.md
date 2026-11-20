@@ -159,7 +159,7 @@ type NgxErrorDisplayMode =
 | Mode | Behavior |
 | --- | --- |
 | `'on-blur-or-submit'` (default) | Show after the control is touched or the form is submitted. |
-| `'on-blur'` | Show after the control is touched or the form is submitted (behaves identically to `'on-blur-or-submit'`; prefer `'on-blur-or-submit'` in new code). |
+| `'on-blur'` | **Deprecated** (scheduled for removal in v4; see [ADR 0013](./adr/0013-display-modes-open-on-submit.md)). Alias for `'on-blur-or-submit'`: shows after the control is touched or the form is submitted. |
 | `'on-submit'` | Show only after a form submission attempt. |
 | `'on-dirty'` | Show as soon as the value changes, or after touch/submit. |
 | `'always'` | Show immediately, including on pristine fields (except when the control uses `updateOn: 'submit'`, which still waits for a form submission attempt). |

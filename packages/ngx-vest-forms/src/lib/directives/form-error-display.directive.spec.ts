@@ -165,6 +165,31 @@ describe('FormErrorDisplayDirective', () => {
       .toBe('required');
   });
 
+  it('should also show errors after submit for an untouched control in on-blur mode', async () => {
+    host.mode.set('on-blur');
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    expect(
+      fixture.nativeElement.querySelector('#should-show-errors')?.textContent
+    ).toBe('false');
+
+    const submitBtn: HTMLButtonElement =
+      fixture.nativeElement.querySelector('#submit-btn');
+    submitBtn.click();
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    await expect
+      .poll(
+        () =>
+          fixture.nativeElement.querySelector('#should-show-errors')
+            ?.textContent
+      )
+      .toBe('true');
+    await expect
+      .poll(() => fixture.nativeElement.querySelector('#errors')?.textContent)
+      .toBe('required');
+  });
+
   it('should show errors only after submit in on-submit mode', async () => {
     host.mode.set('on-submit');
     await TestBed.inject(ApplicationRef).whenStable();
@@ -975,5 +1000,49 @@ describe('FormErrorDisplayDirective and FormDirective.resetField', () => {
     expect(control.pending).toBe(true);
     expect(host.display().errorMessages()).toEqual([]);
     expect(host.display().warningMessages()).toEqual(['Short name']);
+  });
+});
+
+@Component({
+  template: `
+    <form ngxVestForm [suite]="suite" [formValue]="formValue()">
+      <div ngxErrorDisplay [warningDisplayMode]="'on-touch'">
+        <input name="username" [ngModel]="formValue().username" />
+      </div>
+      <button id="submit-btn" type="submit">Submit</button>
+    </form>
+  `,
+  imports: [FormsModule, FormDirective, FormErrorDisplayDirective],
+})
+class WarningOnTouchSubmitHostComponent {
+  readonly formValue = signal<{ username?: string }>({ username: 'x' });
+  readonly suite = noTestsSuite;
+  readonly vestForm = viewChild.required(FormDirective);
+  readonly display = viewChild.required(FormErrorDisplayDirective);
+}
+
+describe('FormErrorDisplayDirective - on-touch warning mode on submit', () => {
+  it('shows warnings for an untouched control after form submission', async () => {
+    await TestBed.configureTestingModule({
+      imports: [WarningOnTouchSubmitHostComponent],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(WarningOnTouchSubmitHostComponent);
+    const host = fixture.componentInstance;
+    fixture.detectChanges();
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    host.vestForm().fieldWarnings.set(new Map([['username', ['Short name']]]));
+    fixture.detectChanges();
+
+    expect(host.display().shouldShowWarnings()).toBe(false);
+
+    const submitBtn: HTMLButtonElement =
+      fixture.nativeElement.querySelector('#submit-btn');
+    submitBtn.click();
+    fixture.detectChanges();
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    await expect.poll(() => host.display().shouldShowWarnings()).toBe(true);
+    expect(host.display().warnings()).toEqual(['Short name']);
   });
 });

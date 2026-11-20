@@ -52,12 +52,12 @@
     {
       "id": 5,
       "prompt": "I’m building a long purchase request form with ngx-vest-forms and want to auto-save the draft whenever a field blurs. Quantity should make quantityJustification required immediately, but I do not want the justification error to show until that field itself blurs. Should I listen to `(blur)`, use `triggerFormValidation()`, or something else? Please keep the answer on the public API and show the right pattern.",
-      "expected_output": "Routes to the `field-blur-events` workflow and also brings in `validation-config-builder` and built-in wrapper guidance, uses `fieldBlur` with `NgxFieldBlurEvent`, keeps persistence separate from validation, pairs dependent revalidation with `errorDisplayMode='on-blur'`, and avoids `(blur)` handlers that call `triggerFormValidation()` or gating draft saves on `event.pending`.",
+      "expected_output": "Routes to the `field-blur-events` workflow and also brings in `validation-config-builder` and built-in wrapper guidance, uses `fieldBlur` with `NgxFieldBlurEvent`, keeps persistence separate from validation, pairs dependent revalidation with `errorDisplayMode='on-blur-or-submit'` (the default), and avoids `(blur)` handlers that call `triggerFormValidation()` or gating draft saves on `event.pending`.",
       "files": [],
       "expectations": [
         "Recommends the form-level fieldBlur output with NgxFieldBlurEvent instead of native per-control blur handlers.",
         "Keeps draft persistence separate from validation and does not gate draft auto-save on event.pending.",
-        "Pairs dependent revalidation with validationConfig and on-blur wrapper display modes for quiet dependent errors.",
+        "Pairs dependent revalidation with validationConfig and on-blur-or-submit wrapper display modes for quiet dependent errors.",
         "Avoids using triggerFormValidation from blur handlers to force this UX.",
         "Anchors the answer to the repo’s canonical blur-save guidance by mentioning docs/AUTO-SAVE-ON-BLUR.md or the /auto-save-demo example."
       ]

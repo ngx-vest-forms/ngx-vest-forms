@@ -187,6 +187,7 @@ Six `@internal` helpers moved from `'ngx-vest-forms'` to `'ngx-vest-forms/intern
 - `FormDirective.idle$` (use `status` / `pending` signals or `ngForm.form.statusChanges`).
 - `FormDirective.createAsyncValidator` (internal library plumbing).
 - `ValidateRootFormDirective.createAsyncValidator` (internal library plumbing).
+- `'on-blur'` error display mode (alias for `'on-blur-or-submit'`; see [ADR 0013](../adr/0013-display-modes-open-on-submit.md)).
 
 ## Known limitations
 

@@ -52,7 +52,7 @@ protected onFieldBlur(event: NgxFieldBlurEvent<PurchaseForm>): void {
 When field A makes field B required, the calm UX is: B is invalid at once, the draft still saves on blur, and B shows its message only after its own blur or a submit. That needs three pieces side by side:
 
 - `validationConfig` with `.whenChanged('quantity', 'quantityJustification')` for the timing ([`../validation-config-builder/SKILL.md`](../validation-config-builder/SKILL.md));
-- `[errorDisplayMode]="'on-blur'"` on B's `<ngx-control-wrapper>` for the visibility;
+- `[errorDisplayMode]="'on-blur-or-submit'"` (the default) on B's `<ngx-control-wrapper>` for the visibility;
 - `(fieldBlur)` for the save.
 
 Native `(blur)` listeners on each control and blur handlers that call `triggerFormValidation()` are the patterns to replace: they couple persistence to validation reruns and restart async tests.

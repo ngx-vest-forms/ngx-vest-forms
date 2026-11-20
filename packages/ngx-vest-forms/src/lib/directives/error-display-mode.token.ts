@@ -7,10 +7,11 @@ import type {
 /**
  * Injection token for configuring the default error display mode.
  * Values:
- * - 'on-blur': Show errors after field is touched/blurred
- * - 'on-submit': Show errors after form submission
  * - 'on-blur-or-submit': Show errors after blur or form submission (default)
- * - 'on-dirty': Show errors as soon as the field value changes
+ * - 'on-blur': Deprecated alias for `'on-blur-or-submit'` (opens on blur or form
+ *   submission; scheduled for removal in v4)
+ * - 'on-submit': Show errors after form submission
+ * - 'on-dirty': Show errors as soon as the field value changes, or after touch/submit
  * - 'always': Show errors immediately, even on pristine fields
  */
 export const NGX_ERROR_DISPLAY_MODE_TOKEN =
@@ -22,9 +23,9 @@ export const NGX_ERROR_DISPLAY_MODE_TOKEN =
 /**
  * Injection token for configuring the default warning display mode.
  * Values:
- * - 'on-touch': Show warnings after field is touched/blurred
- * - 'on-validated-or-touch': Show warnings after validation runs or field is touched (default)
- * - 'on-dirty': Show warnings as soon as the field value changes
+ * - 'on-validated-or-touch': Show warnings after validation runs, touch, or form submission (default)
+ * - 'on-touch': Show warnings after field is touched/blurred or the form is submitted
+ * - 'on-dirty': Show warnings as soon as the field value changes, or after touch/submit
  * - 'always': Show warnings immediately, even on pristine fields
  */
 export const NGX_WARNING_DISPLAY_MODE_TOKEN =
