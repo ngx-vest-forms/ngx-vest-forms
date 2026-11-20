@@ -57,37 +57,26 @@ export function deepArrayToObject<T>(
   array: readonly T[]
 ): Record<number, DeepArrayToObject<T>> {
   return Object.fromEntries(
-    array.map((value, index) => [
-      index,
-      Array.isArray(value)
-        ? deepArrayToObject(value as unknown[])
-        : isPlainObject(value)
-          ? recursivelyConvertArrays(value)
-          : value,
-    ])
+    array.map((value, index) => [index, recursivelyConvertArrays(value)])
   ) as Record<number, DeepArrayToObject<T>>;
 }
 
 /**
- * Recursively traverses a plain object and converts any nested arrays to objects.
+ * Recursively traverses a value and converts any nested arrays to objects.
  */
-function recursivelyConvertArrays<T>(object: T): DeepArrayToObject<T> {
-  if (Array.isArray(object)) {
-    return deepArrayToObject(object as unknown[]) as DeepArrayToObject<T>;
+function recursivelyConvertArrays<T>(value: T): DeepArrayToObject<T> {
+  if (Array.isArray(value)) {
+    return deepArrayToObject(value as unknown[]) as DeepArrayToObject<T>;
   }
-  if (isPlainObject(object)) {
+  if (isPlainObject(value)) {
     return Object.fromEntries(
-      Object.entries(object).map(([key, value]) => [
+      Object.entries(value).map(([key, entryValue]) => [
         key,
-        Array.isArray(value)
-          ? deepArrayToObject(value as unknown[])
-          : isPlainObject(value)
-            ? recursivelyConvertArrays(value)
-            : value,
+        recursivelyConvertArrays(entryValue),
       ])
     ) as DeepArrayToObject<T>;
   }
-  return object as DeepArrayToObject<T>;
+  return value as DeepArrayToObject<T>;
 }
 
 /**
