@@ -231,6 +231,8 @@ export const wizardSuite = create((model: WizardModel) => {
 </form>
 ```
 
+Changing `[validationFocus]` does not automatically re-run field validators. Call `triggerFormValidation()` (or `triggerFormValidation(groupPath)`) after switching focus so mounted controls revalidate under the new scope.
+
 If each wizard step already has its own form and suite (as in `apps/examples/src/app/pages/wizard-form`), pass the per-step suite directly instead of using `validationFocus`.
 
 ## Practical guidelines

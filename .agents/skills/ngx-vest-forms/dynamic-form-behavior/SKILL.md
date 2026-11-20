@@ -26,7 +26,7 @@ Do these together, in one handler; the change is handled when the model, the sui
    - `keepFieldsWhen(value, { fieldA: isTypeA, type: true })` keeps only the keys whose condition is `true`.
 2. **Suite:** call `removeField(path)` on the `FormDirective` for each path that is gone for good, so Vest forgets its results; `resetField(path)` instead when the field stays and only its validation history should restart.
 3. **Rules:** mirror the template condition in the suite with `omitWhen(condition, () => { … })`, so hidden fields have no tests.
-4. **Rerun:** call `triggerFormValidation()` (optionally with a path) when no remaining control will emit a change, which is the input-to-static-content case. It reruns validation only; it does not mark controls touched or reveal errors.
+4. **Rerun:** call `triggerFormValidation()` (or `triggerFormValidation(path)` for a field or group subtree) when no remaining control will emit a change, such as the input-to-static-content case or after switching `[validationFocus]`. Calling it with no path or a group path revalidates every descendant deepest-first before the target (including restarting async tests). It reruns validation only; it does not mark controls touched or reveal errors.
 
 ```ts
 protected onDeliveryChange(method: 'ship' | 'pickup'): void {
@@ -40,7 +40,7 @@ protected onDeliveryChange(method: 'ship' | 'pickup'): void {
 }
 ```
 
-`triggerFormValidation()` belongs to structure changes. Ordinary input-to-input edits already revalidate, dependent timing belongs to `validationConfig`, and blur-driven saving belongs to [`../field-blur-events/SKILL.md`](../field-blur-events/SKILL.md).
+`triggerFormValidation()` belongs to structure changes and `[validationFocus]` switches. Ordinary input-to-input edits already revalidate, dependent timing belongs to `validationConfig`, and blur-driven saving belongs to [`../field-blur-events/SKILL.md`](../field-blur-events/SKILL.md).
 
 ## References
 

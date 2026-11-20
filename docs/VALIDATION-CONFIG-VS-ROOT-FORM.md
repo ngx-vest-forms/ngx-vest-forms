@@ -156,7 +156,7 @@ protected handleFormChange(value: DynamicFormModel): void {
 
 | Method | Updates validity | Shows errors | Typical use |
 | --- | --- | --- | --- |
-| `triggerFormValidation(path?)` | Yes (root or target path) | No | Template structure changes without value changes |
+| `triggerFormValidation(path?)` | Yes (whole form, group subtree, or target field) | No | Template structure or `validationFocus` changes without value changes |
 | `markAllAsTouched()` | No | Yes | Submitting multiple forms from one external button |
 
 With the default `'on-blur-or-submit'` error display mode, standard `(ngSubmit)` / `(submitSettled)` submissions call `markAllAsTouched()` automatically.
