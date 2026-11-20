@@ -114,10 +114,10 @@ import { createDebouncedPendingState } from '../../utils/pending-state.utils';
  *   <input name="username" [ngModel]="formValue().username" />
  * </ngx-control-wrapper>
  * ```
- * // If async validation runs longer than `pendingDebounce.showAfter` (default 500ms),
- * // a spinner and `NGX_PENDING_LABEL` (default 'Validating…') appear and stay visible
- * // for at least `pendingDebounce.minimumDisplay` (default 500ms).
- * // Vest warnings appear below errors.
+ * If async validation runs longer than `pendingDebounce.showAfter` (default 500ms),
+ * a spinner and `NGX_PENDING_LABEL` (default 'Validating…') appear and stay visible
+ * for at least `pendingDebounce.minimumDisplay` (default 500ms).
+ * Vest warnings appear below errors.
  *
  * Example (global config):
  *   import { NGX_ERROR_DISPLAY_MODE_TOKEN } from 'ngx-vest-forms';

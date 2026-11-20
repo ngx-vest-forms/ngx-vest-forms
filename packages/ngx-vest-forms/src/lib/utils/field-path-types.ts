@@ -229,7 +229,7 @@ export type ValidationConfigMap<T> = Partial<
  *       enforce(data.user?.name).isNotBlank();
  *     });
  *
- *     // Form-level validation
+ *     // Root-form rule
  *     test(ROOT_FORM, 'At least one contact method', () => {
  *       enforce(data.email || data.user?.name).isTruthy();
  *     });
