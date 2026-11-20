@@ -115,6 +115,9 @@ describe('field-path.utils', () => {
 
           expect(parseFieldPath(path)).toEqual([]);
           expect(consoleWarnSpy).toHaveBeenCalledWith(
+            expect.stringContaining('[NGX-109]')
+          );
+          expect(consoleWarnSpy).toHaveBeenCalledWith(
             expect.stringContaining(`Invalid field path '${path}'`)
           );
         }

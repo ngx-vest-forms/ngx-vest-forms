@@ -146,7 +146,7 @@ import { createDebouncedPendingState } from '../../utils/pending-state.utils';
 @Component({
   selector: 'ngx-control-wrapper, [ngxControlWrapper]',
   templateUrl: './control-wrapper.component.html',
-  styleUrls: ['./control-wrapper.component.css'],
+  styleUrl: './control-wrapper.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     class: 'ngx-control-wrapper',

@@ -27,7 +27,7 @@ import { createDebouncedPendingState } from '../../utils/pending-state.utils';
   selector: 'ngx-form-group-wrapper, [ngxFormGroupWrapper]',
   exportAs: 'ngxFormGroupWrapper',
   templateUrl: './form-group-wrapper.component.html',
-  styleUrls: ['./form-group-wrapper.component.css'],
+  styleUrl: './form-group-wrapper.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     class: 'ngx-form-group-wrapper',

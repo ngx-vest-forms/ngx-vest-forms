@@ -136,6 +136,9 @@ describe('ValidationConfigBuilder', () => {
           .build();
 
         expect(consoleWarnSpy).toHaveBeenCalledWith(
+          expect.stringContaining('[NGX-110]')
+        );
+        expect(consoleWarnSpy).toHaveBeenCalledWith(
           expect.stringMatching(
             /Duplicate dependencies detected\.[\s\S]*Trigger: 'password'[\s\S]*Duplicates: 'email', 'firstName'/
           )
@@ -243,6 +246,9 @@ describe('ValidationConfigBuilder', () => {
             .bidirectional(first, second)
             .build();
 
+          expect(consoleWarnSpy).toHaveBeenCalledWith(
+            expect.stringContaining('[NGX-111]')
+          );
           expect(consoleWarnSpy).toHaveBeenCalledWith(
             expect.stringContaining(
               'Duplicate bidirectional relationship detected'

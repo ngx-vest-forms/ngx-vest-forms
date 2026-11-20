@@ -57,5 +57,5 @@ export const NGX_PENDING_LABEL = new InjectionToken<NgxPendingLabel>(
  */
 export function injectPendingLabel(): Signal<string> {
   const label = inject(NGX_PENDING_LABEL);
-  return isSignal(label) ? computed(() => label()) : computed(() => label);
+  return isSignal(label) ? label : computed(() => label);
 }

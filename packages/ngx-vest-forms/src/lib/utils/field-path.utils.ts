@@ -1,3 +1,8 @@
+import {
+  logDiagnostic,
+  NGX_VEST_FORMS_DIAGNOSTICS,
+} from '../errors/error-catalog';
+
 /**
  * Utilities for working with field paths in dot/bracket notation and Standard Schema path arrays.
  *
@@ -19,8 +24,6 @@
  * // Returns: 'user.addresses[0].street'
  * ```
  */
-
-const LOG_PREFIX = '[ngx-vest-forms] field-path.utils';
 
 /**
  * @internal
@@ -86,9 +89,7 @@ export function parseFieldPath(path: string): Array<string | number> {
   for (let i = 0; i < segments.length; i++) {
     if (segments[i] === '' && !(i === 0 && startsWithBracket)) {
       if (typeof ngDevMode !== 'undefined' && ngDevMode) {
-        console.warn(
-          `${LOG_PREFIX}: Invalid field path '${path}'. Leading dots, trailing dots, consecutive dots, and '.[' separators are not allowed.`
-        );
+        logDiagnostic(NGX_VEST_FORMS_DIAGNOSTICS.INVALID_FIELD_PATH, path);
       }
       return [];
     }
