@@ -13,8 +13,13 @@ permissions:
 
 jobs:
   e2e:
+    name: E2E (${{ matrix.browser }})
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [firefox, webkit]
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -32,15 +37,16 @@ jobs:
           mode: firewall
       - name: Install
         run: sfw pnpm install --frozen-lockfile
-      - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps firefox webkit
-      - name: E2E tests (Firefox, WebKit)
-        run: pnpm nx run examples-e2e:e2e -- --project=firefox --project=webkit
+      - name: Install Playwright browser (${{ matrix.browser }})
+        run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
+      - name: E2E tests (${{ matrix.browser }})
+        # 2 workers keep WebKit responsive on the 4-vCPU runner alongside vite preview.
+        run: pnpm nx run examples-e2e:e2e -- --project=${{ matrix.browser }} --workers=2
       - name: Upload Playwright report
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: playwright-report-cross-browser
+          name: playwright-report-${{ matrix.browser }}
           path: |
             playwright-report/
             test-results/

@@ -137,7 +137,7 @@ Get the directive with `#vestForm="ngxVestForm"` plus `viewChild.required('vestF
 | end a submit cycle but keep values and touched state  | `clearSubmittedState()` ([guide](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/CLEAR-SUBMITTED-STATE.md)) |
 | one button submitting several forms                   | `markAllAsTouched()` on each                                                                                                  |
 | own focus handling after a failed submit              | `[focusFirstInvalidOnSubmit]="false"`                                                                                         |
-| wizard steps that validate a subset                   | `[validationFocus]="{ onlyGroup: 'step1' }"` with Vest `group()`s in the suite; call `triggerFormValidation()` after changing it |
+| scope a grouped suite to a subset                     | `[validationFocus]="{ onlyGroup: 'step1' }"` with Vest `group()`s; call `triggerFormValidation()` after changing it (for multi-step wizards, prefer one form and suite per step) |
 
 Errors, warnings and touched paths key array items with dot segments: `users.0.name`.
 
