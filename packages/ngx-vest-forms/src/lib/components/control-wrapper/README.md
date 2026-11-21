@@ -18,7 +18,7 @@ The host element always receives the `ngx-control-wrapper` class, adds `ngx-cont
 Controls when errors become visible (and when `aria-invalid="true"` is applied). Inherited from `FormErrorDisplayDirective`.
 
 - `'on-blur-or-submit'` (default): show after the control is touched or the form is submitted.
-- `'on-blur'`: show after the control is touched or the form is submitted (same runtime behavior as `'on-blur-or-submit'`; prefer `'on-blur-or-submit'` in new code).
+- `'on-blur'`: deprecated alias for `'on-blur-or-submit'` (opens on touch or form submit; scheduled for removal in v4).
 - `'on-submit'`: show only after form submission.
 - `'on-dirty'`: show as soon as the value changes, or after touch/submit.
 - `'always'`: show immediately, including on pristine controls.

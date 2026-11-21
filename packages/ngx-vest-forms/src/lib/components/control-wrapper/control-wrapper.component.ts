@@ -40,9 +40,9 @@ import { createDebouncedPendingState } from '../../utils/pending-state.utils';
  * ### Error Display Modes
  * Control when errors appear using the `errorDisplayMode` input:
  * - `'on-blur-or-submit'` (default): Show errors after blur OR form submit
- * - `'on-blur'`: Show errors only after blur
+ * - `'on-blur'`: Deprecated alias for `'on-blur-or-submit'` (shows after blur or form submit; scheduled for removal in v4)
  * - `'on-submit'`: Show errors only after form submit
- * - `'on-dirty'`: Show errors as soon as the field value changes
+ * - `'on-dirty'`: Show errors as soon as the field value changes, or after touch/submit
  * - `'always'`: Show errors immediately, even on pristine fields
  *
  * ```html
@@ -53,9 +53,9 @@ import { createDebouncedPendingState } from '../../utils/pending-state.utils';
  *
  * ### Warning Display Modes
  * Control when warnings appear using the `warningDisplayMode` input:
- * - `'on-validated-or-touch'` (default): Show warnings after validation runs or touch
- * - `'on-touch'`: Show warnings only after touch/blur
- * - `'on-dirty'`: Show warnings as soon as the field value changes
+ * - `'on-validated-or-touch'` (default): Show warnings after validation runs, touch, or form submit
+ * - `'on-touch'`: Show warnings after touch/blur or form submit
+ * - `'on-dirty'`: Show warnings as soon as the field value changes, or after touch/submit
  * - `'always'`: Show warnings immediately, even on pristine fields
  *
  * ```html
@@ -94,9 +94,9 @@ import { createDebouncedPendingState } from '../../utils/pending-state.utils';
  *
  * Error & Warning Display Behavior:
  *   - The error display mode can be configured globally using the NGX_ERROR_DISPLAY_MODE_TOKEN injection token, or per instance using the `errorDisplayMode` input on FormErrorDisplayDirective (which this component uses as a hostDirective).
- *   - Possible error display values: 'on-blur' | 'on-submit' | 'on-blur-or-submit' | 'on-dirty' | 'always' (default: 'on-blur-or-submit')
+ *   - Possible error display values: 'on-blur-or-submit' | 'on-submit' | 'on-dirty' | 'always' (default: 'on-blur-or-submit'; `'on-blur'` is a deprecated alias for `'on-blur-or-submit'`, scheduled for removal in v4)
  *   - The warning display mode can be configured globally using NGX_WARNING_DISPLAY_MODE_TOKEN, or per instance using the `warningDisplayMode` input on FormErrorDisplayDirective.
- *   - Possible warning display values: 'on-touch' | 'on-validated-or-touch' | 'on-dirty' | 'always' (default: 'on-validated-or-touch')
+ *   - Possible warning display values: 'on-validated-or-touch' | 'on-touch' | 'on-dirty' | 'always' (default: 'on-validated-or-touch'; `'on-touch'` opens on touch or form submission)
  *
  * Example (per instance):
  * ```html
