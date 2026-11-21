@@ -225,7 +225,7 @@ export class AddressFormComponent {
 
 ## Examples
 
-The workspace includes a runnable [Examples App](./apps/examples) covering starter forms, async validation, warnings, Zod and native Vest schemas, nested repeatable forms, custom `ControlValueAccessor` and Signal Forms controls, composite adapters, auto-save on blur, and a multi-form wizard.
+Browse the [live Examples App](https://ngx-vest-forms.github.io/ngx-vest-forms/) or inspect the source in [apps/examples](./apps/examples). It covers starter forms, async validation, warnings, Zod and native Vest schemas, nested repeatable forms, custom `ControlValueAccessor` and Signal Forms controls, composite adapters, auto-save on blur, and a multi-form wizard.
 
 Run it locally:
 
