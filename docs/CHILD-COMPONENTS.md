@@ -261,7 +261,7 @@ export class CheckoutFormComponent {
 }
 ```
 
-For multi-step forms that share one parent `<form ngxVestForm>` and one suite partitioned with Vest `group()` blocks, combine conditional step components with `[validationFocus]="{ onlyGroup: currentGroup() }"`. See [Composable validations](./COMPOSABLE-VALIDATIONS.md#scoping-multi-step-suites-with-validationfocus) and [Field clearing utilities](./FIELD-CLEARING-UTILITIES.md).
+For multi-step forms, avoid unmounting earlier steps with `@if` inside a single `<form ngxVestForm>` if you bind `(formValueChange)="formValue.set($event)"`, because Angular removes unmounted controls from the emitted form value. Give each step its own `<form ngxVestForm>` and per-step suite instead, as in `apps/examples/src/app/pages/wizard-form` (see also the `[validationFocus]` caveat in [Composable validations](./COMPOSABLE-VALIDATIONS.md#scoping-multi-step-suites-with-validationfocus)).
 
 ## Standalone helper inputs inside child components
 
