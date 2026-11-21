@@ -20,6 +20,8 @@ Type-safe adapter between Angular template-driven forms and [Vest.js](https://ve
 
 > **Maintainer note:** [Arjen (@the-ult)](https://bsky.app/profile/the-ult.bsky.social) maintains this project since 2025, building on the original library created by Brecht Billiet.
 
+> **Using or migrating to Angular Signal Forms?** See [ngx-signal-forms](https://github.com/ngx-signal-forms/ngx-signal-forms), our library built for Angular Signal Forms.
+
 ## Why ngx-vest-forms?
 
 - **Unidirectional signal state.** Bind `[ngModel]` one way and update your signal from `(formValueChange)`.
@@ -242,6 +244,12 @@ For end-to-end Playwright test setup, see [apps/examples-e2e/README.md](./apps/e
 ### Do I need a Vest suite to use ngx-vest-forms?
 
 No. You can bind `<form ngxVestForm [formValue]="formValue()" (formValueChange)="formValue.set($event)">` without `[suite]` while prototyping, migrating incrementally, or relying on server-side errors, and attach `[suite]` later.
+
+### Should I use ngx-vest-forms or ngx-signal-forms?
+
+Use `ngx-vest-forms` if your app uses Angular template-driven forms (`ngModel` and `ngModelGroup`) with Vest validation. You can render Angular Signal Forms custom controls (`FormValueControl` and `FormCheckboxControl`) inside `<form ngxVestForm>` with `[ngModel]`, so you can adopt those controls one at a time.
+
+If you are building with Angular Signal Forms or migrating your forms to them, use [ngx-signal-forms](https://github.com/ngx-signal-forms/ngx-signal-forms) instead.
 
 ## Developer resources
 
