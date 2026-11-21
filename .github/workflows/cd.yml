@@ -77,6 +77,15 @@ jobs:
         run: pnpm nx run-many --target=test
       - name: E2E tests
         run: pnpm nx run examples-e2e:e2e -- --project=chromium
+      - name: Rebuild production package
+        # examples-e2e serves a development build of examples, whose ^build
+        # dependency overwrites dist/ngx-vest-forms with a development (full
+        # compilation mode) build. Rebuild the production (partial mode)
+        # package right before uploading it, and assert ng-packagr did not
+        # emit the full-mode prepublishOnly guard.
+        run: |
+          pnpm run build:lib
+          node -e "const pkg = require('./dist/ngx-vest-forms/package.json'); if (pkg.scripts?.prepublishOnly) { console.error('Refusing to upload full-compilation build (prepublishOnly present)'); process.exit(1); }"
       - name: Upload package
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
