@@ -233,7 +233,7 @@ export const wizardSuite = create((model: WizardModel) => {
 
 Changing `[validationFocus]` does not automatically re-run field validators. Call `triggerFormValidation()` (or `triggerFormValidation(groupPath)`) after switching focus so mounted controls revalidate under the new scope.
 
-If each wizard step already has its own form and suite (as in `apps/examples/src/app/pages/wizard-form`), pass the per-step suite directly instead of using `validationFocus`.
+> **Multi-step wizard caveat:** In a single `<form ngxVestForm>`, `ngSubmit` marks every mounted control touched and Vest keeps results for fields outside the focused group. Using `validationFocus` to gate step-by-step submits requires manually managing untouched state and clearing errors for other steps. For multi-step wizards today, give each step its own `<form ngxVestForm>` and per-step suite, as in `apps/examples/src/app/pages/wizard-form`.
 
 ## Practical guidelines
 
