@@ -113,6 +113,11 @@ export function resolveFieldFromBlur(
  * @internal
  * Reads the most current DOM value for blur-driven snapshots when the element
  * type exposes it safely.
+ *
+ * Radio inputs and `<select>` elements return `undefined` so `fieldBlurEvent`
+ * falls back to `control.value`. A focused radio exposes its own option value
+ * even when unchecked, `[ngValue]` encodes options as `"<id>: <value>"`
+ * strings, and `<select multiple>` exposes only the first selected option.
  */
 export function readElementValueForBlur(element: HTMLElement): unknown {
   if (element instanceof HTMLInputElement) {
@@ -123,10 +128,7 @@ export function readElementValueForBlur(element: HTMLElement): unknown {
     }
     return element.value;
   }
-  if (
-    element instanceof HTMLTextAreaElement ||
-    element instanceof HTMLSelectElement
-  ) {
+  if (element instanceof HTMLTextAreaElement) {
     return element.value;
   }
   return undefined;

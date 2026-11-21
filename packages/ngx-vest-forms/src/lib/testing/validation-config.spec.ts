@@ -4,7 +4,7 @@
  */
 import { ApplicationRef, Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { waitFor } from '@testing-library/angular';
+import { fireEvent, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { create, enforce, omitWhen, test } from 'vest';
 import {
@@ -961,77 +961,65 @@ describe('FormDirective - Comprehensive', () => {
     });
   });
 
-  // Test for debounce behavior with rapid successive changes
-  it('should debounce validation config triggers properly with rapid changes', async () => {
-    let triggerCount = 0;
-
+  it('validates the Dependent Field after the debounce for the last edit', async () => {
     @Component({
       template: `
         <form
           ngxVestForm
-          [formValue]="formValue()"
+          [formValue]="model()"
           [suite]="suite"
           [validationConfig]="validationConfig"
-          (formValueChange)="handleFormChange($event)"
+          (formValueChange)="model.set($event)"
+          (errorsChange)="errors.set($event)"
         >
-          <input name="triggerField" [ngModel]="formValue().triggerField" />
-          <input name="dependentField" [ngModel]="formValue().dependentField" />
+          <input name="policy" [ngModel]="model().policy" />
+          <input
+            name="booking"
+            [ngModel]="model().booking"
+            [validationOptions]="{ debounceTime: 0 }"
+          />
         </form>
       `,
       imports: [NgxVestForms],
     })
-    class TestComponent {
-      formValue = signal<
-        NgxDeepPartial<{ triggerField: string; dependentField: string }>
-      >({});
-
-      validationConfig = {
-        triggerField: ['dependentField'],
-      };
-
-      suite = create((model: any) => {
-        triggerCount++;
-        test('dependentField', 'Dependent field validation', () => {
-          // Simple validation that always passes
-          enforce(model.dependentField || 'default').isString();
-        });
-      });
-
-      handleFormChange(value: any) {
-        this.formValue.set(value);
-      }
+    class DebounceHost {
+      readonly model = signal({ policy: 'open', booking: 'Ada' });
+      readonly errors = signal<Record<string, string[]>>({});
+      readonly validationConfig = { policy: ['booking'] };
+      readonly suite = create(
+        (model: NgxDeepPartial<{ policy: string }> = {}) => {
+          test('booking', 'Booking is on hold', () => {
+            enforce(model.policy).notEquals('on hold');
+          });
+          test('booking', 'Booking is closed', () => {
+            enforce(model.policy).notEquals('closed');
+          });
+        }
+      );
     }
 
-    const fixture = TestBed.configureTestingModule({
-      imports: [TestComponent],
-    }).createComponent(TestComponent);
+    vi.useFakeTimers();
+    onTestFinished(() => {
+      vi.useRealTimers();
+    });
 
+    const fixture = TestBed.createComponent(DebounceHost);
     fixture.detectChanges();
-    await whenStable();
-    // Let initial setup complete: one validation run per control
-    await expect.poll(() => triggerCount).toBeGreaterThanOrEqual(2);
+    await vi.advanceTimersByTimeAsync(200);
+    const { errors } = fixture.componentInstance;
+    const policy = fixture.nativeElement.querySelector('input[name="policy"]');
 
-    triggerCount = 0; // Reset counter after setup
+    expect(errors()).toEqual({});
+    fireEvent.input(policy, { target: { value: 'on hold' } });
+    await vi.advanceTimersByTimeAsync(50);
+    expect(errors()).toEqual({});
 
-    // Simulate rapid successive changes within the debounce window (100ms)
-    const triggerInput = fixture.nativeElement.querySelector(
-      'input[name="triggerField"]'
-    );
+    fireEvent.input(policy, { target: { value: 'closed' } });
+    await vi.advanceTimersByTimeAsync(99);
+    expect(errors()).toEqual({});
 
-    // Fire multiple rapid changes within debounce window
-    // (one input event per change, so the suite-run count stays comparable)
-    await pasteInto(triggerInput, 'value1');
-    await pasteInto(triggerInput, 'value2');
-    await pasteInto(triggerInput, 'value3');
-    await pasteInto(triggerInput, 'value4');
-
-    // Let validation settle
-    await whenStable();
-
-    // With proper debouncing, we should see only a small number of validations
-    // despite multiple rapid input changes (counts all suite runs, not just dependent field)
-    expect(triggerCount).toBeLessThanOrEqual(5); // Allow flexibility for debounce timing
-    expect(fixture.componentInstance.formValue().triggerField).toBe('value4');
+    await vi.advanceTimersByTimeAsync(10);
+    expect(errors()).toEqual({ booking: ['Booking is closed'] });
   });
 
   // Test for single-direction dependency with omitWhen (password/confirmPassword pattern)

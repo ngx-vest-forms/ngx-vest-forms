@@ -1,5 +1,10 @@
-import { Component } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, Directive } from '@angular/core';
+import {
+  FormsModule,
+  NG_VALIDATORS,
+  type ValidationErrors,
+  type Validator,
+} from '@angular/forms';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
@@ -365,5 +370,61 @@ describe('FormErrorControlDirective', () => {
     await render(PendingLabelHostComponent);
 
     expect(screen.getByTestId('custom-pending')).toHaveTextContent('Bezig…');
+  });
+
+  it('omits errorId from aria-describedby when invalid with no error messages while keeping aria-invalid', async () => {
+    @Directive({
+      selector: '[ngxEmptyErrorsValidator]',
+      providers: [
+        {
+          provide: NG_VALIDATORS,
+          useExisting: EmptyErrorsValidatorDirective,
+          multi: true,
+        },
+      ],
+    })
+    class EmptyErrorsValidatorDirective implements Validator {
+      validate(): ValidationErrors {
+        return { errors: [] };
+      }
+    }
+
+    @Component({
+      imports: [
+        FormsModule,
+        FormErrorControlDirective,
+        EmptyErrorsValidatorDirective,
+      ],
+      template: `
+        <form #form="ngForm">
+          <p id="hint">Hint text</p>
+          <div ngxErrorControl #ec="ngxErrorControl">
+            <label for="empty-err">Empty Err</label>
+            <input
+              id="empty-err"
+              name="emptyErr"
+              [(ngModel)]="model"
+              ngxEmptyErrorsValidator
+              aria-describedby="hint"
+            />
+            <div [id]="ec.errorId"></div>
+          </div>
+        </form>
+      `,
+    })
+    class EmptyErrorsHostComponent {
+      model = '';
+    }
+
+    await render(EmptyErrorsHostComponent);
+    const input = screen.getByLabelText('Empty Err');
+
+    await userEvent.click(input);
+    await userEvent.tab();
+
+    await waitFor(() => {
+      expect(input.getAttribute('aria-invalid')).toBe('true');
+      expect(input.getAttribute('aria-describedby')).toBe('hint');
+    });
   });
 });

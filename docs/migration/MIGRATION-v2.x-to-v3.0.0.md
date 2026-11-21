@@ -1,69 +1,94 @@
-# Migration Guide: v2.x to v3.0.0
+# Migration guide: v2.x to v3.0.0
 
-## v3 deprecation removals
+## Peer dependency updates (required)
 
-v3.0.0 deletes every `@deprecated` runtime helper, const alias, and type alias that v2.x kept around for backward compatibility. Consumers who migrated to the recommended `Ngx`-prefixed names need no changes; consumers still on the deprecated forms get a compile error pointing at the replacement.
+v3 raises the peer dependencies of `ngx-vest-forms`:
 
-| Removed                            | Replacement                        | Migration tip                                                                                                                                                         |
-| ---------------------------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `cloneDeep(value)`                 | `structuredClone(value)`           | Native browser/Node API; no import needed.                                                                                                                            |
-| `set(obj, path, value)`            | `setValueAtPath(obj, path, value)` | Already exported from `ngx-vest-forms`; identical signature.                                                                                                          |
-| `vestForms` (const array)          | `NgxVestForms`                     | `import { NgxVestForms } from 'ngx-vest-forms';` — same array, renamed.                                                                                               |
-| `ROOT_FORM_CONSTANT`               | `ROOT_FORM`                        | Single canonical export from `ngx-vest-forms`.                                                                                                                        |
-| `DeepPartial<T>`                   | `NgxDeepPartial<T>`                | Structurally identical; rename the import.                                                                                                                            |
-| `DeepRequired<T>`                  | `NgxDeepRequired<T>`               | Structurally identical; rename the import.                                                                                                                            |
-| `FormCompatibleDeepRequired<T>`    | _(removed)_                        | See "Replacing `NgxFormCompatibleDeepRequired`" below for a copy-paste snippet, or express Date coercion in your schema (e.g., `z.union([z.date(), z.literal('')])`). |
-| `NgxTypedVestSuite<T>`             | `NgxVestSuite<T>`                  | Structurally identical; rename the type reference.                                                                                                                    |
-| `[formShape]` input                | `[formContract]`                   | See "`[formShape]` → `[formContract]`" below. Raw `NgxDeepRequired<T>` shapes are still accepted; wrap with `toFormContract(shape)` for explicit conversion.          |
-| `NgxFormCompatibleDeepRequired<T>` | _(removed)_                        | See "Replacing `NgxFormCompatibleDeepRequired`" below.                                                                                                                |
+| Package | v2.x | v3.0.0 |
+| --- | --- | --- |
+| `@angular/core`, `@angular/forms` | `>=19.0.0` | `>=22.0.0 <23.0.0` |
+| `vest` | `>=5.4.6` | `>=6.3.4 <7.0.0` |
+| `rxjs` | `>=7.8.0` | `>=7.8.0` |
 
-If you only used the recommended `Ngx*` / `NGX_*` names (or the canonical `setValueAtPath` / `structuredClone`), v3 is a no-op for this category.
+TypeScript ~6.0 is expected alongside Angular 22. `@standard-schema/spec` (`^1.0.0`) is installed automatically as a regular dependency.
 
-### `[formShape]` → `[formContract]`
+```bash
+npm install ngx-vest-forms@beta vest@^6.3.4
+```
 
-The `[formShape]` input on `<form ngxVestForm>` is removed in v3 and replaced by `[formContract]`, which accepts any [Standard Schema v1](https://standardschema.dev) value (Zod v4, Valibot, hand-rolled, …) **or** a legacy `NgxDeepRequired<T>` shape object for back-compat.
+## 1. Rewrite Vest 5 suites to Vest 6 model-only callbacks
 
-If you already have a schema, pass it directly and let that remain your structural contract. Keep raw `NgxDeepRequired<T>` shapes for migration or for apps that want a low-dependency fallback without bringing in a schema library.
+In v2, the directive called `suite(model, field)` and the suite callback had to call `only(field)` unconditionally. In v3, the directive focuses the field at the call site via `suite.only(field).run(model)`, so the callback takes only `model` and must not call `only()`.
+
+```ts
+// Before (v2 / Vest 5)
+import { enforce, only, staticSuite, test } from 'vest';
+
+const suite: NgxVestSuite<MyFormModel> = staticSuite((model, field?) => {
+  only(field);
+  test('email', 'Email is required', () => {
+    enforce(model.email).isNotBlank();
+  });
+});
+
+// After (v3 / Vest 6)
+import { create, enforce, test } from 'vest';
+
+const suite: NgxVestSuite<MyFormModel> = create((model) => {
+  test('email', 'Email is required', () => {
+    enforce(model.email).isNotBlank();
+  });
+});
+```
+
+- Switch `staticSuite(...)` (removed in Vest 6) to `create(...)`. For stateless server-side or script runs outside the directive, call `suite.runStatic(model)`.
+- Replace Vest 5 `test.memo(...)` calls with top-level `memo(() => { test(...); }, deps)` imported from `'vest/memo'`.
+- In async tests, pass Vest 6's `({ signal })` `AbortSignal` into `fetch` or RxJS `takeUntil(fromEvent(signal, 'abort'))` so stale in-flight requests cancel automatically.
+
+## 2. Removed deprecated exports and aliases
+
+v3 removes every `@deprecated` helper, constant, type alias, and `sc-` selector from v2.x:
+
+| Removed | Replacement | Notes |
+| --- | --- | --- |
+| `cloneDeep(value)` | `structuredClone(value)` | Native browser/Node API |
+| `set(obj, path, value)` | `setValueAtPath(obj, path, value)` | Identical signature |
+| `vestForms` | `NgxVestForms` | Same directive/component array |
+| `ROOT_FORM_CONSTANT` | `ROOT_FORM` | Canonical constant |
+| `DeepPartial<T>` | `NgxDeepPartial<T>` | Structurally identical |
+| `DeepRequired<T>` | `NgxDeepRequired<T>` | Structurally identical |
+| `NgxTypedVestSuite<T>` | `NgxVestSuite<T>` | Structurally identical |
+| `FormCompatibleDeepRequired<T>`, `NgxFormCompatibleDeepRequired<T>` | Express `Date` coercion in a Standard Schema | Copy-paste fallback below |
+| `[formShape]` input, `validateShape()` | `[formContract]`, `provideFormContract()`, `toFormContract()` | Accepts Standard Schema v1 or `NgxDeepRequired<T>` |
+| `sc-` selectors, `SC_ERROR_DISPLAY_MODE_TOKEN`, `ScErrorDisplayMode`, `[ngxModel]`, `[ngxModelGroup]` | `ngx-` equivalents | Run the codemod in [SELECTOR-PREFIX-MIGRATION.md](../SELECTOR-PREFIX-MIGRATION.md) |
+
+### `[formShape]` to `[formContract]`
+
+`[formContract]` and `provideFormContract(...)` accept any [Standard Schema v1](https://standardschema.dev) schema (Zod v4, Valibot, etc.) or a legacy `NgxDeepRequired<T>` shape object:
 
 ```html
 <!-- v2 -->
 <form ngxVestForm [suite]="suite" [formShape]="myContract"></form>
 
-<!-- v3: raw NgxDeepRequired<T> shape still accepted (migration/fallback) -->
+<!-- v3: legacy shape fallback still works -->
 <form ngxVestForm [suite]="suite" [formContract]="myContract"></form>
 
-<!-- v3: explicit conversion from legacy shape to Standard Schema.
-     A template cannot call toFormContract itself; convert once in the component:
-     protected readonly contract = toFormContract(myContract); -->
-<form ngxVestForm [suite]="suite" [formContract]="contract"></form>
-
-<!-- v3: real Standard Schema (preferred when your app already has one) -->
+<!-- v3: Standard Schema (recommended for new code, or via provideFormContract(zodSchema)) -->
 <form ngxVestForm [suite]="suite" [formContract]="zodSchema"></form>
 ```
 
-`@standard-schema/spec` (`^1.0.0`) is now a regular dependency of ngx-vest-forms and is installed automatically; you do not need to add it yourself. The internal `validateShape()` helper has been removed; use `toFormContract()` from `ngx-vest-forms` if you need explicit shape→schema conversion.
+Dev-mode contract diagnostics consume synchronous schema results only; unknown-key warnings follow your schema's strictness (legacy shapes keep extra-key warnings).
 
-Unknown-key warnings now depend on the strictness of the supplied Standard Schema. If you keep using a raw `NgxDeepRequired<T>` contract, the legacy extra-property typo checks still apply. The directive only consumes **synchronous** contract results for its development-only diagnostics; async schema results are ignored by that pass.
+### Fallback snippet for `NgxFormCompatibleDeepRequired`
 
-### Replacing `NgxFormCompatibleDeepRequired`
+If you do not move `Date` coercion into a Standard Schema (for example `z.union([z.date(), z.literal('')])`) and need the old type verbatim:
 
-`NgxFormCompatibleDeepRequired<T>` was a project-specific helper that mapped `Date` (and `Date | undefined`) to `Date | string` so date-picker components could use `''` as a no-selection placeholder. v3 removes it for two reasons:
-
-1. The `[formContract]` input now accepts any [Standard Schema v1](https://standardschema.dev) value. Schema validators (Zod, Valibot, ArkType) express Date coercion natively — e.g., `z.union([z.date(), z.literal('')])` or `z.coerce.date()` — so you don't need a TypeScript-only workaround.
-2. It had no equivalent in `ts-essentials` or any standard library, making it surprising in a Standard-Schema-first API surface.
-
-**Recommended migration:** move Date coercion into your schema. **Fallback:** if you still need the type as-is, copy this snippet into your project (it depends only on `_Primitive`, `_Builtin`, `_IsNever`, `_IsTuple` helpers — included below):
-
-```typescript
+```ts
 // Adapted from ts-essentials DeepRequired (MIT License).
-// https://github.com/ts-essentials/ts-essentials
-type _Primitive =
-  string | number | boolean | bigint | symbol | undefined | null;
+type _Primitive = string | number | boolean | bigint | symbol | undefined | null;
 type _Builtin = _Primitive | Function | Date | Error | RegExp;
 type _IsNever<T> = [T] extends [never] ? true : false;
-type _IsTuple<T extends ReadonlyArray<any>> = number extends T['length']
-  ? false
-  : true;
+type _IsTuple<T extends ReadonlyArray<any>> = number extends T['length'] ? false : true;
 
 export type FormCompatibleDeepRequired<T> = T extends Date
   ? Date | string
@@ -74,15 +99,9 @@ export type FormCompatibleDeepRequired<T> = T extends Date
       : T extends Map<infer K, infer V>
         ? Map<FormCompatibleDeepRequired<K>, FormCompatibleDeepRequired<V>>
         : T extends ReadonlyMap<infer K, infer V>
-          ? ReadonlyMap<
-              FormCompatibleDeepRequired<K>,
-              FormCompatibleDeepRequired<V>
-            >
+          ? ReadonlyMap<FormCompatibleDeepRequired<K>, FormCompatibleDeepRequired<V>>
           : T extends WeakMap<infer K, infer V>
-            ? WeakMap<
-                FormCompatibleDeepRequired<K> & object,
-                FormCompatibleDeepRequired<V>
-              >
+            ? WeakMap<FormCompatibleDeepRequired<K> & object, FormCompatibleDeepRequired<V>>
             : T extends Set<infer U>
               ? Set<FormCompatibleDeepRequired<U>>
               : T extends ReadonlySet<infer U>
@@ -95,385 +114,86 @@ export type FormCompatibleDeepRequired<T> = T extends Date
                       ? _IsNever<_IsTuple<T>> extends false
                         ? { [K in keyof T]-?: FormCompatibleDeepRequired<T[K]> }
                         : T extends Array<U>
-                          ? Array<
-                              Exclude<FormCompatibleDeepRequired<U>, undefined>
-                            >
-                          : ReadonlyArray<
-                              Exclude<FormCompatibleDeepRequired<U>, undefined>
-                            >
+                          ? Array<Exclude<FormCompatibleDeepRequired<U>, undefined>>
+                          : ReadonlyArray<Exclude<FormCompatibleDeepRequired<U>, undefined>>
                       : T extends {}
                         ? { [K in keyof T]-?: FormCompatibleDeepRequired<T[K]> }
                         : Required<T>;
 ```
 
-## Upgrade Vest 5 → 6 (required)
+## 3. `getAllFormErrors` returns `{ errors, warnings }` and uses dotted array keys
 
-v3 raises the `vest` peer dependency from `~5.4.6` to `>=6.0.0`. Every consumer must:
+v2 returned `Record<string, string[]>` with a non-enumerable `warnings` property attached to each array. v3 returns `{ errors, warnings }` (`NgxFormErrorsByPath`):
 
-1. **Bump the dependency:**
-
-   ```bash
-   npm install vest@^6.0.0
-   ```
-
-2. **Rewrite every suite to the model-only form.** In v2 the directive ran your suite as `suite(model, field)` and the callback had to call `only(field)` unconditionally. In v3 the directive selects the field at the call site via `suite.only(field).run(model)`, so the callback receives only the model — and must **not** call `only()` itself:
-
-   ```typescript
-   // v2 (Vest 5): two-argument callback + unconditional only(field)
-   import { staticSuite, only, test, enforce } from 'vest';
-
-   const suite: NgxVestSuite<MyFormModel> = staticSuite((model, field?) => {
-     only(field);
-     test('email', 'Email is required', () => {
-       enforce(model.email).isNotBlank();
-     });
-   });
-   ```
-
-   ```typescript
-   // v3 (Vest 6): model-only callback — no field parameter, no only()
-   import { create, test, enforce } from 'vest';
-
-   const suite: NgxVestSuite<MyFormModel> = create((model) => {
-     test('email', 'Email is required', () => {
-       enforce(model.email).isNotBlank();
-     });
-   });
-   ```
-
-   Vest 6 removed `staticSuite(...)`; use `create(...)` and, outside the form directive (server-side validation, scripts), `suite.runStatic(model)` for stateless runs. This rewrite touches every suite in your codebase, but each change is mechanical: drop the `field` parameter, drop the `only(field)` call, and switch `staticSuite` to `create`.
-
-## What's new in v3 beyond Vest 6
-
-Migrating to Vest 6 gets you model-only suites, `suite.run(...)`, `suite.only(...).run(...)`, top-level `memo()`, hybrid run results, and async-test `AbortSignal`. ngx-vest-forms v3 adopts that baseline and the directive's async validator drives the suite via `suite.only(field).run(model)`, so the Vest-6 patterns below compose with the form without extra wiring.
-
-### Use Vest 6's async-test `AbortSignal` to cancel in-flight requests
-
-Each async test receives an `AbortSignal` via its test context. Vest fires the prior run's signal when a new run for the same test ID starts. Because the form directive issues a fresh `suite.only(field).run(model)` on every relevant edit, Vest's own stale-cancellation aborts the in-flight async test automatically — provided the test body passes `signal` into its underlying request.
-
-```typescript
-test('username', 'Username is already taken', async ({ signal }) => {
-  const response = await fetch(
-    `/api/check-username?value=${encodeURIComponent(model.username!)}`,
-    { signal }
-  );
-  const { taken } = await response.json();
-  enforce(taken).isFalsy();
-});
-```
-
-For RxJS-backed APIs, adapt the same signal:
-
-```typescript
-import { fromEvent, lastValueFrom, takeUntil } from 'rxjs';
-
-test('userId', 'User ID is already taken', async ({ signal }) => {
-  const exists = await lastValueFrom(
-    swapiService
-      .userIdExists(model.userId!)
-      .pipe(takeUntil(fromEvent(signal, 'abort')))
-  );
-
-  enforce(exists).isFalsy();
-});
-```
-
-Migration takeaway: stop teaching “ignore late async results” as the primary pattern. Prefer passing the signal into the underlying request so the stale work is cancelled, not merely discarded.
-
-### Prefer `memo()` for expensive deterministic blocks
-
-Vest 6.3 exposes top-level `memo()` from `vest/memo`. Use it to wrap expensive validation blocks whose result should be reused until a dependency changes. The runnable purchase-form example in this repo uses this pattern; see `apps/examples/src/app/pages/purchase-form/purchase.validations.ts`.
-
-If you are migrating older code, the Vest 5 `test.memo(...)` form is removed — move the test body into `memo(() => { test(...) }, deps)`.
-
-```typescript
-import { create, skipWhen, test } from 'vest';
-import { memo } from 'vest/memo';
-
-export const profileSuite = create((model: ProfileModel) => {
-  test('userId', 'User ID is required', () => {
-    enforce(model.userId).isNotBlank();
-  });
-
-  skipWhen(
-    (res) => res.hasErrors('userId'),
-    () => {
-      memo(() => {
-        test('userId', 'User ID is already taken', async ({ signal }) => {
-          const response = await fetch(`/api/users/${model.userId}`, {
-            signal,
-          });
-          const { exists } = await response.json();
-          enforce(exists).isFalsy();
-        });
-      }, [model.userId]);
-    }
-  );
-});
-```
-
-Adoption guidance:
-
-- use `memo()` around deterministic blocks that would otherwise rerun on unrelated fields or repeated identical input
-- keep `memo()` outside ad-hoc `if` trees; pair it with stable suite structure and `skipWhen(...)` / `omitWhen(...)`
-- if you are migrating older Vest 5 `test.memo(...)` examples, move the block into `memo(() => { test(...) }, deps)`
-
-Before:
-
-```typescript
-test.memo(
-  'userId',
-  'User ID is already taken',
-  async ({ signal }) => {
-    await checkUserId(model.userId, { signal });
-  },
-  [model.userId]
-);
-```
-
-After:
-
-```typescript
-memo(() => {
-  test('userId', 'User ID is already taken', async ({ signal }) => {
-    await checkUserId(model.userId, { signal });
-  });
-}, [model.userId]);
-```
-
-## `getAllFormErrors` returns `{ errors, warnings }`
-
-v2 returned `Record<string, string[]>` and attached field-level warnings as a non-enumerable `warnings` property on each errors array. That side-channel was invisible to `Object.keys`, spreads, `JSON.stringify`, and `structuredClone`, which made it easy to miss and impossible to serialise.
-
-v3 returns a sibling-record shape so errors and warnings are first-class:
-
-```typescript
-export type NgxFormErrorsByPath = {
-  errors: Record<string, string[]>;
-  warnings: Record<string, string[]>;
-};
-
-export function getAllFormErrors(form?: AbstractControl): NgxFormErrorsByPath;
-```
-
-Before:
-
-```typescript
+```ts
+// Before (v2)
 const all = getAllFormErrors(form);
-const fieldErrors = all['user.name']; // string[]
-const fieldWarnings = (all['user.name'] as string[] & { warnings?: string[] })
-  .warnings;
-```
-
-After:
-
-```typescript
-const all = getAllFormErrors(form);
-const fieldErrors = all.errors['user.name']; // string[] | undefined
-const fieldWarnings = all.warnings['user.name']; // string[] | undefined
-```
-
-The `errorsChange` output on `FormDirective` still emits `Record<string, string[]>` (the `errors` slice of the new shape), so templates consuming `(errorsChange)="errors.set($event)"` and reading `errors()['field']` continue to work unchanged. For warnings inside templates, prefer the existing `fieldWarnings()` signal on the directive — it is per-field, reactive, and the recommended path for warning display.
-
-### Array indices are dot segments
-
-`getAllFormErrors`, `formState().errors` and `errorsChange` key array entries in dot notation, like every other path the library reports (`fieldWarnings`, `fieldBlur.field`, the validated-field list) and like the Vest field names a suite uses with `each()`:
-
-```typescript
-// v2 and early v3: errors['phonenumbers.values[0]'], errors['users[0].name']
-// v3:              errors['phonenumbers.values.0'], errors['users.0.name']
-```
-
-The same holds for the paths of `FormArray` entries in the touched and validated field lists, which were bracketed before (`contacts[0]` is now `contacts.0`).
-
-If you look up errors or touched state for array items by a bracketed key, switch to the dotted key. Keys without array indices are unchanged.
-
-## Internal helpers moved to `ngx-vest-forms/internal`
-
-Six previously `@internal` symbols have been **removed from the primary `'ngx-vest-forms'` entry point** and are now only reachable from the new `'ngx-vest-forms/internal'` secondary entry point:
-
-| Symbol                    | v2.x import             | v3 import                        |
-| ------------------------- | ----------------------- | -------------------------------- |
-| `fastDeepEqual`           | `from 'ngx-vest-forms'` | `from 'ngx-vest-forms/internal'` |
-| `shallowEqual`            | `from 'ngx-vest-forms'` | `from 'ngx-vest-forms/internal'` |
-| `parseFieldPath`          | `from 'ngx-vest-forms'` | `from 'ngx-vest-forms/internal'` |
-| `getFormControlField`     | `from 'ngx-vest-forms'` | `from 'ngx-vest-forms/internal'` |
-| `getFormGroupField`       | `from 'ngx-vest-forms'` | `from 'ngx-vest-forms/internal'` |
-| `mergeValuesAndRawValues` | `from 'ngx-vest-forms'` | `from 'ngx-vest-forms/internal'` |
-
-```typescript
-// Before (v2.x)
-import { parseFieldPath } from 'ngx-vest-forms';
+const fieldErrors = all['user.name'];
 
 // After (v3)
-import { parseFieldPath } from 'ngx-vest-forms/internal';
+const { errors, warnings } = getAllFormErrors(form);
+const fieldErrors = errors['user.name'];
+const fieldWarnings = warnings['user.name'];
 ```
 
-The `ngx-vest-forms/internal` entry point carries **no semver guarantees** — it is for advanced use only and may change in any release. `getAllFormErrors` and `NgxFormErrorsByPath` are **not** affected; they remain on the primary `'ngx-vest-forms'` entry along with all other documented public API.
+`(errorsChange)` still emits `Record<string, string[]>` (the `errors` record).
 
-## `validationConfig` is strictly typed (untyped `Record` branch removed)
+In addition, array indices in `getAllFormErrors`, `formState().errors`, `errorsChange`, and `touchedFieldPaths` / `validatedFields` now use dot notation everywhere (`users.0.name` instead of `users[0].name`).
 
-`NgxValidationConfig<T>` no longer includes the untyped `Record<string, string[]>` union branch. In v2 (and the v3 pre-releases) that branch silently absorbed any string-keyed object, so a typo'd field path compiled fine and simply never triggered. Now the `[validationConfig]` binding is checked against `ValidationConfigMap<T>`: every trigger key and dependent path must be a valid `FieldPath<T>` of your form model.
+## 4. Internal helpers moved to `ngx-vest-forms/internal`
 
-```typescript
-// ❌ v2-style untyped config: now a compile error if a path doesn't exist
-protected validationConfig = {
-  passwordd: ['confirmPassword'], // typo — no longer compiles when bound
-};
+Six `@internal` helpers moved from `'ngx-vest-forms'` to `'ngx-vest-forms/internal'` (which carries no semver guarantees):
 
-// ✅ Annotate with the model for compile-time checking + autocomplete
-protected validationConfig: NgxValidationConfig<PurchaseFormModel> = {
-  'passwords.password': ['passwords.confirmPassword'],
-};
+- `fastDeepEqual`
+- `shallowEqual`
+- `parseFieldPath`
+- `getFormControlField`
+- `getFormGroupField`
+- `mergeValuesAndRawValues`
 
-// ✅ Or use the fluent builder
-protected validationConfig = createValidationConfig<PurchaseFormModel>()
-  .bidirectional('passwords.password', 'passwords.confirmPassword')
-  .build();
-```
+`getAllFormErrors` and `NgxFormErrorsByPath` stay on `'ngx-vest-forms'`.
 
-### Array paths carry an index
+## 5. Strictly typed `validationConfig` and indexed array `FieldPath<T>`
 
-`FieldPath<T>` and `LeafFieldPath<T>` address array items by index: for `addresses: Address[]` they produce `` `addresses.${number}.street` ``, which accepts `'addresses.0.street'`. v2 produced the index-free `'addresses.street'` instead. That form never worked at runtime: template-driven forms register array items as `ngModelGroup`s keyed by index, so `form.get('addresses.street')` finds no control and a `validationConfig` entry keyed by it never fires. It is no longer a `FieldPath`.
+- `NgxValidationConfig<T>` drops its untyped `Record<string, string[]>` branch. Invalid field paths in `[validationConfig]` now fail at compile time. Use `createValidationConfig<MyModel>()` or annotate `ValidationConfigMap<MyModel>`. For runtime-driven server paths, cast explicitly to `NgxValidationConfig<MyModel>`.
+- `FieldPath<T>` and `LeafFieldPath<T>` now address array elements by index (`` `addresses.${number}.street` `` instead of `'addresses.street'`). Replace index-free array paths with indexed paths, and add `as const` when storing template-literal paths in variables.
+- Internal type parameters were removed from `FieldPath<T>`, `LeafFieldPath<T>`, `ValidationConfigBuilder` methods, and `objectToArray`. Drop any explicit extra type arguments.
 
-- Replace index-free array paths in `validationConfig`, `createValidationConfig()` calls and `FormFieldName<T>` values with the indexed form, one index per array level: `'orders.lines.sku'` → `'orders.0.lines.0.sku'`, or `` `orders.${i}.lines.${j}.sku` `` built inline.
-- A path stored in a variable must keep its literal type. Write it inline or add `as const`; `` const key = `addresses.${i}.street` `` widens to `string` and is rejected.
-- The element itself (`'addresses.0'`) is a path, and a leaf when the element type includes a primitive (`string[]`, `Array<string | { x: number }>`). Elements typed `any` or `unknown` accept any sub-path below the index.
-- Code that relies on the exact union, for example an exhaustive `switch` over `FieldPath<T>` that ends in a `never` check, sees template-literal members.
+## 6. Wrapper ARIA, IDs, pending label, and held messages
 
-For path strings that `FieldPath<T>` cannot express, such as paths read from a server, build the object separately and cast it explicitly: `config as NgxValidationConfig<MyModel>`.
+- **ARIA form-widget roles:** `<ngx-control-wrapper>` and `ngxErrorControl` now stamp `aria-invalid` and `aria-describedby` onto elements with ARIA form-widget roles (`checkbox`, `combobox`, `listbox`, `radiogroup`, `searchbox`, `slider`, `spinbutton`, `switch`, `textbox`) and skip native inputs nested inside them. See [ADR-0010](../adr/0010-aria-association-targets-aria-form-widgets.md).
+- **Per-app IDs:** If your app sets a non-default `APP_ID`, generated region IDs become `ngx-control-wrapper-<APP_ID>-0-error`. Read IDs from `FormErrorControlDirective` rather than hard-coding them.
+- **Held messages while pending:** `errors()`, `warnings()`, `shouldShowErrors()`, and `shouldShowWarnings()` keep the last settled result while an async re-check is pending so live regions do not flicker or re-announce. Tests that expect an error to disappear immediately on keystroke must wait for the async check to settle.
 
-## Wrapper ARIA, message ids and the pending label
+## 7. Other breaking behavioral changes
 
-- **ARIA state on custom widgets.** `<ngx-control-wrapper>` and `ngxErrorControl` (in `all-controls` mode) now set `aria-invalid` and `aria-describedby` on elements with an ARIA form-widget role (`checkbox`, `combobox`, `listbox`, `radiogroup`, `searchbox`, `slider`, `spinbutton`, `switch`, `textbox`), not only on native `input`/`select`/`textarea`. A native control nested inside such a widget is no longer stamped, and `aria-required` is not set on `role="slider"`. Remove any manual `aria-invalid` workaround you added for custom widgets. See [ADR-0010](../adr/0010-aria-association-targets-aria-form-widgets.md).
-- **Message-region ids include a non-default `APP_ID`.** The wrappers number their ids per application instead of per JavaScript module. With Angular's default `APP_ID` (`'ng'`) the ids keep the `ngx-control-wrapper-0-error` shape. If your app sets `APP_ID`, they become `ngx-control-wrapper-<APP_ID>-0-error`; update CSS selectors or tests that match the old shape. Don't hard-code them: in a custom wrapper, read them from `ngxErrorControl`'s (or `<ngx-form-group-wrapper>`'s) `errorId`/`warningId`/`pendingId`, and in tests match the region by role or text.
-- **Translatable pending label.** The built-in wrappers' "Validating…" text comes from the new `NGX_PENDING_LABEL` token (a string or `Signal<string>`). `<ngx-control-wrapper>` also gained the `[pendingDebounce]` input that `<ngx-form-group-wrapper>` already had. See [API-TOKENS.md](../API-TOKENS.md#ngx_pending_label).
-- **Messages stay visible while a field re-validates.** In v2, `errors()`/`warnings()` emptied and `shouldShowErrors()`/`shouldShowWarnings()` went `false` while a control was pending, so on every async re-check the message vanished, came back and was announced again. They now keep the last settled result until the new one lands, next to the pending message; `aria-invalid` and `aria-describedby` follow. A control's first validation still shows nothing, and a form or control reset or `resetField()` clears them at once. Tests that expect a message to be gone right after typing must now wait for the check to settle.
+- **Model writes emit Angular form events:** `[formValue]` sync now calls `patchValue(value)` without `{ emitEvent: false }`. Subscribers to `ngForm.form.valueChanges` / `statusChanges` fire on programmatic model writes (`(formValueChange)` still does not echo back). Model updates made inside `(formValueChange)` now win cleanly without logging `NGX-100`.
+- **`objectToArray(obj, keys)` converts only listed keys:** Unlisted numeric-keyed objects stay objects unless they sit inside or contain a converted key. Add any missing keys to `keys`.
+- **`NgxDeepPartial<T>` allows explicit `undefined`:** Properties are typed `prop?: X | undefined`, which aligns with `exactOptionalPropertyTypes`. Type helpers that accept partial slices as `NgxDeepPartial<X>` instead of `Partial<X>`.
+- **`NgxVestSuite<T>` removes `any`:** `subscribe` returns `() => void`, `dump()` returns `unknown`, and `resume()` accepts `unknown`.
 
-## Model writes emit form events
+## 8. Key v3 additions and v4 deprecations
 
-v2 wrote `[formValue]` into the form with `patchValue(value, { emitEvent: false })`. v3 writes with a plain `patchValue(value)`, so the form's own events fire for every model write.
+**Notable additions in v3:**
 
-- **Subscribers to the form's events now fire on model writes.** `ngForm.form.valueChanges`, `statusChanges` and `events` emit when you set `[formValue]`, not only when the user types. If such a subscriber writes back to the model or starts a request, check that it still behaves, for example by comparing against the last value it handled. `formValueChange` is unchanged: it still does not echo a model write back to you.
-- **A model write made in response to `formValueChange` now wins.** For example, clearing fields that a switched section hides used to be dropped with an `NGX-100` warning. It is now applied when the `[formValue]` input changed and the form still holds the value it last emitted. Real conflicts still warn.
+- `(submitSettled)` output on `<form ngxVestForm>` for async-safe submit handling (`NgxSubmitSettledEvent<T>`), plus automatic dependent revalidation before submit settles.
+- `[focusFirstInvalidOnSubmit]` input (default `true`).
+- `FormDirective.resetField(field)` and `FormDirective.removeField(field)` for per-field Vest 6 state management.
+- `provideFormContract()` / `provideFormContractFactory()` DI helpers, `NGX_PENDING_LABEL`, and `NGX_EQUALITY_FN` tokens (see [API-TOKENS.md](../API-TOKENS.md)).
+- Automatic validator attachment for Angular Signal Forms custom controls (`FormValueControl` / `FormCheckboxControl`) bound with `[ngModel]`.
 
-## `objectToArray` converts only what you list
+**Deprecated in v3 (scheduled for removal in v4):**
 
-v2's `objectToArray` also turned an unlisted numeric-keyed object into an array whenever its items were objects, so `objectToArray({ notes: { 0: { tag: 'a' } } }, [])` returned `{ notes: [{ tag: 'a' }] }`. v3 leaves `notes` an object. A numeric-keyed object still becomes an array when its key is listed, when it sits inside a converted branch, or when it contains a converted key. If your save code relied on the old behaviour, add the missing keys to the `keys` argument.
+- `FormDirective.idle$` (use `status` / `pending` signals or `ngForm.form.statusChanges`).
+- `FormDirective.createAsyncValidator` (internal library plumbing).
+- `ValidateRootFormDirective.createAsyncValidator` (internal library plumbing).
+- `'on-blur'` error display mode (alias for `'on-blur-or-submit'`; see [ADR 0013](../adr/0013-display-modes-open-on-submit.md)).
 
-## `NgxDeepPartial` allows an explicit `undefined`
+## Known limitations
 
-`NgxDeepPartial<T>` now emits `prop?: X | undefined` for object properties instead of `prop?: X`. Without `exactOptionalPropertyTypes` the two are identical. With it, you can now write an empty field as `{ birthDate: undefined }` in a form model, which the form itself does when a control is cleared. `NgxDeepRequired<T>` strips that `undefined` again from optional properties, so contracts built from a partial model stay fully required.
+- **Trigger control recreation under `validationConfig`:** Destroying and recreating a trigger control with `@if` while `validationConfig` stays unchanged is not re-subscribed automatically. See [ADR-0004](../adr/0004-validation-config-trigger-control-recreation-unsupported.md).
+- **Rapid trigger edits during cooldown:** Rapid trigger edits inside the 500 ms re-entry guard are deferred and replayed automatically once the cooldown ends (latest value wins). See [ADR-0003](../adr/0003-validation-config-cooldown-can-drop-rapid-input.md).
 
-If you compile with `exactOptionalPropertyTypes` and pass part of an `NgxDeepPartial` model to a parameter typed with the built-in `Partial<X>`, the call no longer type-checks, because `Partial<X>` rejects the explicit `undefined`. Type that parameter as `NgxDeepPartial<X>` instead.
+## Selector codemod
 
-## `NgxVestSuite` no longer exposes `any`
-
-v2 typed `subscribe`, `dump` and `resume` on `NgxVestSuite<T>` as `any`. v3 types them as follows; real `create(...)` suites are assignable as before.
-
-- `subscribe(callback)` and `subscribe(event, callback)` return the unsubscribe function, typed `() => void`. The event name is a `string` and the payload `unknown`.
-- `dump()` returns `unknown`, and `resume(state)` takes `unknown`. The precise type is Vest's internal isolate tree, which ngx-vest-forms does not re-export; pass the value from `dump()` straight to `resume()`.
-
-Code that read properties off `dump()`'s result through `NgxVestSuite` needs a cast or the suite's own inferred type. A hand-written suite fake whose `subscribe` returned nothing must now return a function, for example `subscribe: () => () => {}`.
-
-## Internal type parameters removed
-
-v3 drops type parameters that were recursion internals or did nothing. Calls and type references that let TypeScript infer them, which is how the docs and examples use them, need no change. Only code that passes these type arguments explicitly gets a compile error ("Expected N type arguments"):
-
-| v2                                                                                     | v3                                      | Change                                                                                                                                     |
-| -------------------------------------------------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `FieldPath<T, Prefix, Depth>`                                                          | `FieldPath<T>`                          | `Prefix` and `Depth` were documented as internal. For prefixed paths write the template literal yourself: `` `user.${FieldPath<User>}` ``. |
-| `LeafFieldPath<T, Prefix, Depth>`                                                      | `LeafFieldPath<T>`                      | Same as `FieldPath`.                                                                                                                       |
-| `builder.whenChanged<K>(…)`, `builder.bidirectional<K1, K2>(…)`, `builder.group<K>(…)` | the same methods without type arguments | The parameters are typed `FieldPath<T>` directly; autocomplete and checking are unchanged.                                                 |
-| `objectToArray<K>(object, keys)`                                                       | `objectToArray(object, keys)`           | `K` never reached the return type, which stays `unknown`.                                                                                  |
-
-## Known limitations (v3)
-
-These are accepted, documented limitations in the v3 line. Each links to an Architecture Decision Record (ADR) with the full rationale and the conditions under which it will be revisited.
-
-- **`validationConfig` cooldown defers (does not drop) rapid trigger-field input.** The time-based re-entry guard that prevents bidirectional validation loops briefly holds back a very rapid user edit to a trigger field that lands inside the cooldown window; the edit is replayed automatically once the cooldown expires (latest value wins), so dependent fields always converge without further interaction — at most one cooldown (500 ms) later. See [docs/adr/0003-validation-config-cooldown-can-drop-rapid-input.md](../adr/0003-validation-config-cooldown-can-drop-rapid-input.md) (superseded — describes the historical drop and the current defer/replay design).
-
-## v3 selector + token removals
-
-v3.0.0 removes the legacy `sc-` selectors, duplicate directive aliases, duplicate root-form inputs, and `SC_ERROR_DISPLAY_MODE_TOKEN`.
-
-### Removed symbols
-
-- `form[scVestForm]`
-- `exportAs: 'scVestForm'`
-- `form[validateRootForm]`
-- `validateRootForm`
-- `validateRootFormMode`
-- `[formControlState]`
-- `exportAs: 'formControlState'`
-- `[formErrorDisplay]`
-- `exportAs: 'formErrorDisplay'`
-- `[formErrorControl]`
-- `exportAs: 'formErrorControl'`
-- `sc-control-wrapper`, `[scControlWrapper]`, `[sc-control-wrapper]`
-- `[ngx-control-wrapper]`
-- `sc-form-group-wrapper`, `[scFormGroupWrapper]`
-- `SC_ERROR_DISPLAY_MODE_TOKEN`
-- `[ngxModel]` and `[ngxModelGroup]`: alias selectors of the directives that hook into `ngModel` and `ngModelGroup`. Nothing in the docs or examples used them, and on their own they validated nothing, because only `ngModel` and `ngModelGroup` create the control that runs the validator. If you added `ngxModel` or `ngxModelGroup` next to `ngModel` or `ngModelGroup`, delete the attribute; validation is unchanged.
-
-### Renamed symbols
-
-- `ScErrorDisplayMode` → `NgxErrorDisplayMode`
-
-### Keep using
-
-- `form[ngxVestForm]`
-- `ngxValidateRootForm`
-- `ngxValidateRootFormMode`
-- `ngxControlState`
-- `ngxErrorDisplay`
-- `ngxErrorControl`
-- `ngx-control-wrapper`, `[ngxControlWrapper]`
-- `ngx-form-group-wrapper`, `[ngxFormGroupWrapper]`
-- `NGX_ERROR_DISPLAY_MODE_TOKEN`
-
-### Migration steps
-
-1. Run the codemod in [../SELECTOR-PREFIX-MIGRATION.md](../SELECTOR-PREFIX-MIGRATION.md).
-2. Replace any remaining `SC_ERROR_DISPLAY_MODE_TOKEN` providers with `NGX_ERROR_DISPLAY_MODE_TOKEN`. If you imported the `ScErrorDisplayMode` type, switch to `NgxErrorDisplayMode`; the values are unchanged.
-3. Replace template refs and aliases:
-   - `#form="scVestForm"` → `#form="ngxVestForm"`
-   - `#state="formControlState"` → `#state="ngxControlState"`
-   - `#display="formErrorDisplay"` → `#display="ngxErrorDisplay"`
-   - `#ec="formErrorControl"` → `#ec="ngxErrorControl"`
-4. Replace root-form bindings:
-   - `validateRootForm` → `ngxValidateRootForm`
-   - `validateRootFormMode` → `ngxValidateRootFormMode`
-5. Replace kebab-case wrapper attributes with PascalCase:
-   - `ngx-control-wrapper` attribute → `ngxControlWrapper`
-   - `sc-control-wrapper` attribute → `ngxControlWrapper`
-6. Update any custom CSS that targets removed `sc-` host classes.
-7. Rebuild and rerun your tests.
-
-### Example
-
-```html
-<!-- Before (v2.x) -->
-<form
-  scVestForm
-  validateRootForm
-  [validateRootFormMode]="'submit'"
-  #form="scVestForm"
->
-  <div formErrorControl #ec="formErrorControl">
-    <input name="email" [ngModel]="formValue().email" />
-  </div>
-</form>
-
-<!-- After (v3.x) -->
-<form
-  ngxVestForm
-  ngxValidateRootForm
-  [ngxValidateRootFormMode]="'submit'"
-  #form="ngxVestForm"
->
-  <div ngxErrorControl #ec="ngxErrorControl">
-    <input name="email" [ngModel]="formValue().email" />
-  </div>
-</form>
-```
+For the full list of removed `sc-` selectors and the automated migration script, see [SELECTOR-PREFIX-MIGRATION.md](../SELECTOR-PREFIX-MIGRATION.md).

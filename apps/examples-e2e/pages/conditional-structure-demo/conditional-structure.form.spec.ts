@@ -20,12 +20,18 @@ test.describe('Conditional Structure Demo Form', () => {
       name: /delivery method/i,
     });
 
+    const relevantPayload = page.locator('ngx-card').filter({
+      has: page.getByRole('heading', { name: 'Relevant payload', exact: true }),
+    });
+
     await fillAndBlur(contactName, 'Ada Lovelace');
     await deliveryMethod.selectOption('shipment');
 
     const shippingAddress = page.getByLabel(/shipping address/i);
     await fillAndBlur(shippingAddress, '123 Analytical Engine Way');
-    await expect(shippingAddress).toHaveValue('123 Analytical Engine Way');
+    await expect(relevantPayload).toContainText(
+      '"shippingAddress": "123 Analytical Engine Way"'
+    );
 
     await deliveryMethod.selectOption('pickup');
 
@@ -33,7 +39,8 @@ test.describe('Conditional Structure Demo Form', () => {
     await expect(
       page.getByText(/no extra delivery field is required for pickup orders/i)
     ).toBeVisible();
-    await expect(page.getByText(/123 Analytical Engine Way/i)).toHaveCount(0);
+    await expect(relevantPayload).toContainText('"deliveryMode": "pickup"');
+    await expect(relevantPayload).not.toContainText('shippingAddress');
 
     await page.getByRole('button', { name: /save delivery plan/i }).click();
 
@@ -48,6 +55,9 @@ test.describe('Conditional Structure Demo Form', () => {
       '"deliveryMode": "pickup"'
     );
     await expect(submittedPayloadCard).not.toContainText('shippingAddress');
+
+    await deliveryMethod.selectOption('shipment');
+    await expect(shippingAddress).toBeEmpty();
 
     await waitForFormProcessing(page);
     diagnostics.expectNoUnexpectedDiagnostics();

@@ -1,4 +1,10 @@
-import { Component, computed, inject, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+} from '@angular/core';
 import { FormErrorDisplayDirective } from '../../directives/form-error-display.directive';
 import { injectPendingLabel } from '../../tokens/pending-label.token';
 import {
@@ -21,7 +27,8 @@ import { createDebouncedPendingState } from '../../utils/pending-state.utils';
   selector: 'ngx-form-group-wrapper, [ngxFormGroupWrapper]',
   exportAs: 'ngxFormGroupWrapper',
   templateUrl: './form-group-wrapper.component.html',
-  styleUrls: ['./form-group-wrapper.component.css'],
+  styleUrl: './form-group-wrapper.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     class: 'ngx-form-group-wrapper',
     '[class.ngx-form-group-wrapper--invalid]':
@@ -77,7 +84,9 @@ export class FormGroupWrapperComponent {
    */
   readonly describedByIds = computed(() =>
     buildMessageDescribedBy(this.#regionIds, {
-      errors: this.errorDisplay.shouldShowErrors(),
+      errors:
+        this.errorDisplay.shouldShowErrors() &&
+        this.errorDisplay.errors().length > 0,
       warnings: this.errorDisplay.shouldShowWarnings(),
       pending: this.showPendingMessage(),
     })

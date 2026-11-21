@@ -38,7 +38,7 @@ the reference for "how do all of these pieces fit together in a real form".
 - `createFormFeedbackSignals()` for packaged `formState`, `warnings`,
   `validatedFields`, and `pending`
 - `clearFields()`, `setValueAtPath()`
-- `FormDirective.focusFirstInvalidControl()`, `resetForm()`
+- `FormDirective.resetForm()` and automatic `focusFirstInvalidOnSubmit`
 - `ROOT_FORM` token for form-level errors
 - `NGX_VALIDATION_DEBOUNCE_PRESETS` (`typing` and `async`)
 - `NgxVestSuite` / Vest `create`, `test`, `enforce`, `omitWhen`, `warn`,

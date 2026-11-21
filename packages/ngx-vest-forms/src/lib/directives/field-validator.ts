@@ -21,6 +21,7 @@ import {
   runFieldValidation,
 } from '../utils/vest-runner';
 import type { NgxValidationFocus } from './form-directive.types';
+import { announceOnSilentRevalidation } from './revalidation-triggers';
 import type { ValidationOptions } from './validation-options';
 
 /** Field warnings keyed by field path, as `FormDirective.fieldWarnings`. */
@@ -100,7 +101,7 @@ export function createFieldValidator<T>(
       only: field,
     };
 
-    return runFieldValidation(
+    const validation$ = runFieldValidation(
       suite,
       focus,
       snapshot,
@@ -141,5 +142,7 @@ export function createFieldValidator<T>(
         return of({ vestInternalError: 'Validation failed' });
       })
     );
+
+    return announceOnSilentRevalidation(control, validation$, destroyRef);
   };
 }

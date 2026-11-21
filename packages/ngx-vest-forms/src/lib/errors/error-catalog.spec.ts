@@ -56,6 +56,9 @@ describe('NGX_VEST_FORMS_DIAGNOSTICS', () => {
       'NGX-106',
       'NGX-107',
       'NGX-108',
+      'NGX-109',
+      'NGX-110',
+      'NGX-111',
     ]);
   });
 
@@ -63,6 +66,33 @@ describe('NGX_VEST_FORMS_DIAGNOSTICS', () => {
     expect(
       NGX_VEST_FORMS_DIAGNOSTICS.SIGNAL_CONTROL_NOT_REGISTERED.message('seats')
     ).toContain('ngModel "seats" on a Signal Forms control was not registered');
+  });
+
+  it('NGX-109 INVALID_FIELD_PATH names the malformed path', () => {
+    expect(NGX_VEST_FORMS_DIAGNOSTICS.INVALID_FIELD_PATH.message('a..b')).toBe(
+      "[ngx-vest-forms] field-path.utils: Invalid field path 'a..b'. Leading dots, trailing dots, consecutive dots, and '.[' separators are not allowed."
+    );
+  });
+
+  it('NGX-110 VALIDATION_CONFIG_DUPLICATE_DEPENDENCIES lists the trigger and duplicate dependents', () => {
+    const message =
+      NGX_VEST_FORMS_DIAGNOSTICS.VALIDATION_CONFIG_DUPLICATE_DEPENDENCIES.message(
+        'password',
+        ['email', 'firstName']
+      );
+    expect(message).toContain('Duplicate dependencies detected.');
+    expect(message).toContain("Trigger: 'password'");
+    expect(message).toContain("Duplicates: 'email', 'firstName'");
+  });
+
+  it('NGX-111 VALIDATION_CONFIG_DUPLICATE_BIDIRECTIONAL lists the duplicate field pair', () => {
+    const message =
+      NGX_VEST_FORMS_DIAGNOSTICS.VALIDATION_CONFIG_DUPLICATE_BIDIRECTIONAL.message(
+        'password',
+        'confirmPassword'
+      );
+    expect(message).toContain('Duplicate bidirectional relationship detected.');
+    expect(message).toContain("Fields: 'password' ↔ 'confirmPassword'");
   });
 
   it('NGX-100 SYNC_CONFLICT_DROPPED explains the dropped change', () => {

@@ -4,14 +4,30 @@ import { isUnsafePathSegment } from './field-path.utils';
  * Recursively maps array element types to records keyed by numeric index.
  *
  * This is the type-level counterpart of {@link deepArrayToObject}: arrays
- * become `Record<number, ...>` while non-array objects keep their keys.
+ * become `Record<number, ...>` while plain objects keep their keys and common
+ * built-in non-plain objects (`Date`, `RegExp`, `Error`, `Map`, `Set`,
+ * `WeakMap`, `WeakSet`, `Promise`, and functions) are preserved as-is.
+ *
+ * Note: TypeScript's structural type system cannot distinguish a plain-shaped
+ * custom class instance (such as `class Box { values = ['a']; }`) from a plain
+ * object literal at the type level, even though `deepArrayToObject` returns
+ * non-plain instances by reference at runtime.
  */
 export type DeepArrayToObject<T> =
   T extends ReadonlyArray<infer U>
     ? Record<number, DeepArrayToObject<U>>
-    : T extends object
-      ? { [K in keyof T]: DeepArrayToObject<T[K]> }
-      : T;
+    : T extends Date | RegExp | Error | ((...args: never[]) => unknown)
+      ? T
+      : T extends
+            | ReadonlyMap<infer _K, infer _V>
+            | WeakMap<infer _WK, infer _WV>
+            | ReadonlySet<infer _S>
+            | WeakSet<infer _WS>
+            | Promise<infer _P>
+        ? T
+        : T extends object
+          ? { [K in keyof T]: DeepArrayToObject<T[K]> }
+          : T;
 
 /**
  * Converts a flat array to an object with numeric keys.
@@ -55,44 +71,27 @@ export function deepArrayToObject<T>(
   array: readonly T[]
 ): Record<number, DeepArrayToObject<T>> {
   return Object.fromEntries(
-    array.map((value, index) => [
-      index,
-      Array.isArray(value)
-        ? deepArrayToObject(value as unknown[])
-        : value && typeof value === 'object'
-          ? recursivelyConvertArrays(value)
-          : value,
-    ])
+    array.map((value, index) => [index, recursivelyConvertArrays(value)])
   ) as Record<number, DeepArrayToObject<T>>;
 }
 
 /**
- * Recursively traverses an object and converts any nested arrays to objects.
+ * Recursively traverses a value and converts any nested arrays to objects.
  */
-function recursivelyConvertArrays<T>(object: T): DeepArrayToObject<T> {
-  if (Array.isArray(object)) {
-    return deepArrayToObject(object as unknown[]) as DeepArrayToObject<T>;
+function recursivelyConvertArrays<T>(value: T): DeepArrayToObject<T> {
+  if (Array.isArray(value)) {
+    return deepArrayToObject(value as unknown[]) as DeepArrayToObject<T>;
   }
-  if (object && typeof object === 'object') {
+  if (isPlainObject(value)) {
     return Object.fromEntries(
-      Object.entries(object).map(([key, value]) => [
+      Object.entries(value).map(([key, entryValue]) => [
         key,
-        Array.isArray(value)
-          ? deepArrayToObject(value as unknown[])
-          : value && typeof value === 'object'
-            ? recursivelyConvertArrays(value)
-            : value,
+        recursivelyConvertArrays(entryValue),
       ])
     ) as DeepArrayToObject<T>;
   }
-  return object as DeepArrayToObject<T>;
+  return value as DeepArrayToObject<T>;
 }
-
-/**
- * Converts selected numeric-keyed object properties back to arrays.
- * Only properties listed in keys will be converted; others remain untouched.
- * Useful for converting form models back to array format before saving/sending to backend.
- */
 
 /**
  * Public API: Convert selected numeric-keyed object properties back to arrays.
@@ -123,9 +122,15 @@ function recursivelyConvertArrays<T>(object: T): DeepArrayToObject<T> {
  *
  * @example
  * ```ts
- * const model = { addresses: { 0: { city: 'A' }, 1: { city: 'B' } } };
- * objectToArray(model, ['addresses']) as { addresses: { city: string }[] };
- * // => { addresses: [{ city: 'A' }, { city: 'B' }] }
+ * const model = {
+ *   name: 'Ada',
+ *   addresses: { 0: { city: 'A' }, 1: { city: 'B' } },
+ * };
+ * objectToArray(model, ['addresses']) as {
+ *   name: string;
+ *   addresses: { city: string }[];
+ * };
+ * // => { name: 'Ada', addresses: [{ city: 'A' }, { city: 'B' }] }
  *
  * // Single-entry wrapper is unwrapped to the bare array:
  * objectToArray({ list: { 0: { id: 1 } } }, ['list']);
@@ -137,10 +142,8 @@ export function objectToArray(
   keys: readonly string[]
 ): unknown {
   const { value: processed } = objectToArrayInternal(object, keys);
-  if (processed && typeof processed === 'object' && !Array.isArray(processed)) {
-    const entries: Array<[string, unknown]> = Object.entries(
-      processed as Record<string, unknown>
-    );
+  if (isPlainObject(processed)) {
+    const entries: Array<[string, unknown]> = Object.entries(processed);
     if (entries.length === 1) {
       const firstEntry = entries[0];
       if (!firstEntry) {
@@ -188,7 +191,7 @@ function objectToArrayInternal(
     };
   }
 
-  if (object && typeof object === 'object') {
+  if (isPlainObject(object)) {
     if (isNumericObject(object)) {
       // First, recursively process the contents
       const processedContents: Record<string, unknown> = {};
@@ -243,9 +246,21 @@ function objectToArrayInternal(
 }
 
 /**
- * Checks if a value is an object with only numeric keys (not an array).
+ * Checks whether a value is a plain object (null-prototype or Object.prototype
+ * from any realm), excluding arrays, Date, RegExp, and custom class instances.
+ */
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+  const prototype: unknown = Object.getPrototypeOf(value);
+  return prototype === null || Object.getPrototypeOf(prototype) === null;
+}
+
+/**
+ * Checks if a value is a plain object with only numeric keys (not an array).
  */
 function isNumericObject(value: unknown): value is Record<string, unknown> {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  if (!isPlainObject(value)) return false;
   return Object.keys(value).every((k) => /^\d+$/.test(k));
 }

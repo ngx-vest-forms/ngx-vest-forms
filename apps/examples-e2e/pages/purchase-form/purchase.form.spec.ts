@@ -661,35 +661,6 @@ test.describe('Purchase Form', () => {
   });
 
   test.describe('Fetch Data (Luke) Functionality', () => {
-    test('should fetch Luke data and populate form fields', async ({
-      page,
-    }) => {
-      await test.step('Click Fetch Data button and verify fields are populated', async () => {
-        const fetchButton = page.getByRole('button', {
-          name: /fetch luke/i,
-        });
-        const userId = page.getByLabel(/user id/i);
-        const firstName = page.getByLabel(/first name/i);
-        const lastName = page.getByLabel(/last name/i);
-        const genderMale = page.locator('#gender-male');
-
-        // Initially fields should be empty/unchecked
-        await expect(userId).toBeEmpty();
-        await expect(firstName).toBeEmpty();
-        await expect(lastName).toBeEmpty();
-        await expect(genderMale).not.toBeChecked();
-
-        // Click fetch button
-        await fetchButton.click();
-
-        // Wait for the data to load (fields should be populated)
-        await expect(userId).toHaveValue('1', { timeout: 5000 });
-        await expect(firstName).toHaveValue('Luke');
-        await expect(lastName).toHaveValue('Skywalker');
-        await expect(genderMale).toBeChecked();
-      });
-    });
-
     test('should surface an intentional fetch failure and keep the form editable', async ({
       page,
     }) => {
@@ -731,76 +702,58 @@ test.describe('Purchase Form', () => {
       });
     });
 
-    test('should disable fetched fields after data is loaded', async ({
-      page,
-    }) => {
-      await test.step('Fetch data and verify fields are disabled', async () => {
-        const fetchButton = page.getByRole('button', {
-          name: /fetch luke/i,
-        });
-        const userId = page.getByLabel(/user id/i);
-        const firstName = page.getByLabel(/first name/i);
-        const lastName = page.getByLabel(/last name/i);
-        const genderMale = page.locator('#gender-male');
-        const genderFemale = page.locator('#gender-female');
-        const genderOther = page.locator('#gender-other');
+    test('fills and disables the fetched identity fields', async ({ page }) => {
+      const userId = page.getByLabel(/user id/i);
+      const firstName = page.getByLabel(/first name/i);
+      const lastName = page.getByLabel(/last name/i);
+      const genderMale = page.locator('#gender-male');
 
-        // Before fetch, fields should be enabled
-        await expect(userId).toBeEnabled();
-        await expect(firstName).toBeEnabled();
-        await expect(lastName).toBeEnabled();
+      for (const field of [userId, firstName, lastName]) {
+        await expect(field).toBeEmpty();
+        await expect(field).toBeEnabled();
+      }
+      await expect(genderMale).not.toBeChecked();
 
-        // Click fetch button
-        await fetchButton.click();
+      await page.getByRole('button', { name: /fetch luke/i }).click();
 
-        // Wait for data to load
-        await expect(firstName).toHaveValue('Luke', { timeout: 5000 });
-
-        // After fetch, fields should be disabled
-        await expect(userId).toBeDisabled();
-        await expect(firstName).toBeDisabled();
-        await expect(lastName).toBeDisabled();
-        await expect(genderMale).toBeDisabled();
-        await expect(genderFemale).toBeDisabled();
-        await expect(genderOther).toBeDisabled();
-      });
+      await expect(userId).toHaveValue('1');
+      await expect(firstName).toHaveValue('Luke');
+      await expect(lastName).toHaveValue('Skywalker');
+      await expect(genderMale).toBeChecked();
+      for (const field of [
+        userId,
+        firstName,
+        lastName,
+        genderMale,
+        page.locator('#gender-female'),
+        page.locator('#gender-other'),
+      ]) {
+        await expect(field).toBeDisabled();
+      }
     });
 
-    test('should clear fetched data and re-enable fields when clicking Clear Sensitive Data', async ({
+    test('clears fetched identity fields and keeps the age when clearing sensitive data', async ({
       page,
     }) => {
-      await test.step('Fetch data, then clear sensitive data', async () => {
-        const fetchButton = page.getByRole('button', {
-          name: /fetch luke/i,
-        });
-        const clearButton = page.getByRole('button', {
-          name: /clear sensitive data/i,
-        });
-        const userId = page.getByLabel(/user id/i);
-        const firstName = page.getByLabel(/first name/i);
-        const lastName = page.getByLabel(/last name/i);
-        const genderMale = page.locator('#gender-male');
+      const userId = page.getByLabel(/user id/i);
+      const firstName = page.getByLabel(/first name/i);
+      const lastName = page.getByLabel(/last name/i);
+      const genderMale = page.locator('#gender-male');
+      const age = page.getByLabel(/age/i);
 
-        // Fetch data first
-        await fetchButton.click();
-        await expect(firstName).toHaveValue('Luke', { timeout: 5000 });
-        await expect(firstName).toBeDisabled();
+      await fillAndBlur(age, '25');
+      await page.getByRole('button', { name: /fetch luke/i }).click();
+      await expect(firstName).toHaveValue('Luke');
 
-        // Click clear sensitive data
-        await clearButton.click();
+      await page.getByRole('button', { name: /clear sensitive data/i }).click();
 
-        // Fields should be cleared and re-enabled
-        await expect(userId).toBeEmpty();
-        await expect(firstName).toBeEmpty();
-        await expect(lastName).toBeEmpty();
-        await expect(genderMale).not.toBeChecked();
-
-        // Fields should be editable again
-        await expect(userId).toBeEnabled();
-        await expect(firstName).toBeEnabled();
-        await expect(lastName).toBeEnabled();
-        await expect(genderMale).toBeEnabled();
-      });
+      for (const field of [userId, firstName, lastName]) {
+        await expect(field).toBeEmpty();
+        await expect(field).toBeEnabled();
+      }
+      await expect(genderMale).not.toBeChecked();
+      await expect(genderMale).toBeEnabled();
+      await expect(age).toHaveValue('25');
     });
 
     test('should clear fetch errors when clicking Clear Sensitive Data', async ({
@@ -827,63 +780,30 @@ test.describe('Purchase Form', () => {
       });
     });
 
-    test('should clear fetched data and re-enable fields when clicking Reset', async ({
+    test('resets the fetched identity and allows a new fetch', async ({
       page,
     }) => {
-      await test.step('Fetch data, then reset form', async () => {
-        const fetchButton = page.getByRole('button', {
-          name: /fetch luke/i,
-        });
-        const resetButton = page.getByRole('button', { name: /^reset$/i });
-        const userId = page.getByLabel(/user id/i);
-        const firstName = page.getByLabel(/first name/i);
-        const lastName = page.getByLabel(/last name/i);
-        const genderMale = page.locator('#gender-male');
+      const fetchButton = page.getByRole('button', { name: /fetch luke/i });
+      const userId = page.getByLabel(/user id/i);
+      const firstName = page.getByLabel(/first name/i);
+      const lastName = page.getByLabel(/last name/i);
+      const genderMale = page.locator('#gender-male');
 
-        // Fetch data first
-        await fetchButton.click();
-        await expect(firstName).toHaveValue('Luke', { timeout: 5000 });
-        await expect(firstName).toBeDisabled();
+      await fetchButton.click();
+      await expect(firstName).toHaveValue('Luke');
 
-        // Click reset
-        await resetButton.click();
+      await page.getByRole('button', { name: /^reset$/i }).click();
 
-        // Fields should be cleared and re-enabled
-        await expect(userId).toBeEmpty();
-        await expect(firstName).toBeEmpty();
-        await expect(lastName).toBeEmpty();
-        await expect(genderMale).not.toBeChecked();
+      for (const field of [userId, firstName, lastName]) {
+        await expect(field).toBeEmpty();
+        await expect(field).toBeEnabled();
+      }
+      await expect(genderMale).not.toBeChecked();
+      await expect(genderMale).toBeEnabled();
 
-        // Fields should be editable again
-        await expect(userId).toBeEnabled();
-        await expect(firstName).toBeEnabled();
-        await expect(lastName).toBeEnabled();
-        await expect(genderMale).toBeEnabled();
-      });
-    });
-
-    test('should allow re-fetching data after reset', async ({ page }) => {
-      await test.step('Fetch, reset, then fetch again', async () => {
-        const fetchButton = page.getByRole('button', {
-          name: /fetch luke/i,
-        });
-        const resetButton = page.getByRole('button', { name: /^reset$/i });
-        const firstName = page.getByLabel(/first name/i);
-
-        // Fetch data
-        await fetchButton.click();
-        await expect(firstName).toHaveValue('Luke', { timeout: 5000 });
-
-        // Reset
-        await resetButton.click();
-        await expect(firstName).toBeEmpty();
-        await expect(firstName).toBeEnabled();
-
-        // Fetch again
-        await fetchButton.click();
-        await expect(firstName).toHaveValue('Luke', { timeout: 5000 });
-        await expect(firstName).toBeDisabled();
-      });
+      await fetchButton.click();
+      await expect(firstName).toHaveValue('Luke');
+      await expect(firstName).toBeDisabled();
     });
 
     test('should clear fetch errors when clicking Reset', async ({ page }) => {
@@ -1118,41 +1038,6 @@ test.describe('Purchase Form', () => {
         await submitButton.click();
         await waitForFormProcessing(page, 15000);
         await expect(rootFormError).toBeVisible({ timeout: 15000 });
-      });
-    });
-  });
-
-  test.describe('Advanced Field Clearing Scenarios', () => {
-    test('should clear fetched data fields when clicking Clear Sensitive Data', async ({
-      page,
-    }) => {
-      await test.step('Fetch data then clear, verify specific fields cleared', async () => {
-        const fetchButton = page.getByRole('button', {
-          name: /fetch luke/i,
-        });
-        const clearButton = page.getByRole('button', {
-          name: /clear sensitive data/i,
-        });
-        const userId = page.getByLabel(/user id/i);
-        const firstName = page.getByLabel(/first name/i);
-        const age = page.getByLabel(/age/i);
-
-        // Fill age first (should NOT be cleared)
-        await fillAndBlur(age, '25');
-
-        // Fetch Luke data
-        await fetchButton.click();
-        await expect(firstName).toHaveValue('Luke', { timeout: 5000 });
-
-        // Clear sensitive data
-        await clearButton.click();
-
-        // Sensitive fields should be cleared
-        await expect(userId).toBeEmpty();
-        await expect(firstName).toBeEmpty();
-
-        // Age should still have value (not in clearFields list)
-        await expect(age).toHaveValue('25');
       });
     });
   });

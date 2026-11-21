@@ -80,7 +80,8 @@ hold:
   (a `feat` or `fix` commit; docs-only betas don't reset the clock).
   `fix(deps)` commits and dependency overrides that touch none of
   `packages/ngx-vest-forms/src`, the library's runtime peer ranges, or its
-  runtime `dependencies` (`tslib` in `packages/ngx-vest-forms/package.json`)
+  runtime `dependencies` (`@standard-schema/spec` and `tslib` in
+  `packages/ngx-vest-forms/package.json`)
   don't reset it either (dev and build tooling, transitive security
   overrides), even though semantic-release counts them as `fix` and bumps the
   beta number.

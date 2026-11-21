@@ -86,9 +86,14 @@ describe('Equality Utils', () => {
       const date1 = new Date('2023-01-01');
       const date2 = new Date('2023-01-01');
       const date3 = new Date('2023-01-02');
+      const invalid1 = new Date('invalid');
+      const invalid2 = new Date('invalid');
 
       expect(fastDeepEqual(date1, date2)).toBe(true);
       expect(fastDeepEqual(date1, date3)).toBe(false);
+      expect(fastDeepEqual(invalid1, invalid2)).toBe(true);
+      expect(fastDeepEqual(date1, invalid1)).toBe(false);
+      expect(fastDeepEqual(invalid1, date1)).toBe(false);
     });
 
     it('should handle RegExp objects correctly', () => {
@@ -313,29 +318,6 @@ describe('Equality Utils', () => {
           createDeepTree(20, 'different')
         )
       ).toBe(false);
-    });
-
-    it('should be performant compared to JSON.stringify', () => {
-      const largeObj = {
-        users: Array.from({ length: 1000 }, (_, i) => ({
-          id: i,
-          name: `User ${i}`,
-          email: `user${i}@example.com`,
-          profile: {
-            age: 20 + (i % 50),
-            preferences: {
-              theme: i % 2 ? 'dark' : 'light',
-              notifications: true,
-            },
-          },
-        })),
-      };
-
-      const largeObj2 = JSON.parse(JSON.stringify(largeObj));
-
-      const result = fastDeepEqual(largeObj, largeObj2);
-
-      expect(result).toBe(true);
     });
   });
 });

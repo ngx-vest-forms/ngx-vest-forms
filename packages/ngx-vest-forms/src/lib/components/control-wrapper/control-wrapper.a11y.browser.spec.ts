@@ -1,5 +1,11 @@
-import { ApplicationRef, Component, signal } from '@angular/core';
+import { ApplicationRef, Component, Directive, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import {
+  FormsModule,
+  NG_VALIDATORS,
+  type ValidationErrors,
+  type Validator,
+} from '@angular/forms';
 import { render } from '@testing-library/angular';
 import { create, enforce, test as vestTest } from 'vest';
 import { describe, expect, it } from 'vitest';
@@ -95,5 +101,158 @@ describe('ControlWrapperComponent - aria wiring (browser mode)', () => {
     expect((await input.element()).getAttribute('aria-invalid')).not.toBe(
       'true'
     );
+  });
+
+  it('animates the pending spinner by default and stops rotation under prefers-reduced-motion: reduce', async () => {
+    const pendingSuite = create(() => {
+      vestTest(
+        'username',
+        'Checking username',
+        () =>
+          new Promise<void>(() => {
+            // Keep pending active while checking styles.
+          })
+      );
+    });
+
+    @Component({
+      selector: 'ngx-test-control-wrapper-pending-motion-browser',
+      imports: [NgxVestForms, ControlWrapperComponent],
+      template: `
+        <form
+          ngxVestForm
+          [suite]="suite"
+          [formValue]="formValue()"
+          (formValueChange)="formValue.set($event)"
+        >
+          <ngx-control-wrapper
+            [pendingDebounce]="{ showAfter: 0, minimumDisplay: 0 }"
+          >
+            <label for="pending-username">Pending username</label>
+            <input
+              id="pending-username"
+              name="username"
+              [ngModel]="formValue().username"
+            />
+          </ngx-control-wrapper>
+        </form>
+      `,
+    })
+    class PendingMotionHostComponent {
+      readonly formValue = signal({ username: '' });
+      readonly suite = pendingSuite;
+    }
+
+    await render(PendingMotionHostComponent);
+
+    const input = page.getByRole('textbox', { name: 'Pending username' });
+    await userEvent.click(input);
+    await userEvent.fill(input, 'arjen');
+
+    await expect.element(page.getByText('Validating…')).toBeVisible();
+
+    const spinner = document.querySelector<HTMLElement>(
+      '.ngx-control-wrapper__spinner'
+    );
+    expect(spinner).toBeTruthy();
+
+    if (!spinner) {
+      throw new Error('Expected .ngx-control-wrapper__spinner to be rendered');
+    }
+
+    const computed = getComputedStyle(spinner);
+    expect(computed.display).not.toBe('none');
+    expect(computed.animationName).toContain('ngx-control-wrapper-spin');
+    expect(computed.animationIterationCount).toBe('infinite');
+
+    const reducedMotionRules: CSSStyleRule[] = [];
+    for (const sheet of Array.from(document.styleSheets)) {
+      let rules: CSSRuleList;
+      try {
+        rules = sheet.cssRules;
+      } catch {
+        continue;
+      }
+      for (const rule of Array.from(rules)) {
+        if (
+          rule instanceof CSSMediaRule &&
+          rule.conditionText.includes('prefers-reduced-motion') &&
+          rule.conditionText.includes('reduce')
+        ) {
+          for (const inner of Array.from(rule.cssRules)) {
+            if (
+              inner instanceof CSSStyleRule &&
+              inner.selectorText.includes('.ngx-control-wrapper__spinner')
+            ) {
+              reducedMotionRules.push(inner);
+            }
+          }
+        }
+      }
+    }
+
+    expect(reducedMotionRules.length).toBeGreaterThan(0);
+    expect(
+      reducedMotionRules.some((rule) => rule.style.animationName === 'none')
+    ).toBe(true);
+    expect(
+      reducedMotionRules.some((rule) => rule.style.display === 'none')
+    ).toBe(false);
+  });
+
+  it('omits the error region id from aria-describedby when invalid with no rendered error text', async () => {
+    @Directive({
+      selector: '[ngxBrowserEmptyError]',
+      providers: [
+        {
+          provide: NG_VALIDATORS,
+          useExisting: BrowserEmptyErrorValidatorDirective,
+          multi: true,
+        },
+      ],
+    })
+    class BrowserEmptyErrorValidatorDirective implements Validator {
+      validate(): ValidationErrors {
+        return { errors: [] };
+      }
+    }
+
+    @Component({
+      selector: 'ngx-test-control-wrapper-empty-error-browser',
+      imports: [
+        FormsModule,
+        ControlWrapperComponent,
+        BrowserEmptyErrorValidatorDirective,
+      ],
+      template: `
+        <form>
+          <ngx-control-wrapper>
+            <label for="empty-error-input">Code</label>
+            <input
+              id="empty-error-input"
+              name="code"
+              [(ngModel)]="code"
+              ngxBrowserEmptyError
+              aria-describedby="code-hint"
+            />
+            <span id="code-hint">Enter your code</span>
+          </ngx-control-wrapper>
+        </form>
+      `,
+    })
+    class EmptyErrorBrowserHostComponent {
+      code = '';
+    }
+
+    await render(EmptyErrorBrowserHostComponent);
+
+    const input = page.getByRole('textbox', { name: 'Code' });
+    await userEvent.click(input);
+    await userEvent.tab();
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    const inputElement = await input.element();
+    expect(inputElement.getAttribute('aria-invalid')).toBe('true');
+    expect(inputElement.getAttribute('aria-describedby')).toBe('code-hint');
   });
 });

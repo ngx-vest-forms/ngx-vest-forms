@@ -68,7 +68,7 @@ A raw object works too when it is clearer; annotate it as `NgxValidationConfig<M
 
 ## Calm dependents
 
-Dependents revalidate silently: `validationConfig` does not mark them touched, so with the default `'on-blur-or-submit'` mode their error appears only after their own blur or a submit. Setting `[errorDisplayMode]="'on-blur'"` on the dependent's `<ngx-control-wrapper>` makes that choice explicit at the field. That pairing (config for timing, wrapper for visibility, suite for the rule) replaces `(blur)` handlers that call `triggerFormValidation()`. For blur-driven saving on top, add [`../field-blur-events/SKILL.md`](../field-blur-events/SKILL.md).
+Dependents revalidate silently: `validationConfig` does not mark them touched, so with the default `'on-blur-or-submit'` mode their error appears only after their own blur or a submit. Setting `[errorDisplayMode]="'on-blur-or-submit'"` explicitly on the dependent's `<ngx-control-wrapper>` documents that choice at the field. That pairing (config for timing, wrapper for visibility, suite for the rule) replaces `(blur)` handlers that call `triggerFormValidation()`. For blur-driven saving on top, add [`../field-blur-events/SKILL.md`](../field-blur-events/SKILL.md).
 
 ## Known limits
 

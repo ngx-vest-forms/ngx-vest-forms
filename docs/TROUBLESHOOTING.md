@@ -1,18 +1,59 @@
 # Troubleshooting diagnostics
 
-ngx-vest-forms logs development-mode diagnostics with `console.warn`. They are silent in production builds, but they are useful signals while building forms and while running tests. If a test intentionally exercises a warning path, spy on `console.warn` and assert the diagnostic so test output stays clean.
+ngx-vest-forms logs development-mode diagnostics via `console.warn`. They are silent in production builds (`isDevMode() === false`). When a test intentionally exercises a warning path, spy on `console.warn` and assert the diagnostic code to keep test output clean.
 
-## `NGX-100` — divergent same-tick form/model writes
+## Code index
 
-**Meaning:** `ngxVestForm` saw the Angular form value and the bound `[formValue]` model change in the same synchronization turn, but to different values. The form value wins for that turn and the directive advances its internal baselines so later single-sided updates still sync.
+| Code | Summary |
+| --- | --- |
+| [`NGX-001`](#ngx-001--ngx-002--ngx-004-form-contract-diagnostics) | Extra property in form value not present in form contract |
+| [`NGX-002`](#ngx-001--ngx-002--ngx-004-form-contract-diagnostics) | Value type mismatch against form contract |
+| [`NGX-003`](#ngx-003-control-not-found-in-triggerformvalidation) | Control path passed to `triggerFormValidation(path)` was not found |
+| [`NGX-004`](#ngx-001--ngx-002--ngx-004-form-contract-diagnostics) | Standard Schema issue reported by form contract |
+| [`NGX-100`](#ngx-100-divergent-same-tick-formmodel-writes) | Divergent same-tick form/model write dropped (form wins) |
+| [`NGX-101`](#ngx-101-ngform-not-found-on-ngxvalidaterootform) | `ngxValidateRootForm` used without an `NgForm` |
+| [`NGX-102`](#ngx-102-root-form-validation-error) | Unhandled error thrown during root-form validation |
+| [`NGX-103`](#ngx-103-no-ngxvestform-context) | `ngModel` or `ngModelGroup` validated outside `<form ngxVestForm>` |
+| [`NGX-104`](#ngx-104-unresolved-control-path-in-async-validator-bridge) | Async validator could not resolve the control's path in the form tree |
+| [`NGX-105`](#ngx-105-errordisplaymodeon-blur-with-updateon-submit) | `errorDisplayMode="on-blur"` combined with `updateOn: 'submit'` |
+| [`NGX-106`](#ngx-106--ngx-107-validationconfig-timeout-warnings) | `validationConfig` timed out waiting for `PENDING` to settle |
+| [`NGX-107`](#ngx-106--ngx-107-validationconfig-timeout-warnings) | `validationConfig` timed out waiting for dependent controls |
+| [`NGX-108`](#ngx-108-signal-forms-control-not-registered-in-time) | Signal Forms custom control not registered in its form in time |
+| [`NGX-109`](#ngx-109-invalid-field-path) | Malformed field path passed to `parseFieldPath` or `setValueAtPath` |
+| [`NGX-110`](#ngx-110--ngx-111-duplicate-validationconfigbuilder-entries) | Duplicate dependent fields added to `ValidationConfigBuilder` |
+| [`NGX-111`](#ngx-110--ngx-111-duplicate-validationconfigbuilder-entries) | Duplicate bidirectional pair added to `ValidationConfigBuilder` |
 
-**Usually caused by application code, not the library:**
+---
 
-- updating the signal bound to `[formValue]` from a native `(change)` / `(input)` handler on the same control that Angular is already updating
-- writing the model while `(formValueChange)` is not bound, so the directive cannot tell that your write responds to the user's edit
-- keeping separate input and output signals where `(formValueChange)` updates one signal but `[formValue]` reads another
+## `NGX-001` / `NGX-002` / `NGX-004`: form contract diagnostics
 
-**Not a conflict:** a model write made in response to `(formValueChange)`, such as auto-filling derived fields or clearing fields a switched section hides. The directive knows you received the form's latest value, so your write wins and no warning is logged. You can do it in the same handler:
+**Meaning:** Development-only structural contract checks found an extra property (`NGX-001`), a type mismatch (`NGX-002`), or a Standard Schema issue (`NGX-004`). These warnings never affect runtime form validity.
+
+**Notes:**
+
+- Runs only when `isDevMode()` is `true`.
+- Consumes only synchronous Standard Schema results; async schemas are skipped by this pass.
+- Unknown-key detection depends on the strictness of your Standard Schema (legacy `NgxDeepRequired<T>` contracts always warn on extra keys).
+
+**Fix:** Align control `name` / `ngModelGroup` paths with your schema or `NgxDeepRequired<T>` contract, and keep runtime business rules in your Vest suite.
+
+## `NGX-003`: control not found in `triggerFormValidation`
+
+**Meaning:** `vestForm().triggerFormValidation(path)` was called with a `path` that `ngForm.form.get(path)` could not find.
+
+**Fix:** Check the dotted path spelling (including enclosing `ngModelGroup` names) and verify the control is mounted in the DOM when `triggerFormValidation(path)` runs.
+
+## `NGX-100`: divergent same-tick form/model writes
+
+**Meaning:** `ngxVestForm` saw the Angular form value and the bound `[formValue]` signal change to different values in the same synchronization turn. The form value wins for that turn and internal baselines advance so subsequent single-sided updates sync normally.
+
+**Common causes:**
+
+- Mutating the `[formValue]` signal from a native `(change)` / `(input)` or `(ngModelChange)` handler on a control that is already part of `<form ngxVestForm>`.
+- Updating `[formValue]` without binding `(formValueChange)`.
+- Reading `[formValue]` from one signal while writing `(formValueChange)` to a different signal.
+
+**Not a conflict:** updating the model inside `(formValueChange)` (such as clearing hidden fields or filling derived values). Let `(formValueChange)` be your single write path:
 
 ```ts
 protected handleFormChange(value: ProfileFormModel): void {
@@ -24,122 +65,74 @@ protected handleFormChange(value: ProfileFormModel): void {
 }
 ```
 
-Do not add a separate `(change)` handler that writes to the same signal for ordinary form controls. Let `(formValueChange)` be the single write path.
+## `NGX-101`: `NgForm` not found on `ngxValidateRootForm`
 
-## `NGX-103` — no `ngxVestForm` context
+**Meaning:** `ValidateRootFormDirective` could not resolve a host `NgForm`.
 
-**Meaning:** a form control or `ngModelGroup` picked up ngx-vest-forms validation bridging, but there is no parent `<form ngxVestForm>` context. Validation is skipped fail-open.
+**Fix:** Place `ngxValidateRootForm` on a `<form ngxVestForm>` element and ensure `NgxVestForms` (or `FormsModule`) is imported in the component.
 
-**Usually caused by imports or wrapper usage:**
+## `NGX-102`: root-form validation error
 
-- importing the full `NgxVestForms` bundle into a component that contains a plain Angular template-driven form
-- using `<ngx-form-group-wrapper ngModelGroup="...">` outside a parent `<form ngxVestForm>` when you expected Vest-backed validation
+**Meaning:** The Vest suite threw an unhandled error while running `ROOT_FORM` validation. The directive forwards the error to Angular's `ErrorHandler` and fails open so the form does not lock up.
 
-**Fix options:**
+**Fix:** Guard nullable nested accesses in your `ROOT_FORM` tests with optional chaining (`model.address?.street`) and handle rejected promises inside async tests.
 
-- If the form should be Vest-backed, add `ngxVestForm`, `[suite]`, and `[formValue]` to the parent `<form>`.
-- If the test/component is only exercising wrapper rendering with a plain Angular form, import only the specific wrapper component instead of the full `NgxVestForms` bundle.
+## `NGX-103`: no `ngxVestForm` context
 
-```ts
-@Component({
-  imports: [FormsModule, FormGroupWrapperComponent],
-  template: `
-    <form #form="ngForm">
-      <ngx-form-group-wrapper ngModelGroup="address">
-        ...
-      </ngx-form-group-wrapper>
-    </form>
-  `,
-})
-class WrapperOnlyHost {}
-```
+**Meaning:** `FormModelDirective` (`[ngModel]`) or `FormModelGroupDirective` (`[ngModelGroup]`) ran without an ancestor `<form ngxVestForm>`. Validation is skipped fail-open.
 
-## `NGX-105` — `errorDisplayMode="on-blur"` with `updateOn: 'submit'`
+**Common causes:**
 
-**Meaning:** a control is configured to show errors on blur, but Angular is configured not to update that control until submit. The user will not see blur-time errors.
+- Importing the full `NgxVestForms` array into a component that renders a plain Angular `<form>` without `ngxVestForm`.
+- Wrapping a plain Angular `ngModelGroup` with `<ngx-form-group-wrapper>` while `NgxVestForms` is imported.
 
-**Fix:** align validation timing and display timing.
+**Fix:** Either add `ngxVestForm`, `[suite]`, and `[formValue]` to the parent `<form>`, or import only `FormsModule` and the specific wrapper component (`ControlWrapperComponent` / `FormGroupWrapperComponent`) when using a plain Angular form.
 
-```html
-<!-- Blur UX -->
-<ngx-control-wrapper [errorDisplayMode]="'on-blur'">
-  <input name="email" [ngModel]="formValue().email" />
-</ngx-control-wrapper>
+## `NGX-104`: unresolved control path in async validator bridge
 
-<!-- Submit-only UX -->
-<ngx-control-wrapper [errorDisplayMode]="'on-submit'">
-  <input
-    name="email"
-    [ngModel]="formValue().email"
-    [ngModelOptions]="{ updateOn: 'submit' }"
-  />
-</ngx-control-wrapper>
-```
+**Meaning:** The async validator bridge could not resolve a control's dotted path inside `ngForm.control`.
 
-## `NGX-106` / `NGX-107` — `validationConfig` timeout warnings
+**Fix:** Ensure every control has a non-empty `name` attribute, every group has a non-empty `ngModelGroup`, and child components provide `viewProviders: [vestFormsViewProviders]`.
 
-**Meaning:** the dependent-field pipeline waited for either:
+## `NGX-105`: `errorDisplayMode="on-blur"` with `updateOn: 'submit'`
 
-- the form to leave `PENDING` (`NGX-106`), or
-- dependent controls to appear after a dynamic structure change (`NGX-107`, which lists the missing paths),
+**Meaning:** The wrapper is configured to show errors on blur, while Angular delays model updates until submit. Users will not see blur-time errors.
 
-then continued after its safety timeout so validation would not stall forever.
+**Fix:** Align display timing with `updateOn`: use `[errorDisplayMode]="'on-submit'"` when `[ngModelOptions]="{ updateOn: 'submit' }"`, or remove `updateOn: 'submit'` for blur feedback.
 
-**Usually caused by:**
+## `NGX-106` / `NGX-107`: `validationConfig` timeout warnings
 
-- async validators that never resolve or are too slow for the current timeout
-- a `validationConfig` dependent path that is currently hidden or misspelled
-- dynamic structures where the trigger change removes the dependent control
+**Meaning:** The `validationConfig` pipeline hit its safety timeout waiting for either the form to leave `PENDING` (`NGX-106`) or dependent controls to mount after a dynamic change (`NGX-107`, listing missing paths), and continued so validation would not stall.
 
-**Fix:** make async validators resolve/cancel, keep `name` paths aligned with `[ngModel]`, and pair dynamic structures with field-clearing utilities plus `omitWhen(...)` in the Vest suite.
+**Fix:** Ensure async validators resolve or honor `AbortSignal`, verify dependent paths in `validationConfig` match mounted control paths, and clear hidden sections with `clearFieldsWhen()` + `removeField()` + `omitWhen()`.
 
-## `NGX-108` — Signal Forms control not registered in time
+## `NGX-108`: Signal Forms control not registered in time
 
-**Meaning:** an `[ngModel]` on a Signal Forms control (`FormValueControl` / `FormCheckboxControl`) never became reachable at its path in its form, so ngx-vest-forms gave up attaching its validators (Angular 22.2 does not attach them on this path; see [Custom control wrappers](./CUSTOM-CONTROL-WRAPPERS.md#signal-forms-controls-inside-a-wrapper)). Vest does not validate that field.
+**Meaning:** An `[ngModel]` on a Signal Forms custom control (`FormValueControl` / `FormCheckboxControl`) did not become reachable in its form in time, so ngx-vest-forms could not attach its validators. Vest will not validate that field.
 
-**Usually caused by:**
+**Fix:** Give the control a stable, non-empty `name` inside the form and avoid tearing down or renaming it mid-registration. Standalone controls (`[ngModelOptions]="{ standalone: true }"`) do not trigger this warning. See [Custom control wrappers](./CUSTOM-CONTROL-WRAPPERS.md#signal-forms-controls-inside-a-wrapper).
 
-- a `name` that the form cannot register (empty, or changed again before registration finished)
-- code that replaces or removes the control from the form right after it renders
+## `NGX-109`: invalid field path
 
-**Fix:** give the control a stable `name` inside the form. An `ngModel` without a form container (`[ngModelOptions]="{ standalone: true }"`, or a child component that does not provide `ControlContainer`) counts as set up and does not log this.
+**Meaning:** `parseFieldPath` (also used by `setValueAtPath`) received a malformed path with a leading dot, trailing dot, consecutive dots, or a `.[` separator (such as `.email`, `user..name`, or `items.[0]`). The call returns `[]` and makes no write.
 
-## Duplicate `ValidationConfigBuilder` warnings
+**Fix:** Pass a valid dot or bracket path such as `user.name`, `items.0.street`, or `items[0].street`.
 
-**Meaning:** the fluent builder received the same dependency twice. The builder deduplicates automatically, but warns in development mode because duplicate dependencies often indicate unclear dependency ownership.
+## `NGX-110` / `NGX-111`: duplicate `ValidationConfigBuilder` entries
 
-**Fix:** remove duplicate builder calls, or consolidate them through `.merge(...)` when combining reusable fragments.
+**Meaning:** The same trigger-to-dependent pair (`NGX-110`) or bidirectional pair (`NGX-111`) was added twice to `createValidationConfig()`. The builder deduplicates automatically and warns in dev mode.
 
-```ts
-const validationConfig = createValidationConfig<FormModel>()
-  .bidirectional('password', 'confirmPassword')
-  .whenChanged('country', ['state', 'postalCode'])
-  .build();
-```
-
-## `formContract` diagnostics only appear in development mode
-
-**Meaning:** structural contract diagnostics (`[NGX-001]`, `[NGX-002]`, `[NGX-004]`) are development-only warnings and do not block runtime validity.
-
-**Important behavior:**
-
-- diagnostics run only in `isDevMode()`
-- only synchronous Standard Schema results are consumed by this pass
-- async schema validations are ignored by diagnostics (Vest suite validation still drives runtime validity)
-
-**Fix:** keep contract checks synchronous when you want developer feedback, and keep business validity in the Vest suite.
+**Fix:** Remove duplicate calls, or combine reusable fragments with `.merge(...)`.
 
 ## Testing expected warnings
 
-When a test intentionally exercises a warning path, assert it without leaking noisy stderr output:
+Spy on `console.warn` and assert the code so intentional warning tests stay quiet:
 
 ```ts
-const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-// exercise the warning path
+// Exercise the warning path
 
-expect(consoleWarnSpy).toHaveBeenCalledWith(
-  expect.stringContaining('[NGX-100]')
-);
-consoleWarnSpy.mockRestore();
+expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('[NGX-100]'));
+warnSpy.mockRestore();
 ```

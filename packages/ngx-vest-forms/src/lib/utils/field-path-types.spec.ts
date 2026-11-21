@@ -1,882 +1,340 @@
-import { expectTypeOf } from 'vitest';
-import { ROOT_FORM } from '../constants';
-import type { NgxValidationConfig } from '../directives/form.directive';
-import type { NgxDeepPartial } from './deep-partial';
 import type {
   FieldPath,
   FieldPathValue,
   FormFieldName,
   LeafFieldPath,
+  NgxDeepPartial,
+  NgxValidationConfig,
+  ROOT_FORM,
   ValidateFieldPath,
   ValidationConfigMap,
-} from './field-path-types';
+} from 'ngx-vest-forms';
+import { describe, expectTypeOf, it } from 'vitest';
 
-describe('field-path-types', () => {
-  describe('FieldPath', () => {
-    it('should generate paths for flat object', () => {
-      type TestModel = {
-        name: string;
-        age: number;
-      };
+type Address = { street: string; geo: { lat: number } };
+type AddressModel = {
+  name: string;
+  addresses: readonly Address[];
+  tags: string[];
+};
 
-      // Type-level test: These should not error
-      const validPaths: FieldPath<TestModel>[] = ['name', 'age'];
-      expect(validPaths).toEqual(['name', 'age']);
-
-      // Verify autocomplete works (compile-time check)
-      const path: FieldPath<TestModel> = 'name';
-      expect(path).toBe('name');
-    });
-
-    it('should generate paths for nested objects', () => {
-      type TestModel = {
-        user: {
-          profile: {
-            age: number;
-          };
-          email: string;
-        };
-      };
-
-      const validPaths: FieldPath<TestModel>[] = [
-        'user',
-        'user.profile',
-        'user.profile.age',
-        'user.email',
-      ];
-
-      expect(validPaths.length).toBe(4);
-    });
-
-    it('should generate paths for optional properties', () => {
-      type TestModel = {
-        required: string;
-        optional?: {
-          nested?: string;
-        };
-      };
-
-      const validPaths: FieldPath<TestModel>[] = [
-        'required',
-        'optional',
-        'optional.nested',
-      ];
-
-      expect(validPaths.length).toBe(3);
-    });
-
-    it('should handle arrays', () => {
-      type TestModel = {
-        items: Array<{
-          name: string;
-        }>;
-      };
-
-      // Array elements are addressed by index, as at runtime
-      const validPaths: FieldPath<TestModel>[] = [
-        'items',
-        'items.0',
-        'items.0.name',
-      ];
-
-      expect(validPaths.length).toBe(3);
-    });
-
-    it('should stop at primitive types', () => {
-      type TestModel = {
-        date: Date;
-        string: string;
-        number: number;
-        boolean: boolean;
-        nullable: string | null;
-      };
-
-      const validPaths: FieldPath<TestModel>[] = [
-        'date',
-        'string',
-        'number',
-        'boolean',
-        'nullable',
-      ];
-
-      expect(validPaths.length).toBe(5);
-    });
-
-    it('should handle deep nesting', () => {
-      type TestModel = {
-        level1: {
-          level2: {
-            level3: {
-              level4: {
-                value: string;
-              };
-            };
-          };
-        };
-      };
-
-      const validPaths: FieldPath<TestModel>[] = [
-        'level1',
-        'level1.level2',
-        'level1.level2.level3',
-        'level1.level2.level3.level4',
-        'level1.level2.level3.level4.value',
-      ];
-
-      expect(validPaths.length).toBe(5);
-    });
-  });
-
-  describe('public type parameters', () => {
-    it('should take only the model type', () => {
-      type Model = { user: { name: string } };
-
-      // @ts-expect-error the recursion prefix is no longer a public parameter
-      type Prefixed = FieldPath<Model, 'root.'>;
-      // @ts-expect-error the recursion prefix is no longer a public parameter
-      type PrefixedLeaf = LeafFieldPath<Model, 'root.'>;
-
-      // The replacement for a prefix is a template literal.
-      expectTypeOf<`root.${LeafFieldPath<Model>}`>().toEqualTypeOf<'root.user.name'>();
-      expectTypeOf<Prefixed | PrefixedLeaf>().not.toBeNever();
-
-      const prefixed: `root.${LeafFieldPath<Model>}` = 'root.user.name';
-      expect(prefixed).toBe('root.user.name');
-    });
-  });
-
-  describe('FieldPath with runtime array indices', () => {
-    type Address = { street: string; geo: { lat: number } };
+describe('FieldPath and LeafFieldPath', () => {
+  it('includes nested containers in FieldPath and only leaves in LeafFieldPath', () => {
     type Model = {
-      name: string;
-      addresses: Address[];
-      tags: string[];
+      title: string;
+      user?: { profile: { age: number }; email?: string };
     };
 
-    it('should emit every array path with an index segment', () => {
-      expectTypeOf<FieldPath<Model>>().toEqualTypeOf<
-        | 'name'
-        | 'addresses'
-        | `addresses.${number}`
-        | `addresses.${number}.street`
-        | `addresses.${number}.geo`
-        | `addresses.${number}.geo.lat`
-        | 'tags'
-        | `tags.${number}`
-      >();
-
-      const indexed: FieldPath<Model> = 'addresses.0.geo.lat';
-      expect(indexed).toBe('addresses.0.geo.lat');
-    });
-
-    it('should keep paths of a model without arrays unchanged', () => {
-      type Flat = {
-        name: string;
-        profile: { age: number; address: { city: string } };
-      };
-
-      expectTypeOf<FieldPath<Flat>>().toEqualTypeOf<
-        | 'name'
-        | 'profile'
-        | 'profile.age'
-        | 'profile.address'
-        | 'profile.address.city'
-      >();
-
-      const path: FieldPath<Flat> = 'profile.address.city';
-      expect(path).toBe('profile.address.city');
-    });
-
-    it('should accept indexed paths', () => {
-      const paths: FieldPath<Model>[] = [
-        'addresses.0',
-        'addresses.0.street',
-        'addresses.12.geo.lat',
-        'tags.3',
-      ];
-
-      expect(paths).toHaveLength(4);
-    });
-
-    it('should reject paths that do not exist or do not resolve at runtime', () => {
-      // @ts-expect-error index-free paths never match a control (see array-field-paths.spec.ts)
-      const flattened: FieldPath<Model> = 'addresses.street';
-      // @ts-expect-error unknown property below an index
-      const unknownProperty: FieldPath<Model> = 'addresses.0.nope';
-      // @ts-expect-error the index segment must be a number
-      const nonNumericIndex: FieldPath<Model> = 'addresses.first.street';
-      // @ts-expect-error a string field is not an array
-      const indexOnPrimitive: FieldPath<Model> = 'name.0';
-      // @ts-expect-error an array element of a string array has no children
-      const belowPrimitiveElement: FieldPath<Model> = 'tags.0.length';
-      // @ts-expect-error a missing dot before the index
-      const missingDot: FieldPath<Model> = 'addresses0.street';
-      // @ts-expect-error bracket indices are not a FieldPath form
-      const bracketIndex: FieldPath<Model> = 'addresses[0].street';
-
-      expect([
-        flattened,
-        unknownProperty,
-        nonNumericIndex,
-        indexOnPrimitive,
-        belowPrimitiveElement,
-        missingDot,
-        bracketIndex,
-      ]).toHaveLength(7);
-    });
-
-    it('should index optional arrays in an NgxDeepPartial model', () => {
-      type FormModel = NgxDeepPartial<{
-        contacts: Array<{ email: string }>;
-        notes: string[];
-      }>;
-
-      expectTypeOf<FieldPath<FormModel>>().toEqualTypeOf<
-        | 'contacts'
-        | `contacts.${number}`
-        | `contacts.${number}.email`
-        | 'notes'
-        | `notes.${number}`
-      >();
-
-      const note: FieldPath<FormModel> = 'notes.0';
-      expect(note).toBe('notes.0');
-    });
-
-    it('should index nested arrays at every level', () => {
-      type Orders = {
-        orders: Array<{ lines: Array<{ sku: string }> }>;
-        matrix: number[][];
-      };
-
-      const paths: FieldPath<Orders>[] = [
-        'orders.0.lines.3.sku',
-        'orders.0.lines',
-        'matrix.1',
-        'matrix.1.2',
-      ];
-      // @ts-expect-error every array level needs its index
-      const missingInnerIndex: FieldPath<Orders> = 'orders.0.lines.sku';
-
-      expect([...paths, missingInnerIndex]).toHaveLength(5);
-    });
-
-    it('should emit indexed primitive elements as leaves', () => {
-      expectTypeOf<LeafFieldPath<Model>>().toEqualTypeOf<
-        | 'name'
-        | `addresses.${number}.street`
-        | `addresses.${number}.geo.lat`
-        | `tags.${number}`
-      >();
-
-      const tag: LeafFieldPath<Model> = 'tags.0';
-      expect(tag).toBe('tags.0');
-    });
-
-    it('should treat an element of a mixed primitive/object union as a leaf too', () => {
-      type Mixed = { mixed: Array<string | { x: number }> };
-
-      expectTypeOf<FieldPath<Mixed>>().toEqualTypeOf<
-        'mixed' | `mixed.${number}` | `mixed.${number}.x`
-      >();
-      expectTypeOf<LeafFieldPath<Mixed>>().toEqualTypeOf<
-        `mixed.${number}` | `mixed.${number}.x`
-      >();
-
-      const element: LeafFieldPath<Mixed> = 'mixed.0';
-      expect(element).toBe('mixed.0');
-    });
-
-    it('should not treat an optional object element as a leaf', () => {
-      type Sparse = { slots: Array<{ id: string } | undefined> };
-
-      expectTypeOf<
-        LeafFieldPath<Sparse>
-      >().toEqualTypeOf<`slots.${number}.id`>();
-
-      const id: LeafFieldPath<Sparse> = 'slots.0.id';
-      expect(id).toBe('slots.0.id');
-    });
-
-    it('should accept any sub-path below an any or unknown element', () => {
-      type Loose = { items: any[]; extras: unknown[] };
-
-      const paths: FieldPath<Loose>[] = [
-        'items',
-        'items.0',
-        'items.0.name',
-        'items.0.deep.er',
-        'extras.1',
-        'extras.1.anything',
-      ];
-      const leaves: LeafFieldPath<Loose>[] = ['items.0', 'items.0.name'];
-      // @ts-expect-error the index is still required
-      const noIndex: FieldPath<Loose> = 'items.name';
-
-      expect([...paths, ...leaves, noIndex]).toHaveLength(9);
-    });
-
-    it('should compile recursive models', () => {
-      type Tree = { name: string; children: Tree[] };
-
-      const config: ValidationConfigMap<Tree> = {
-        name: ['children.0.name', 'children.0.children.1.name'],
-      };
-      const deep: FieldPath<Tree> = 'children.0.children.0.children.0.name';
-
-      expect(config.name).toHaveLength(2);
-      expect(deep).toBe('children.0.children.0.children.0.name');
-    });
-
-    it('should compile a wide model with three levels of nested arrays', () => {
-      // Regression guard: emitting two forms per array level made this
-      // config literal cost ~35k instantiations; one form keeps it ~5k.
-      type Fields = {
-        f1: string;
-        f2: string;
-        f3: string;
-        f4: string;
-        f5: string;
-        f6: string;
-        f7: string;
-        f8: string;
-        f9: string;
-        f10: string;
-        f11: string;
-        f12: string;
-        f13: string;
-        f14: string;
-      };
-      type L3 = Fields & { f15: string };
-      type L2 = Fields & { items: L3[] };
-      type L1 = Fields & { items: L2[] };
-      type Wide = Fields & { items: L1[] };
-
-      const config: ValidationConfigMap<Wide> = {
-        f1: ['f2', 'items.0.items.1.items.2.f15'],
-      };
-
-      expect(config.f1).toHaveLength(2);
-    });
-
-    it('should accept a runtime-built path inline or as const, not once widened to string', () => {
-      const index: number = 2;
-
-      const inline: FieldPath<Model> = `addresses.${index}.street`;
-      const asConst = `addresses.${index}.street` as const;
-      const fromConst: FieldPath<Model> = asConst;
-      const widened = `addresses.${index}.street`;
-      // @ts-expect-error a template literal stored without `as const` widens to string
-      const fromWidened: FieldPath<Model> = widened;
-
-      expect([inline, fromConst, fromWidened]).toEqual([
-        'addresses.2.street',
-        'addresses.2.street',
-        'addresses.2.street',
-      ]);
-    });
-
-    it('should resolve FieldPathValue for an indexed path', () => {
-      expectTypeOf<
-        FieldPathValue<Model, 'addresses.0.street'>
-      >().toEqualTypeOf<string>();
-      expectTypeOf<
-        FieldPathValue<Model, `addresses.${number}.geo.lat`>
-      >().toEqualTypeOf<number>();
-      expectTypeOf<
-        FieldPathValue<Model, 'addresses.1'>
-      >().toEqualTypeOf<Address>();
-      expectTypeOf<FieldPathValue<Model, 'tags.2'>>().toEqualTypeOf<string>();
-
-      const street: FieldPathValue<Model, 'addresses.0.street'> = 'Main St';
-      expect(street).toBe('Main St');
-    });
-
-    it('should accept indexed paths in ValidationConfigMap and NgxValidationConfig', () => {
-      const config: ValidationConfigMap<Model> = {
-        'addresses.0.street': ['addresses.0.geo.lat', 'name'],
-        name: ['addresses.1.street'],
-      };
-      const bound: NgxValidationConfig<Model> = config;
-
-      expect(bound['addresses.0.street']).toEqual([
-        'addresses.0.geo.lat',
-        'name',
-      ]);
-
-      const badConfig: ValidationConfigMap<Model> = {
-        // @ts-expect-error unknown property below an index
-        'addresses.0.nope': ['name'],
-      };
-      expect(badConfig).toBeDefined();
-    });
+    expectTypeOf<FieldPath<Model>>().toEqualTypeOf<
+      'title' | 'user' | 'user.profile' | 'user.profile.age' | 'user.email'
+    >();
+    expectTypeOf<LeafFieldPath<Model>>().toEqualTypeOf<
+      'title' | 'user.profile.age' | 'user.email'
+    >();
   });
 
-  describe('ValidationConfigMap', () => {
-    it('should provide type-safe validation config', () => {
-      type TestModel = {
-        password: string;
-        confirmPassword: string;
-        email: string;
-      };
+  it('stops at scalar values and dates', () => {
+    type Model = {
+      title: string;
+      total: number;
+      active: boolean;
+      id: bigint;
+      token: symbol;
+      date: Date;
+      note: string | null;
+    };
+    type Paths =
+      | 'title'
+      | 'total'
+      | 'active'
+      | 'id'
+      | 'token'
+      | 'date'
+      | 'note';
 
-      const config: ValidationConfigMap<TestModel> = {
-        password: ['confirmPassword'],
-        email: ['password', 'confirmPassword'],
-      };
-
-      expect(config.password).toEqual(['confirmPassword']);
-      expect(config.email).toEqual(['password', 'confirmPassword']);
-    });
-
-    it('should support nested field paths', () => {
-      type TestModel = {
-        addresses: {
-          billing: {
-            street: string;
-            city: string;
-          };
-        };
-      };
-
-      const config: ValidationConfigMap<TestModel> = {
-        'addresses.billing.street': ['addresses.billing.city'],
-      };
-
-      expect(config['addresses.billing.street']).toEqual([
-        'addresses.billing.city',
-      ]);
-    });
-
-    it('should reject mistyped keys on the NgxValidationConfig input type (no untyped fallback)', () => {
-      type FormModel = NgxDeepPartial<{
-        password: string;
-        confirmPassword: string;
-      }>;
-
-      // The typed shape is accepted at the input type.
-      const config: NgxValidationConfig<FormModel> = {
-        password: ['confirmPassword'],
-      };
-      expect(config).toEqual({ password: ['confirmPassword'] });
-
-      // Since 3.0.0 there is no `Record<string, string[]>` union branch that
-      // would absorb typo'd keys, so this fails to compile.
-      const badConfig: NgxValidationConfig<FormModel> = {
-        // @ts-expect-error typo'd trigger key is a compile-time error
-        passwordd: ['confirmPassword'],
-      };
-      expect(badConfig).toBeDefined();
-
-      const badDependent: NgxValidationConfig<FormModel> = {
-        // @ts-expect-error typo'd dependent path is a compile-time error
-        password: ['confirmPasswordd'],
-      };
-      expect(badDependent).toBeDefined();
-
-      // `null` disables cross-field revalidation.
-      const disabled: NgxValidationConfig<FormModel> = null;
-      expect(disabled).toBeNull();
-    });
-
-    it('should be optional (partial)', () => {
-      type TestModel = {
-        field1: string;
-        field2: string;
-      };
-
-      // Empty config is valid
-      const emptyConfig: ValidationConfigMap<TestModel> = {};
-      expect(emptyConfig).toEqual({});
-
-      // Partial config is valid
-      const partialConfig: ValidationConfigMap<TestModel> = {
-        field1: ['field2'],
-      };
-      expect(partialConfig.field1).toEqual(['field2']);
-    });
+    expectTypeOf<FieldPath<Model>>().toEqualTypeOf<Paths>();
+    expectTypeOf<LeafFieldPath<Model>>().toEqualTypeOf<Paths>();
   });
 
-  describe('FormFieldName', () => {
-    it('should include field paths and ROOT_FORM', () => {
-      type TestModel = {
-        email: string;
-        user: {
-          name: string;
-        };
-      };
-
-      // All of these should be valid
-      const fieldNames: FormFieldName<TestModel>[] = [
-        'email',
-        'user',
-        'user.name',
-        ROOT_FORM,
-      ];
-
-      expect(fieldNames.length).toBe(4);
-      expect(fieldNames).toContain(ROOT_FORM);
-    });
-
-    it('should work with typed vest suite field parameter', () => {
-      type TestModel = {
-        firstName: string;
-        lastName: string;
-      };
-
-      // This simulates how it's used in validation suites
-      function mockSuite(
-        model: TestModel,
-        field?: FormFieldName<TestModel>
-      ): void {
-        // Field can be undefined, any field path, or ROOT_FORM
-        expect(
-          field === undefined ||
-            field === 'firstName' ||
-            field === 'lastName' ||
-            field === ROOT_FORM
-        ).toBe(true);
-      }
-
-      mockSuite({ firstName: 'John', lastName: 'Doe' }, 'firstName');
-      mockSuite({ firstName: 'John', lastName: 'Doe' }, ROOT_FORM);
-      mockSuite({ firstName: 'John', lastName: 'Doe' }, undefined);
-    });
+  it('uses numeric dot segments for array items and includes scalar items as leaves', () => {
+    expectTypeOf<FieldPath<AddressModel>>().toEqualTypeOf<
+      | 'name'
+      | 'addresses'
+      | `addresses.${number}`
+      | `addresses.${number}.street`
+      | `addresses.${number}.geo`
+      | `addresses.${number}.geo.lat`
+      | 'tags'
+      | `tags.${number}`
+    >();
+    expectTypeOf<LeafFieldPath<AddressModel>>().toEqualTypeOf<
+      | 'name'
+      | `addresses.${number}.street`
+      | `addresses.${number}.geo.lat`
+      | `tags.${number}`
+    >();
   });
 
-  describe('FieldPathValue', () => {
-    it('should infer value type at path', () => {
-      type TestModel = {
-        name: string;
-        age: number;
-        user: {
-          profile: {
-            email: string;
-          };
-        };
-      };
+  it('keeps indices in optional arrays in a Form Model', () => {
+    type Model = NgxDeepPartial<{
+      contacts: { email: string }[];
+      notes: string[];
+    }>;
 
-      // Type-level tests (compile-time verification)
-      type NameType = FieldPathValue<TestModel, 'name'>; // should be string
-      type AgeType = FieldPathValue<TestModel, 'age'>; // should be number
-      type EmailType = FieldPathValue<TestModel, 'user.profile.email'>; // should be string
-
-      const name: NameType = 'test';
-      const age: AgeType = 42;
-      const email: EmailType = 'test@example.com';
-
-      expectTypeOf<NameType>().toEqualTypeOf<string>();
-      expectTypeOf<AgeType>().toEqualTypeOf<number>();
-      expectTypeOf<EmailType>().toEqualTypeOf<string>();
-
-      expect(typeof name).toBe('string');
-      expect(typeof age).toBe('number');
-      expect(typeof email).toBe('string');
-    });
-
-    it('should resolve array-traversing paths in flattened form (consistent with FieldPath)', () => {
-      type TestModel = {
-        addresses: Array<{
-          street: string;
-          geo: { lat: number };
-        }>;
-      };
-
-      // Flattened form is what FieldPath<TestModel> produces.
-      type StreetType = FieldPathValue<TestModel, 'addresses.street'>;
-      type LatType = FieldPathValue<TestModel, 'addresses.geo.lat'>;
-      type ArrType = FieldPathValue<TestModel, 'addresses'>;
-
-      expectTypeOf<StreetType>().toEqualTypeOf<string>();
-      expectTypeOf<LatType>().toEqualTypeOf<number>();
-      expectTypeOf<ArrType>().toEqualTypeOf<
-        Array<{ street: string; geo: { lat: number } }>
-      >();
-
-      // Previously this resolved to `never`; assert it no longer does.
-      const street: StreetType = 'Main St';
-      expect(typeof street).toBe('string');
-    });
-
-    it('should resolve array-traversing paths in bracket form', () => {
-      type TestModel = {
-        addresses: Array<{ street: string }>;
-        tags: string[];
-      };
-
-      type StreetType = FieldPathValue<TestModel, 'addresses[0].street'>;
-      type ElementType = FieldPathValue<TestModel, 'addresses[0]'>;
-      type TagType = FieldPathValue<TestModel, 'tags[3]'>;
-
-      expectTypeOf<StreetType>().toEqualTypeOf<string>();
-      expectTypeOf<ElementType>().toEqualTypeOf<{ street: string }>();
-      expectTypeOf<TagType>().toEqualTypeOf<string>();
-
-      // Runtime anchor (matches this file's typed-const convention so the
-      // type assertions also carry a recognized runtime assertion).
-      const street: StreetType = 'Main St';
-      const tag: TagType = 't';
-      expect(typeof street).toBe('string');
-      expect(typeof tag).toBe('string');
-    });
-
-    it('should resolve array-traversing paths with numeric dot segments (runtime form)', () => {
-      type TestModel = {
-        addresses: Array<{ street: string }>;
-        tags: string[];
-        matrix: number[][];
-      };
-
-      type StreetType = FieldPathValue<TestModel, 'addresses.0.street'>;
-      type ElementType = FieldPathValue<TestModel, 'addresses.0'>;
-      type TagType = FieldPathValue<TestModel, 'tags.3'>;
-      type CellType = FieldPathValue<TestModel, 'matrix.1.2'>;
-
-      expectTypeOf<StreetType>().toEqualTypeOf<string>();
-      expectTypeOf<ElementType>().toEqualTypeOf<{ street: string }>();
-      expectTypeOf<TagType>().toEqualTypeOf<string>();
-      expectTypeOf<CellType>().toEqualTypeOf<number>();
-
-      const street: StreetType = 'Main St';
-      const cell: CellType = 1;
-      expect(typeof street).toBe('string');
-      expect(typeof cell).toBe('number');
-    });
-
-    it('should strip the partial `| undefined` consistently for nested paths', () => {
-      type FormModel = NgxDeepPartial<{
-        user: {
-          profile: {
-            age: number;
-          };
-        };
-        addresses: Array<{ street: string }>;
-      }>;
-
-      type AgeType = FieldPathValue<FormModel, 'user.profile.age'>;
-      type StreetType = FieldPathValue<FormModel, 'addresses.street'>;
-
-      // `Exclude<..., undefined>` stripping means these are the bare leaf
-      // types, not `number | undefined` / `string | undefined`.
-      expectTypeOf<AgeType>().toEqualTypeOf<number>();
-      expectTypeOf<StreetType>().toEqualTypeOf<string>();
-
-      // Runtime anchor (matches this file's typed-const convention).
-      const age: AgeType = 42;
-      const street: StreetType = 'Main St';
-      expect(typeof age).toBe('number');
-      expect(typeof street).toBe('string');
-    });
-
-    it('should preserve a domain-level `| null` on leaf types (only `undefined` is stripped)', () => {
-      type TestModel = {
-        middleName: string | null;
-        user: {
-          nickname: string | null;
-        };
-      };
-
-      // `null` is a first-class Angular forms value and must survive.
-      type MiddleNameType = FieldPathValue<TestModel, 'middleName'>;
-      type NicknameType = FieldPathValue<TestModel, 'user.nickname'>;
-
-      expectTypeOf<MiddleNameType>().toEqualTypeOf<string | null>();
-      expectTypeOf<NicknameType>().toEqualTypeOf<string | null>();
-
-      // Partial models still get their `| undefined` stripped, while `| null`
-      // survives on the leaf.
-      type FormModel = NgxDeepPartial<{ middleName: string | null }>;
-      type PartialMiddleNameType = FieldPathValue<FormModel, 'middleName'>;
-      expectTypeOf<PartialMiddleNameType>().toEqualTypeOf<string | null>();
-
-      // Runtime anchor (matches this file's typed-const convention).
-      const middleName: MiddleNameType = null;
-      expect(middleName).toBeNull();
-    });
-
-    it('should not produce traversal paths for bigint/symbol fields', () => {
-      const sym: unique symbol = Symbol('s');
-      type Sym = typeof sym;
-      type TestModel = {
-        id: bigint;
-        tag: Sym;
-        name: string;
-      };
-
-      // bigint/symbol are leaves: FieldPath only yields the field names.
-      const paths: FieldPath<TestModel>[] = ['id', 'tag', 'name'];
-      expect(paths.length).toBe(3);
-
-      expectTypeOf<FieldPathValue<TestModel, 'id'>>().toEqualTypeOf<bigint>();
-      expectTypeOf<FieldPathValue<TestModel, 'tag'>>().toEqualTypeOf<Sym>();
-    });
+    expectTypeOf<FieldPath<Model>>().toEqualTypeOf<
+      | 'contacts'
+      | `contacts.${number}`
+      | `contacts.${number}.email`
+      | 'notes'
+      | `notes.${number}`
+    >();
   });
 
-  describe('ValidateFieldPath', () => {
-    it('should validate paths at compile time', () => {
-      type TestModel = {
-        name: string;
-        age: number;
-      };
+  it('uses an index at each level of nested arrays', () => {
+    type Model = {
+      orders: { lines: { sku: string }[] }[];
+      matrix: number[][];
+    };
 
-      // Valid paths should pass through
-      type ValidName = ValidateFieldPath<TestModel, 'name'>; // 'name'
-      type ValidAge = ValidateFieldPath<TestModel, 'age'>; // 'age'
-
-      const validName: ValidName = 'name';
-      const validAge: ValidAge = 'age';
-
-      expect(validName).toBe('name');
-      expect(validAge).toBe('age');
-
-      // Invalid paths would be `never` (compile error)
-      // type Invalid = ValidateFieldPath<TestModel, 'invalid'>; // never
-    });
+    expectTypeOf<FieldPath<Model>>().toEqualTypeOf<
+      | 'orders'
+      | `orders.${number}`
+      | `orders.${number}.lines`
+      | `orders.${number}.lines.${number}`
+      | `orders.${number}.lines.${number}.sku`
+      | 'matrix'
+      | `matrix.${number}`
+      | `matrix.${number}.${number}`
+    >();
   });
 
-  describe('LeafFieldPath', () => {
-    it('should only include leaf paths', () => {
-      type TestModel = {
-        user: {
-          name: string;
-          profile: {
-            age: number;
-          };
-        };
-      };
+  it('includes an array item as a leaf when its type includes a scalar', () => {
+    type Model = { items: (string | { label: string })[] };
 
-      // Only leaf paths (primitives)
-      const leafPaths: LeafFieldPath<TestModel>[] = [
-        'user.name',
-        'user.profile.age',
-      ];
-
-      // Note: 'user' and 'user.profile' are NOT included (not leaves)
-      expect(leafPaths.length).toBe(2);
-    });
-
-    it('should handle flat objects', () => {
-      type TestModel = {
-        name: string;
-        age: number;
-        active: boolean;
-      };
-
-      // All fields are leaves in a flat object
-      const leafPaths: LeafFieldPath<TestModel>[] = ['name', 'age', 'active'];
-
-      expect(leafPaths.length).toBe(3);
-    });
+    expectTypeOf<FieldPath<Model>>().toEqualTypeOf<
+      'items' | `items.${number}` | `items.${number}.label`
+    >();
+    expectTypeOf<LeafFieldPath<Model>>().toEqualTypeOf<
+      `items.${number}` | `items.${number}.label`
+    >();
   });
 
-  describe('Real-world example', () => {
-    it('should work with complex purchase form model', () => {
-      type PurchaseFormModel = {
-        firstName?: string;
-        lastName?: string;
-        age?: number;
-        addresses?: {
-          billing?: {
-            street?: string;
-            city?: string;
-          };
-          shipping?: {
-            street?: string;
-            city?: string;
-          };
-        };
-        passwords?: {
-          password?: string;
-          confirmPassword?: string;
-        };
-      };
+  it('keeps only the item properties as leaves for optional object items', () => {
+    type Model = { slots: ({ id: string } | undefined)[] };
 
-      // Validation config with type safety
-      const config: ValidationConfigMap<PurchaseFormModel> = {
-        age: ['firstName'], // when age changes, revalidate firstName
-        'passwords.password': ['passwords.confirmPassword'],
-        'addresses.billing.street': ['addresses.billing.city'],
-      };
-
-      expect(config.age).toEqual(['firstName']);
-      expect(config['passwords.password']).toEqual([
-        'passwords.confirmPassword',
-      ]);
-
-      // Field names for use in test() calls
-      const fieldName: FormFieldName<PurchaseFormModel> = 'firstName';
-      expect(fieldName).toBe('firstName');
-
-      const nestedFieldName: FormFieldName<PurchaseFormModel> =
-        'addresses.billing.street';
-      expect(nestedFieldName).toBe('addresses.billing.street');
-
-      const rootFieldName: FormFieldName<PurchaseFormModel> = ROOT_FORM;
-      expect(rootFieldName).toBe(ROOT_FORM);
-    });
+    expectTypeOf<LeafFieldPath<Model>>().toEqualTypeOf<`slots.${number}.id`>();
   });
 
-  describe('Edge cases', () => {
-    it('should handle empty object', () => {
-      type EmptyModel = Record<string, never>;
+  it('accepts any subpath after the index of an any or unknown item', () => {
+    type Model = { items: any[]; extras: unknown[] };
+    type ItemPaths =
+      | `items.${number}`
+      | `items.${number}.${string}`
+      | `extras.${number}`
+      | `extras.${number}.${string}`;
 
-      // Empty model has no valid paths
-      // FieldPath<EmptyModel> would be never
-      const paths: FieldPath<EmptyModel>[] = [];
-      expect(paths.length).toBe(0);
-    });
+    expectTypeOf<FieldPath<Model>>().toEqualTypeOf<
+      'items' | 'extras' | ItemPaths
+    >();
+    expectTypeOf<LeafFieldPath<Model>>().toEqualTypeOf<ItemPaths>();
+  });
 
-    it('should handle mixed primitive and object properties', () => {
-      type MixedModel = {
-        id: number;
-        name: string;
-        meta: {
-          created: Date;
-          tags: string[];
-        };
-      };
+  it('accepts numeric interpolation inline and when stored as a literal', () => {
+    const index: number = 2;
+    const stored = `addresses.${index}.street` as const;
+    const widened = `addresses.${index}.street`;
 
-      const paths: FieldPath<MixedModel>[] = [
-        'id',
-        'name',
-        'meta',
-        'meta.created',
-        'meta.tags',
-      ];
+    expectTypeOf(
+      `addresses.${index}.street` satisfies FieldPath<AddressModel>
+    ).toEqualTypeOf<`addresses.${number}.street`>();
+    expectTypeOf(stored).toExtend<FieldPath<AddressModel>>();
+    expectTypeOf(widened).not.toExtend<FieldPath<AddressModel>>();
+  });
 
-      expect(paths.length).toBe(5);
-    });
+  it('has no paths for a model with no fields', () => {
+    type EmptyModel = Record<never, never>;
 
-    it('should respect maximum depth limit', () => {
-      // This test ensures we don't have infinite recursion
-      type DeeplyNested = {
-        l1: {
-          l2: {
-            l3: {
-              l4: {
-                l5: { l6: { l7: { l8: { l9: { l10: { l11: string } } } } } };
-              };
-            };
-          };
-        };
-      };
+    expectTypeOf<FieldPath<EmptyModel>>().toBeNever();
+    expectTypeOf<LeafFieldPath<EmptyModel>>().toBeNever();
+  });
 
-      // Should stop at depth 10, so l11 would not be included
-      const paths: FieldPath<DeeplyNested>[] = [
-        'l1',
-        'l1.l2',
-        'l1.l2.l3',
-        'l1.l2.l3.l4',
-        'l1.l2.l3.l4.l5',
-        'l1.l2.l3.l4.l5.l6',
-        'l1.l2.l3.l4.l5.l6.l7',
-        'l1.l2.l3.l4.l5.l6.l7.l8',
-        'l1.l2.l3.l4.l5.l6.l7.l8.l9',
-        'l1.l2.l3.l4.l5.l6.l7.l8.l9.l10',
-      ];
+  it('limits object traversal to ten levels', () => {
+    type Branch = { next: Branch; value: string };
 
-      // Should have exactly 10 levels
-      expect(paths.length).toBe(10);
-    });
+    expectTypeOf<'next.next.next.next.next.next.next.next.next.value'>().toExtend<
+      LeafFieldPath<Branch>
+    >();
+    expectTypeOf<'next.next.next.next.next.next.next.next.next.next.value'>().not.toExtend<
+      FieldPath<Branch>
+    >();
+  });
+});
+
+describe('FieldPathValue', () => {
+  it('resolves top-level and nested fields', () => {
+    type Model = { name: string; profile: { address: { zipCode: number } } };
+
+    expectTypeOf<FieldPathValue<Model, 'name'>>().toEqualTypeOf<string>();
+    expectTypeOf<
+      FieldPathValue<Model, 'profile.address.zipCode'>
+    >().toEqualTypeOf<number>();
+  });
+
+  it('resolves dot-indexed items and their properties', () => {
+    type Model = AddressModel & { matrix: number[][] };
+
+    expectTypeOf<
+      FieldPathValue<Model, 'addresses.1'>
+    >().toEqualTypeOf<Address>();
+    expectTypeOf<
+      FieldPathValue<Model, 'addresses.0.street'>
+    >().toEqualTypeOf<string>();
+    expectTypeOf<
+      FieldPathValue<Model, `addresses.${number}.geo.lat`>
+    >().toEqualTypeOf<number>();
+    expectTypeOf<FieldPathValue<Model, 'tags.2'>>().toEqualTypeOf<string>();
+    expectTypeOf<FieldPathValue<Model, 'matrix.1.2'>>().toEqualTypeOf<number>();
+  });
+
+  it('resolves bracket indices for items and their properties', () => {
+    expectTypeOf<
+      FieldPathValue<AddressModel, 'addresses[0]'>
+    >().toEqualTypeOf<Address>();
+    expectTypeOf<
+      FieldPathValue<AddressModel, 'addresses[0].street'>
+    >().toEqualTypeOf<string>();
+    expectTypeOf<
+      FieldPathValue<AddressModel, 'tags[3]'>
+    >().toEqualTypeOf<string>();
+  });
+
+  it('resolves array properties without an index and preserves the array type at its own path', () => {
+    expectTypeOf<
+      FieldPathValue<AddressModel, 'addresses.street'>
+    >().toEqualTypeOf<string>();
+    expectTypeOf<
+      FieldPathValue<AddressModel, 'addresses.geo.lat'>
+    >().toEqualTypeOf<number>();
+    expectTypeOf<FieldPathValue<AddressModel, 'addresses'>>().toEqualTypeOf<
+      readonly Address[]
+    >();
+  });
+
+  it('removes undefined from optional fields and preserves null', () => {
+    type Model = NgxDeepPartial<{
+      nickname: string | null;
+      profile: { age: number; nickname: string | null };
+      addresses: Address[];
+    }>;
+
+    expectTypeOf<
+      FieldPathValue<Model, 'profile.age'>
+    >().toEqualTypeOf<number>();
+    expectTypeOf<
+      FieldPathValue<Model, 'addresses.street'>
+    >().toEqualTypeOf<string>();
+    expectTypeOf<FieldPathValue<Model, 'nickname'>>().toEqualTypeOf<
+      string | null
+    >();
+    expectTypeOf<FieldPathValue<Model, 'profile.nickname'>>().toEqualTypeOf<
+      string | null
+    >();
+  });
+
+  it('preserves bigint and unique symbol value types', () => {
+    type Model = { id: bigint; readonly token: unique symbol };
+
+    expectTypeOf<FieldPathValue<Model, 'id'>>().toEqualTypeOf<bigint>();
+    expectTypeOf<FieldPathValue<Model, 'token'>>().toEqualTypeOf<
+      Model['token']
+    >();
+  });
+});
+
+describe('ValidateFieldPath', () => {
+  it('preserves a valid Field Path and rejects an invalid one', () => {
+    expectTypeOf<
+      ValidateFieldPath<AddressModel, 'addresses.0.street'>
+    >().toEqualTypeOf<'addresses.0.street'>();
+    expectTypeOf<
+      ValidateFieldPath<AddressModel, 'addresses.street'>
+    >().toBeNever();
+  });
+});
+
+describe('FormFieldName', () => {
+  it('includes Field Paths and ROOT_FORM', () => {
+    type Model = { email: string; user: { name: string } };
+
+    expectTypeOf<FormFieldName<Model>>().toEqualTypeOf<
+      'email' | 'user' | 'user.name' | typeof ROOT_FORM
+    >();
+  });
+});
+
+describe('Validation Config types', () => {
+  it('makes Trigger Fields optional and limits Dependent Fields to valid Field Paths', () => {
+    type Model = NgxDeepPartial<{
+      password: string;
+      contact: { email: string };
+    }>;
+    type Path = 'password' | 'contact' | 'contact.email';
+    type Config = {
+      password?: Path[];
+      contact?: Path[];
+      'contact.email'?: Path[];
+    };
+
+    expectTypeOf<ValidationConfigMap<Model>>().toEqualTypeOf<Config>();
+    expectTypeOf<NgxValidationConfig<Model>>().toEqualTypeOf<Config | null>();
+  });
+
+  it('checks indexed Trigger and Dependent Fields', () => {
+    type Config = {
+      'addresses.0.street': ['addresses.0.geo.lat', 'name'];
+      name: ['addresses.1.street'];
+    };
+
+    expectTypeOf<Config>().toExtend<ValidationConfigMap<AddressModel>>();
+    expectTypeOf<Config>().toExtend<NgxValidationConfig<AddressModel>>();
+    expectTypeOf<'addresses.0.nope'>().not.toExtend<
+      keyof ValidationConfigMap<AddressModel>
+    >();
+  });
+
+  it('accepts a Validation Config for a recursive array model', () => {
+    type Tree = { name: string; children: Tree[] };
+    type Config = { name: ['children.0.name', 'children.0.children.1.name'] };
+
+    expectTypeOf<Config>().toExtend<ValidationConfigMap<Tree>>();
+    expectTypeOf<'children.0.children.0.children.0.name'>().toExtend<
+      FieldPath<Tree>
+    >();
+  });
+
+  it('accepts a Validation Config for a wide model with three array levels', () => {
+    type FieldNumber =
+      | 1
+      | 2
+      | 3
+      | 4
+      | 5
+      | 6
+      | 7
+      | 8
+      | 9
+      | 10
+      | 11
+      | 12
+      | 13
+      | 14;
+    type Fields = Record<`f${FieldNumber}`, string>;
+    type Line = Fields & { f15: string };
+    type Section = Fields & { items: Line[] };
+    type Page = Fields & { items: Section[] };
+    type Model = Fields & { items: Page[] };
+    type Config = { f1: ['f2', 'items.0.items.1.items.2.f15'] };
+
+    expectTypeOf<Config>().toExtend<ValidationConfigMap<Model>>();
   });
 });

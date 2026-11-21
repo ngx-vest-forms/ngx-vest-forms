@@ -87,6 +87,27 @@ export const NGX_VEST_FORMS_DIAGNOSTICS = {
       'form in time, so its validators were not attached and Vest will not validate it. ' +
       'Check its name and that it sits inside the form (or uses ngModelOptions standalone).',
   },
+  INVALID_FIELD_PATH: {
+    code: 'NGX-109',
+    message: (path: string) =>
+      `[ngx-vest-forms] field-path.utils: Invalid field path '${path}'. ` +
+      "Leading dots, trailing dots, consecutive dots, and '.[' separators are not allowed.",
+  },
+  VALIDATION_CONFIG_DUPLICATE_DEPENDENCIES: {
+    code: 'NGX-110',
+    message: (trigger: string, duplicates: readonly string[]) =>
+      `[ngx-vest-forms] ValidationConfigBuilder: Duplicate dependencies detected.\n` +
+      `  Trigger: '${trigger}'\n` +
+      `  Duplicates: ${duplicates.map((d) => `'${d}'`).join(', ')}\n` +
+      `  These will be automatically deduplicated.`,
+  },
+  VALIDATION_CONFIG_DUPLICATE_BIDIRECTIONAL: {
+    code: 'NGX-111',
+    message: (field1: string, field2: string) =>
+      `[ngx-vest-forms] ValidationConfigBuilder: Duplicate bidirectional relationship detected.\n` +
+      `  Fields: '${field1}' ↔ '${field2}'\n` +
+      `  This bidirectional relationship was already configured.`,
+  },
 } as const;
 
 export function logWarning<T extends unknown[]>(

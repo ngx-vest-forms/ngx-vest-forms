@@ -1,149 +1,60 @@
-# Advanced Form Structure Change Detection
+# Structure change detection
 
-> **Note**: This guide provides advanced techniques and alternatives for handling form structure changes. For basic usage, see the [README.md](../README.md#dynamic-form-structure) section on "Dynamic Form Structure".
+Handle form validity updates when conditional template branches switch between form controls and static content without a control value changing.
 
-This document explains advanced techniques for handling form validation updates when form structure changes dynamically in ngx-vest-forms.
+## When `triggerFormValidation()` is needed
 
-## The Problem
+When an `@if` branch replaces an `<input>` with non-form content such as `<p>` (without another control emitting a value change), Angular does not emit a `ValueChangeEvent`, so root form validity can stay stale.
 
-When form structure changes from **input fields to non-input content** (like `<p>` tags) without control value changes, the `formValueChange` event is not automatically emitted. This can lead to situations where form validity is not updated correctly.
-
-### Example Scenario
-
-```typescript
-// Form with conditional fields based on selection
-@if (procedureType() === 'typeA') {
+```html
+@if (formValue().procedureType === 'typeA') {
   <input name="fieldA" [ngModel]="formValue().fieldA" />
-}
-@else if (procedureType() === 'typeB') {
+} @else if (formValue().procedureType === 'typeB') {
   <input name="fieldB" [ngModel]="formValue().fieldB" />
-}
-@else if (procedureType() === 'typeC') {
+} @else if (formValue().procedureType === 'typeC') {
   <p>No additional input required for this procedure type.</p>
 }
 ```
 
-When switching from `typeA` to `typeC`, the input field is removed but no control values change, so validation doesn't update automatically.
+You do **not** need `triggerFormValidation()` when switching between two inputs (for example, changing `<input type="text">` to `<input type="number">`) because control value changes trigger validation automatically.
 
-### When You DON'T Need This
+## API
 
-**Important**: You do **NOT** need `triggerFormValidation()` when switching between different input fields:
-
-```typescript
-// ✅ This works automatically - no triggerFormValidation() needed
-@if (procedureType() === 'typeA') {
-  <input name="fieldA" [ngModel]="formValue().fieldA" />
-} @else {
-  <input name="fieldB" [ngModel]="formValue().fieldB" />
-}
-```
-
-Why? Because switching between inputs means control values change, which triggers Angular's `ValueChangeEvent` and validation updates automatically.
-
-**You only need `triggerFormValidation()` when**:
-
-- Switching from input field → non-input content (like `<p>`, `<div>`, etc.)
-- The structure changes but no control values change
-
-## Solution: Manual Validation Update
-
-### API
-
-```typescript
+```ts
 triggerFormValidation(path?: string): void
 ```
 
-Without `path` it calls `updateValueAndValidity()` on the root form: root-level validators re-run and the form's aggregated status is recalculated from its current controls, which is what a structure change needs. It does not re-run each field's own validators. Pass a control path (for example `'address.street'`) to re-run that control's validators; its ancestors, up to the root form, then recalculate their own validity and status. An unknown path logs a development-mode warning and does nothing.
+- **Without `path`:** re-runs validators on every descendant control in the form tree (deepest first), then runs `updateValueAndValidity({ emitEvent: true })` on the root form. Every field and root validator re-evaluates, including async tests.
+- **With `path`:** re-runs validators on every descendant under `path` (deepest first) if `path` points to an `ngModelGroup` or `FormArray`, then runs `updateValueAndValidity({ emitEvent: true })` on that target so its ancestors recalculate up to the root. Pass a field or group path (for example `'address'` or `'address.street'`) when only one section needs revalidation, such as after switching `[validationFocus]`. Passing an unknown path logs `[NGX-003]` in development mode and does nothing.
 
-**CRITICAL: This method does NOT mark fields as touched or show errors.**
+`triggerFormValidation()` never marks controls as touched and never reveals errors. To show errors programmatically (for example, submitting multiple forms with one button), call `markAllAsTouched()`. With the default `'on-blur-or-submit'` display mode, regular `(ngSubmit)` / `(submitSettled)` submissions call `markAllAsTouched()` automatically.
 
-It only re-runs validation logic to update validity state.
+## Recommended pattern
 
-> **Note on form submission**: With the default `on-blur-or-submit` error display mode, errors are shown automatically when you submit via `(ngSubmit)`. The form internally calls `markAllAsTouched()` on submit. You only need to call `markAllAsTouched()` manually for special cases like multiple forms with one submit button.
+Clear hidden fields and purge removed fields from Vest 6's stateful suite inside `(formValueChange)`. Do **not** update `formValue` from a separate `(ngModelChange)` handler alongside `(formValueChange)`, as simultaneous writes trigger `[NGX-100]` sync warnings.
 
-**When to use each:**
+```ts
+import { ChangeDetectionStrategy, Component, signal, viewChild } from '@angular/core';
+import {
+  clearFieldsWhen,
+  FormDirective,
+  NgxVestForms,
+  type NgxDeepPartial,
+  type NgxVestSuite,
+} from 'ngx-vest-forms';
+import { create, enforce, omitWhen, test } from 'vest';
 
-- `triggerFormValidation()` - Re-run validation when structure changes
-- `markAllAsTouched()` - Manually show all errors (rarely needed - automatic on submit)
-- Both together - Rare, only if structure changed AND you want to show all errors immediately
+type ProcedureFormModel = NgxDeepPartial<{
+  procedureType: 'typeA' | 'typeB' | 'typeC';
+  fieldA: string;
+  fieldB: string;
+}>;
 
-### Usage
-
-```typescript
-@Component({
-  template: `
-    <form
-      ngxVestForm
-      [suite]="validationSuite"
-      (formValueChange)="formValue.set($event)"
-      #vestForm="ngxVestForm"
-    >
-      <select
-        name="procedureType"
-        [ngModel]="formValue().procedureType"
-        (ngModelChange)="onProcedureTypeChange($event)"
-      >
-        <option value="typeA">Type A</option>
-        <option value="typeB">Type B</option>
-        <option value="typeC">Type C (No input)</option>
-      </select>
-
-      @if (formValue().procedureType === 'typeA') {
-        <input name="fieldA" [ngModel]="formValue().fieldA" />
-      } @else if (formValue().procedureType === 'typeB') {
-        <input name="fieldB" [ngModel]="formValue().fieldB" />
-      } @else if (formValue().procedureType === 'typeC') {
-        <p>No additional input required for this procedure type.</p>
-      }
-    </form>
-  `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-})
-export class MyFormComponent {
-  // Modern Angular: use viewChild() instead of @ViewChild when available
-  private readonly vestForm =
-    viewChild.required<FormDirective<MyFormModel>>('vestForm');
-
-  protected readonly formValue = signal<MyFormModel>({});
-  protected readonly validationSuite = myValidationSuite;
-
-  onProcedureTypeChange(newType: string) {
-    // Update the form value
-    this.formValue.update((current) => ({
-      ...current,
-      procedureType: newType,
-      // Clear fields that are no longer relevant
-      ...(newType !== 'typeA' && { fieldA: undefined }),
-      ...(newType !== 'typeB' && { fieldB: undefined }),
-    }));
-
-    // IMPORTANT: Trigger validation update after structure change
-    this.vestForm().triggerFormValidation();
-  }
-}
-```
-
-### When to Use
-
-Call `triggerFormValidation()` in these scenarios:
-
-1. **After changing form structure** - When conditional fields are shown/hidden
-2. **After clearing form sections** - When resetting parts of the form
-3. **After dynamic field addition/removal** - When programmatically modifying form structure
-4. **After switching form modes** - When toggling between different form layouts
-
-### Validation Suite Pattern
-
-```typescript
-import { create, test, enforce, omitWhen } from 'vest';
-
-export const myValidationSuite = create((model: MyFormModel) => {
-  // Always validate procedure type
+const procedureSuite: NgxVestSuite<ProcedureFormModel> = create((model) => {
   test('procedureType', 'Procedure type is required', () => {
     enforce(model.procedureType).isNotBlank();
   });
 
-  // Conditional validations
   omitWhen(model.procedureType !== 'typeA', () => {
     test('fieldA', 'Field A is required for Type A', () => {
       enforce(model.fieldA).isNotBlank();
@@ -155,85 +66,103 @@ export const myValidationSuite = create((model: MyFormModel) => {
       enforce(model.fieldB).isNotBlank();
     });
   });
-
-  // Note: No validation needed for typeC as it has no input fields
 });
-```
 
-## Alternative Approaches (Not Recommended)
+@Component({
+  selector: 'app-procedure-form',
+  imports: [NgxVestForms],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <form
+      ngxVestForm
+      [suite]="suite"
+      [formValue]="formValue()"
+      (formValueChange)="handleFormChange($event)"
+      #vestForm="ngxVestForm"
+    >
+      <ngx-control-wrapper>
+        <label for="procedureType">Procedure type</label>
+        <select
+          id="procedureType"
+          name="procedureType"
+          [ngModel]="formValue().procedureType"
+        >
+          <option value="typeA">Type A</option>
+          <option value="typeB">Type B</option>
+          <option value="typeC">Type C (no input)</option>
+        </select>
+      </ngx-control-wrapper>
 
-### Approach 1: Hidden Input Fields
+      @if (formValue().procedureType === 'typeA') {
+        <ngx-control-wrapper>
+          <label for="fieldA">Field A</label>
+          <input id="fieldA" name="fieldA" [ngModel]="formValue().fieldA" />
+        </ngx-control-wrapper>
+      } @else if (formValue().procedureType === 'typeB') {
+        <ngx-control-wrapper>
+          <label for="fieldB">Field B</label>
+          <input id="fieldB" name="fieldB" [ngModel]="formValue().fieldB" />
+        </ngx-control-wrapper>
+      } @else if (formValue().procedureType === 'typeC') {
+        <p>No additional input required for this procedure type.</p>
+      }
+    </form>
+  `,
+})
+export class ProcedureFormComponent {
+  private readonly vestForm =
+    viewChild.required<FormDirective<ProcedureFormModel>>('vestForm');
 
-```typescript
-// Less clean approach - add hidden fields
-@if (formValue().procedureType === 'typeC') {
-  <input type="hidden" name="hiddenTrigger" [ngModel]="formValue().procedureType" />
-  <p>No additional input required for this procedure type.</p>
+  protected readonly formValue = signal<ProcedureFormModel>({});
+  protected readonly suite = procedureSuite;
+
+  protected handleFormChange(value: ProcedureFormModel): void {
+    const next = clearFieldsWhen(value, {
+      fieldA: value.procedureType !== 'typeA',
+      fieldB: value.procedureType !== 'typeB',
+    });
+
+    if (value.procedureType !== 'typeA') {
+      this.vestForm().removeField('fieldA');
+    }
+    if (value.procedureType !== 'typeB') {
+      this.vestForm().removeField('fieldB');
+    }
+
+    this.formValue.set(next);
+    this.vestForm().triggerFormValidation();
+  }
 }
 ```
 
-### Approach 2: Manual Form Control Update
+### `removeField()` vs `resetField()`
 
-```typescript
-// More verbose approach
-onProcedureTypeChange(newType: string) {
-  this.formValue.update(current => ({ ...current, procedureType: newType }));
-  this.ngForm.form.updateValueAndValidity(); // Low-level Angular API
-}
-```
+Vest 6 suites accumulate results across `suite.only(field).run(model)` calls:
 
-## Best Practices
+- Call `vestForm().removeField(field)` when a control is unmounted (for example by `@if` or when deleting an array row). It calls Vest's `suite.remove(field)` (cancelling any pending async test for that field) and clears stored warnings.
+- Call `vestForm().resetField(field)` when a control stays mounted but its value is reset programmatically. It calls Vest's `suite.resetField(field)`, clears warnings and held messages, and revalidates the control.
 
-1. **Always call after structure changes** - Make it part of your form change handlers
-2. **Update form value first** - Ensure the form model reflects the new state before calling
-3. **Use in event handlers** - Call from `(ngModelChange)` or similar events
-4. **Document usage** - Add comments explaining why the manual update is needed
-5. **Test thoroughly** - Verify validation behavior with all form structure combinations
+## FAQ: do I need `#group="ngModelGroup"` with wrappers?
 
-## FAQ: Do I need `#group="ngModelGroup"` with `ngx-control-wrapper`?
+No. Template references like `#group="ngModelGroup"` are standard Angular template-driven forms features and are optional.
 
-No. Template reference variables like `#group="ngModelGroup"` (or `#form="ngForm"`) are a **standard Angular template-driven forms** pattern and are **not required** by ngx-vest-forms.
-
-`ngx-control-wrapper` does not change how `ngModelGroup` works. It's safe to wrap groups/controls with `ngx-control-wrapper`, and you can still export and reference Angular directives as usual.
-
-Accessibility note: for a **group container** (an element that contains multiple inputs), prefer using `<ngx-form-group-wrapper>` (group-safe by default). If you apply `ngx-control-wrapper` to a group container, consider setting `ariaAssociationMode="none"` so the wrapper does not stamp `aria-describedby` / `aria-invalid` onto every descendant control.
-
-### When a template ref _is_ useful
-
-Use a template ref when you need **imperative access** to the group instance, for example:
-
-- Checking group state in the template (`group.pending`, `group.invalid`)
-- Calling low-level Angular APIs on the group (`control.updateValueAndValidity()`)
-- Passing the group to a component method that needs to coordinate structural changes
-
-Example:
+Add a template reference only when you need direct access to the group's state in the template (for example disabling a section button while `billingGroup.pending || billingGroup.invalid`). For group containers, use `<ngx-form-group-wrapper ngModelGroup="...">` so ARIA attributes are not stamped onto child inputs.
 
 ```html
 <ngx-form-group-wrapper ngModelGroup="addresses">
   <ngx-form-group-wrapper ngModelGroup="billing" #billingGroup="ngModelGroup">
-    <!-- ... -->
+    <!-- child controls -->
   </ngx-form-group-wrapper>
 
-  <button
-    type="button"
-    [disabled]="billingGroup.pending || billingGroup.invalid"
-  >
-    Save
+  <button type="button" [disabled]="billingGroup.pending || billingGroup.invalid">
+    Save billing address
   </button>
 </ngx-form-group-wrapper>
 ```
 
-### Preferred ngx-vest-forms API for structure changes
+## Related guides
 
-If your goal is specifically to refresh validation after a structure change, prefer calling the higher-level API on the form directive:
-
-- `FormDirective.triggerFormValidation()`
-
-This keeps the logic at the form level and avoids relying on Angular internals like `updateValueAndValidity()`.
-
-## Performance Considerations
-
-- The manual update method has **zero overhead** when not called
-- It only triggers when explicitly invoked
-- Much more efficient than polling-based solutions
-- Follows the explicit-is-better-than-implicit principle
+- [Field clearing utilities](./FIELD-CLEARING-UTILITIES.md)
+- [ValidationConfig vs root-form](./VALIDATION-CONFIG-VS-ROOT-FORM.md)
+- [Troubleshooting diagnostics](./TROUBLESHOOTING.md)
+- Runnable demo: `/conditional-structure` (`apps/examples/src/app/pages/conditional-structure-demo`)

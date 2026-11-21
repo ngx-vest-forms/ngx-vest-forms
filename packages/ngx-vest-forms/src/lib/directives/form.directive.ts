@@ -33,7 +33,7 @@ import {
   scan,
   startWith,
 } from 'rxjs';
-import { logWarning, NGX_VEST_FORMS_ERRORS } from '../errors/error-catalog';
+import { logDiagnostic, NGX_VEST_FORMS_ERRORS } from '../errors/error-catalog';
 import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from '../tokens/debounce.token';
 import { NGX_EQUALITY_FN } from '../tokens/equality.token';
 import {
@@ -69,6 +69,7 @@ import { FormValueSnapshot } from './form-value-snapshot';
 import { ModelFormSync } from './model-form-sync';
 import {
   connectValidationConfig,
+  revalidateControlTree,
   revalidateOnSuiteChange,
 } from './revalidation-triggers';
 import {
@@ -326,6 +327,11 @@ export class FormDirective<T extends Record<string, unknown>> {
    *
    * Useful for step-based flows where group focus should be applied on top of
    * the field-level `only` focus.
+   *
+   * Changing `validationFocus` does not automatically re-run field validators.
+   * Call {@link triggerFormValidation} (with no path or with the target group
+   * path) after switching focus when you want fields under the new focus to
+   * validate immediately.
    */
   readonly validationFocus = input<NgxValidationFocus | null>(null);
 
@@ -595,20 +601,21 @@ export class FormDirective<T extends Record<string, unknown>> {
    * when no value changes occur (e.g., switching from input fields to informational content).
    *
    * **Performance Note:**
-   * This method calls `updateValueAndValidity({ emitEvent: true })` on the root form,
-   * which validates all form controls. For large forms, consider if more granular
-   * validation updates are possible.
+   * With no path (or a group path), this method re-runs validators on every
+   * descendant control deepest-first before updating the group or root form,
+   * which also restarts async tests on those controls. Pass a specific field
+   * or group path when only part of a large form needs revalidation.
    *
    * @example
    * ```typescript
-   * /// After changing form structure
+   * // After changing form structure
    * onProcedureTypeChange(newType: string) {
    *   this.procedureType.set(newType);
-   *   /// Structure changed but no control values changed
+   *   // Structure changed but no control values changed
    *   this.formDirective.triggerFormValidation();
    * }
    *
-   * /// For submit with multiple forms (show all errors)
+   * // For submit with multiple forms (show all errors)
    * submitAll() {
    *   // Mark all as touched to show errors
    *   this.form1Ref().markAllAsTouched();
@@ -623,13 +630,12 @@ export class FormDirective<T extends Record<string, unknown>> {
     if (path) {
       const control = this.ngForm.form.get(path);
       if (control) {
-        control.updateValueAndValidity({ emitEvent: true });
+        revalidateControlTree(control);
       } else if (isDevMode()) {
-        logWarning(NGX_VEST_FORMS_ERRORS.CONTROL_NOT_FOUND, path);
+        logDiagnostic(NGX_VEST_FORMS_ERRORS.CONTROL_NOT_FOUND, path);
       }
     } else {
-      // Update all form controls validity which will trigger all form events
-      this.ngForm.form.updateValueAndValidity({ emitEvent: true });
+      revalidateControlTree(this.ngForm.form);
     }
   }
 
@@ -657,18 +663,18 @@ export class FormDirective<T extends Record<string, unknown>> {
    *
    * @example
    * ```typescript
-   * /// Standard form submission - NO need to call markAllAsTouched()
-   * /// The directive handles this automatically on ngSubmit
-   * <form ngxVestForm (ngSubmit)="save()">
-   *   <button type="submit">Submit</button>
-   * </form>
+   * // Standard form submission - no need to call markAllAsTouched()
+   * // The directive handles this automatically on ngSubmit
+   * // <form ngxVestForm (ngSubmit)="save()">
+   * //   <button type="submit">Submit</button>
+   * // </form>
    *
-   * /// Multiple forms with one submit button
+   * // Multiple forms with one submit button
    * submitAll() {
    *   this.form1().markAllAsTouched();
    *   this.form2().markAllAsTouched();
    *   if (this.form1().formState().valid && this.form2().formState().valid) {
-   *     /// Submit all forms
+   *     // Submit all forms
    *   }
    * }
    * ```

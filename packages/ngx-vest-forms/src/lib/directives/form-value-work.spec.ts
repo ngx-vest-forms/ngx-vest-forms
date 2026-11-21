@@ -58,11 +58,10 @@ const suite = create((model: Model) => {
   }
 });
 
-const counters = { equal: 0, deepEqual: 0 };
+let deepComparisons = 0;
 function countingEqual(a: unknown, b: unknown): boolean {
-  counters.equal++;
   if (!Object.is(a, b)) {
-    counters.deepEqual++;
+    deepComparisons++;
   }
   return fastDeepEqual(a, b);
 }
@@ -142,8 +141,7 @@ async function measureKeystrokes(
   // root form; Angular itself never calls it on the root.
   const rawValueSpy = vi.spyOn(host.vestForm().ngForm.form, 'getRawValue');
   host.emissions.length = 0;
-  counters.equal = 0;
-  counters.deepEqual = 0;
+  deepComparisons = 0;
   // Read formState the way a template binding would.
   host.vestForm().formState();
 
@@ -160,8 +158,7 @@ async function measureKeystrokes(
   return {
     host,
     copies: rawValueSpy.mock.calls.length,
-    equalCalls: counters.equal,
-    deepEqualCalls: counters.deepEqual,
+    deepComparisons,
   };
 }
 
@@ -172,7 +169,7 @@ describe('PERF-01: per-keystroke work in a 200-field form', () => {
     suite.reset();
   });
 
-  it('copies the form value once per value event and compares each snapshot pair once', async () => {
+  it('uses at most one Form Model copy and two deep comparisons per edit without a Suite', async () => {
     const result = await measureKeystrokes(LargeFormNoSuiteComponent, [
       'changed',
     ]);
@@ -180,8 +177,8 @@ describe('PERF-01: per-keystroke work in a 200-field form', () => {
     // Before PERF-01: 2 copies and 7 deep comparisons. Now the value event
     // takes the one snapshot `formValueChange`, `formState` and the sync
     // effect share.
-    expect(result.copies).toBe(1);
-    expect(result.deepEqualCalls).toBeLessThanOrEqual(2);
+    expect(result.copies).toBeLessThanOrEqual(1);
+    expect(result.deepComparisons).toBeLessThanOrEqual(2);
     expect(result.host.emissions).toHaveLength(1);
     expect(result.host.emissions[0]?.['group4']?.['field7']).toBe('changed');
     expect(result.host.vestForm().formState().value).toEqual(
@@ -199,7 +196,7 @@ describe('PERF-01: per-keystroke work in a 200-field form', () => {
       // ngModelGroup each validate on a copy of their own (2); the value event
       // takes 1, and the status event of the async result 1 more.
       expect(result.copies).toBeLessThanOrEqual(4);
-      expect(result.deepEqualCalls).toBeLessThanOrEqual(4);
+      expect(result.deepComparisons).toBeLessThanOrEqual(4);
       expect(result.host.emissions).toHaveLength(1);
       expect(result.host.emissions[0]?.['group4']?.['field7']).toBe('changed');
       expect(result.host.vestForm().formState().value).toEqual(
@@ -220,7 +217,7 @@ describe('PERF-01: per-keystroke work in a 200-field form', () => {
 
       // Before PERF-01: 15 copies and 27 deep comparisons.
       expect(result.copies).toBeLessThanOrEqual(12);
-      expect(result.deepEqualCalls).toBeLessThanOrEqual(12);
+      expect(result.deepComparisons).toBeLessThanOrEqual(12);
       expect(
         result.host.emissions.map((value) => value['group4']?.['field7'])
       ).toEqual(['a', 'ab', 'abc']);

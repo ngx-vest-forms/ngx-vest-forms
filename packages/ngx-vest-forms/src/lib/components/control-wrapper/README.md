@@ -1,142 +1,98 @@
 # `ngx-control-wrapper`
 
-A small UI helper component that:
+`ControlWrapperComponent` wraps a single form control to render inline errors, warnings, and pending states, and wires those regions to descendant controls with ARIA attributes.
 
-- renders inline **errors**, **warnings**, and **pending** state regions, and
-- (optionally) wires those regions to descendant form controls via ARIA.
-
-It is intended for **single-control** wrappers (one input/select/textarea per wrapper) and is the recommended default for field-level error UI.
-
-## Recommended usage
-
-Use one wrapper per control:
-
-- Wrap the label + control together.
-- Ensure the control has a `name` that matches the `[ngModel]` path.
-
-For `ngModelGroup` containers, prefer using `ngx-form-group-wrapper` (it renders group-level regions and does **not** stamp ARIA onto descendant controls).
+Use `<ngx-control-wrapper>` for single-control fields. For `ngModelGroup` containers with multiple inputs, use `<ngx-form-group-wrapper>`, which renders group-level messages without stamping ARIA attributes onto descendant controls.
 
 ## Selectors
 
-Supported selectors:
+- Element: `<ngx-control-wrapper>`
+- Attribute: `[ngxControlWrapper]`
 
-- Elements: `<ngx-control-wrapper>`
-- Attributes: `[ngxControlWrapper]`
+The host element always receives the `ngx-control-wrapper` class, adds `ngx-control-wrapper--invalid` when errors are shown, and sets `aria-busy="true"` while pending.
 
-The host element automatically receives the `ngx-control-wrapper` CSS class.
-
-## Public inputs
+## Inputs
 
 ### `errorDisplayMode`
 
-Controls _when_ errors become visible (and therefore when `aria-invalid` may be applied).
+Controls when errors become visible (and when `aria-invalid="true"` is applied). Inherited from `FormErrorDisplayDirective`.
 
-Accepted values:
+- `'on-blur-or-submit'` (default): show after the control is touched or the form is submitted.
+- `'on-blur'`: deprecated alias for `'on-blur-or-submit'` (opens on touch or form submit; scheduled for removal in v4).
+- `'on-submit'`: show only after form submission.
+- `'on-dirty'`: show as soon as the value changes, or after touch/submit.
+- `'always'`: show immediately, including on pristine controls.
 
-- `"on-blur-or-submit"` (default) — Show after blur OR form submit
-- `"on-blur"` — Show only after blur/touch
-- `"on-submit"` — Show only after form submission
-- `"on-dirty"` — Show as soon as value changes (or after blur/submit)
-- `"always"` — Show immediately, even on pristine fields
-
-This input is provided by the composed `FormErrorDisplayDirective`.
+Set a global default with `NGX_ERROR_DISPLAY_MODE_TOKEN`.
 
 ### `warningDisplayMode`
 
-Controls _when_ warnings become visible.
+Controls when non-blocking warnings become visible. Inherited from `FormErrorDisplayDirective`.
 
-Accepted values:
+- `'on-validated-or-touch'` (default): show after validation completes, touch, or submit.
+- `'on-touch'`: show after touch or form submission.
+- `'on-dirty'`: show as soon as the value changes, or after touch/submit.
+- `'always'`: show immediately, including on pristine controls.
 
-- `"on-validated-or-touch"` (default) — Show after validation runs or touch
-- `"on-touch"` — Show only after blur/touch
-- `"on-dirty"` — Show as soon as value changes (or after blur/submit)
-- `"always"` — Show immediately, even on pristine fields
+Set a global default with `NGX_WARNING_DISPLAY_MODE_TOKEN`.
 
-This input is provided by the composed `FormErrorDisplayDirective`.
+### `pendingDebounce`
+
+Controls the delay before showing the pending message and how long it stays visible once shown:
+
+```ts
+{ showAfter: 500, minimumDisplay: 500 } // default
+```
+
+Translate or customize the pending text with the `NGX_PENDING_LABEL` token (default `'Validating…'`).
 
 ### `ariaRequired`
 
-Explicitly applies `aria-required="true"` to associated descendant controls.
+Boolean input (default `false`). When set, applies `aria-required="true"` to associated descendant controls.
 
-Use this when the wrapped control is always required. For conditional requirements,
-keep the label/help text and validation messages as the primary explanation.
+Use `ariaRequired` only for controls that are unconditionally required. Requiredness is not inferred from Vest rules because rules are often conditional.
 
 ### `ariaAssociationMode`
 
-Controls how this wrapper applies `aria-describedby` / `aria-invalid` to descendant controls.
+Controls how `aria-describedby` and `aria-invalid` are stamped onto descendant controls:
 
-Accepted values:
+- `'all-controls'` (default): stamps all descendant `input`, `select`, and `textarea` elements, plus elements with an ARIA form-widget role (`checkbox`, `combobox`, `listbox`, `radiogroup`, `searchbox`, `slider`, `spinbutton`, `switch`, `textbox`). Native inputs nested inside such a widget are skipped so the widget remains the single target.
+- `'single-control'`: stamps only when exactly one descendant control is found. Use this when a wrapper contains an input alongside extra focusable buttons or controls.
+- `'none'`: never mutates descendant controls. Use this for manual ARIA wiring or multi-control containers.
 
-- `"all-controls"` (default)
-  - Applies ARIA attributes to **all** descendant `input/select/textarea` elements and to elements with an ARIA form-widget role (for example a custom `role="radiogroup"`). Controls nested inside such a widget are skipped.
-  - Useful for _true composite_ controls where the same message applies to every child control.
+## Rendering and accessibility behavior
 
-- `"single-control"`
-  - Applies ARIA attributes only when **exactly one** descendant control exists.
-  - Useful when your wrapper sometimes contains extra focusable UI (e.g. input + “Clear” button) and you want to avoid accidentally stamping ARIA onto multiple controls.
+Message regions stay mounted in the DOM so screen readers announce updates reliably:
 
-- `"none"`
-  - Never mutates descendant controls.
-  - Useful when:
-    - you want **manual** ARIA wiring, or
-    - you’re wrapping a multi-control container and don’t want blanket stamping.
+- `...-error` (`role="status"`, `aria-live="polite"`)
+- `...-warning` (`role="status"`, `aria-live="polite"`)
+- `...-pending` (`role="status"`, `aria-live="polite"`, positioned top-right)
 
-### Guidance: when to use which
+When ARIA stamping is enabled (`'all-controls'` or `'single-control'`), the wrapper merges its active region IDs into any existing `aria-describedby` attribute without overwriting consumer-provided hint IDs.
 
-- Most forms: **omit `ariaAssociationMode`** and use one wrapper per input. The default behaves as expected when there’s only one descendant control.
-- `ngModelGroup` containers: prefer **`ngx-form-group-wrapper`** instead of using `ngx-control-wrapper` as a group wrapper.
-- Multi-control container (advanced/custom): use `ariaAssociationMode="none"` and wire ARIA explicitly.
+Warnings do not make a control invalid. Under the default `warningDisplayMode`, warnings can appear when `validationConfig` triggers validation on an untouched field. Warnings clear on `resetForm()`.
 
-## Rendering and styling behavior
+## Styling and theming
 
-This component always keeps its message regions stable in the DOM (to improve announcement reliability), but only renders message content when relevant.
-
-It renders three regions with generated IDs:
-
-- `...-error` (errors)
-- `...-warning` (warnings)
-- `...-pending` (pending)
-
-The pending region is positioned `absolute` in the top-right corner of the wrapper (host is `position: relative`).
-
-### Warnings visibility
-
-- Warnings are **non-blocking** and do not make a field invalid.
-- Warnings can show after validation has run due to `validationConfig` even if the
-  field was not touched yet (default behavior). Use `warningDisplayMode="on-touch"`
-  to require explicit interaction before warnings appear.
-- Warnings are cleared on `resetForm()`.
-
-### Styling and theming
-
-`ngx-control-wrapper` ships with built-in, framework-agnostic baseline styling via its component stylesheet.
-No Tailwind dependency is required for default message presentation.
-
-The wrapper is themeable through CSS custom properties defined on `:host`, including tokens for:
-
-- error/warning/pending colors (light + dark)
-- message spacing and typography
-- pending layout
-- spinner size and border color
-
-You can override these tokens from your app/theme stylesheet without replacing the wrapper:
+`ngx-control-wrapper` ships with framework-agnostic baseline styles and requires no CSS framework. Public `--ngx-control-wrapper-*` custom properties are consumed with private `--_ngx-control-wrapper-*` fallbacks rather than declared on `:host`, so consumer element selectors win over Angular's emulated encapsulation:
 
 ```css
 ngx-control-wrapper {
   --ngx-control-wrapper-error-color: #b91c1c;
   --ngx-control-wrapper-warning-color: #92400e;
+  --ngx-control-wrapper-pending-color: #4b5563;
 }
 ```
 
-#### Dark mode
+Available public tokens include:
 
-Built-in dark colors switch automatically via `@media (prefers-color-scheme: dark)`.
-This relies on the user's OS preference and does **not** react to a class- or
-attribute-based dark-mode toggle.
+- Layout and typography: `--ngx-control-wrapper-feedback-min-height`, `--ngx-control-wrapper-message-margin-top`, `--ngx-control-wrapper-message-font-size`, `--ngx-control-wrapper-message-line-height`, `--ngx-control-wrapper-message-gap`
+- Colors: `--ngx-control-wrapper-error-color`, `--ngx-control-wrapper-warning-color`, `--ngx-control-wrapper-pending-color`
+- Pending badge and spinner: `--ngx-control-wrapper-pending-top`, `--ngx-control-wrapper-pending-right`, `--ngx-control-wrapper-pending-gap`, `--ngx-control-wrapper-pending-font-size`, `--ngx-control-wrapper-pending-line-height`, `--ngx-control-wrapper-spinner-size`, `--ngx-control-wrapper-spinner-border-width`, `--ngx-control-wrapper-spinner-color`, `--ngx-control-wrapper-spinner-radius`
 
-If your app drives dark mode with a class or data attribute (e.g. `html.dark`,
-`[data-theme="dark"]`, the typical Tailwind / shadcn / Material setup), override
-the same tokens under your toggle selector:
+### Dark mode
+
+Built-in dark colors respond to `@media (prefers-color-scheme: dark)`. If your application switches themes with a class or data attribute, override the same public tokens under your theme selector:
 
 ```css
 html.dark ngx-control-wrapper {
@@ -146,20 +102,10 @@ html.dark ngx-control-wrapper {
 }
 ```
 
-Because each color is a single token (no separate `*-dark` companion), one
-override per concept is enough.
-
-If you need fully custom markup/layout, you can still build a custom wrapper using
-`FormErrorDisplayDirective` — see [Custom Control Wrappers](../../../../../../docs/CUSTOM-CONTROL-WRAPPERS.md).
-
-### ARIA merging
-
-When ARIA stamping is enabled (anything except `"none"`), the wrapper:
-
-- merges its own IDs into an existing `aria-describedby` on the control (does not clobber consumer-provided IDs)
-- toggles `aria-invalid="true"` only when errors are meant to be shown (`shouldShowErrors()`)
+If you need different markup or layout, build a custom wrapper on `FormErrorDisplayDirective` or `FormErrorControlDirective`.
 
 ## Related docs
 
-- [Accessibility Guide](../../../../../../docs/ACCESSIBILITY.md)
-- [Custom Control Wrappers](../../../../../../docs/CUSTOM-CONTROL-WRAPPERS.md)
+- [Accessibility guide](../../../../../../docs/ACCESSIBILITY.md)
+- [Custom control wrappers](../../../../../../docs/CUSTOM-CONTROL-WRAPPERS.md)
+- [API tokens](../../../../../../docs/API-TOKENS.md)

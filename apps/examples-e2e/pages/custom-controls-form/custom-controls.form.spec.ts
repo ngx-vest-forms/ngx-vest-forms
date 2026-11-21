@@ -5,14 +5,21 @@ test.describe('Custom Controls Form', () => {
     await page.goto('/custom-controls', { waitUntil: 'domcontentloaded' });
   });
 
-  test('should put aria-required on the element that carries each custom control role', async ({
+  test('exposes the label and required state of custom controls', async ({
     page,
   }) => {
+    const ratingLabel = page.locator('#rating-label');
+    const rating = page.getByRole('radiogroup', {
+      name: 'Rating',
+      exact: true,
+    });
+    await expect(ratingLabel).toBeVisible();
+    await expect(ratingLabel).toHaveText('Rating');
+    await expect(rating).toHaveAttribute('aria-labelledby', 'rating-label');
+
     // The wrapper only stamps the attribute on native controls and ARIA form
     // widgets, so this fails if a custom control stops exposing its role.
-    await expect(
-      page.getByRole('radiogroup', { name: /^rating/i })
-    ).toHaveAttribute('aria-required', 'true');
+    await expect(rating).toHaveAttribute('aria-required', 'true');
     await expect(
       page.getByRole('radiogroup', { name: 'Experience level' })
     ).toHaveAttribute('aria-required', 'true');
@@ -101,17 +108,6 @@ test.describe('Custom Controls Form', () => {
 
     await expect(rating).not.toHaveAttribute('aria-invalid');
     await expect(experience).not.toHaveAttribute('aria-invalid');
-  });
-
-  test('should name the rating radiogroup from its visible label', async ({
-    page,
-  }) => {
-    const label = (await page.locator('#rating-label').textContent())?.trim();
-
-    expect(label).toBe('Rating');
-    await expect(
-      page.getByRole('radiogroup', { name: label, exact: true })
-    ).toBeVisible();
   });
 
   test('should not mark the rating touched or show its error while arrowing between stars', async ({

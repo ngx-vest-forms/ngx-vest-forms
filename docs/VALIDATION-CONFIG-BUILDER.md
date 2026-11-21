@@ -1,848 +1,203 @@
-# ValidationConfig Fluent Builder API
+# ValidationConfig builder
 
-> **Vest 6 Recommended:** `validationConfig` works seamlessly with Vest 6's `omitWhen`/`skipWhen`. These patterns ensure dependent fields revalidate when conditions change. This guide assumes Vest 6 (`suite.only(field).run(model)` pattern).
+`createValidationConfig<T>()` builds a compile-time checked `ValidationConfigMap<T>` for `<form ngxVestForm [validationConfig]="...">`.
 
-The `ValidationConfigBuilder` provides a type-safe, fluent API for creating validation configuration objects. This builder simplifies the process of defining field dependencies and ensures correctness through compile-time type checking.
+Use `validationConfig` whenever a Vest 6 test for one field depends on another field's value (especially inside `omitWhen`, `skipWhen`, or cross-field comparisons). Angular only revalidates the field the user edits; `validationConfig` tells `FormDirective` which dependent fields to revalidate as well.
 
-> **💡 Critical Insight**: `validationConfig` is **essential** when using Vest.js's `omitWhen`/`skipWhen` for conditional validations. It ensures Angular re-validates dependent fields when conditions change, preventing stale validation states in dynamic forms.
+## Quick start
 
-## Table of Contents
+```ts
+import { Component, signal } from '@angular/core';
+import {
+  createValidationConfig,
+  NgxVestForms,
+  type NgxDeepPartial,
+  type NgxVestSuite,
+} from 'ngx-vest-forms';
+import { create, enforce, omitWhen, test } from 'vest';
 
-- [Quick Start](#quick-start)
-- [Why ValidationConfig Matters](#why-validationconfig-matters)
-- [Core Concepts](#core-concepts)
-- [API Reference](#api-reference)
-  - [whenChanged()](#whenchanged)
-  - [bidirectional()](#bidirectional)
-  - [group()](#group)
-  - [merge()](#merge)
-  - [build()](#build)
-- [Common Patterns](#common-patterns)
-- [Migration Guide](#migration-guide)
-- [Best Practices](#best-practices)
-
-## Quick Start
-
-```typescript
-import { createValidationConfig, type NgxDeepPartial } from 'ngx-vest-forms';
-
-type MyFormModel = NgxDeepPartial<{
+type SignupFormModel = NgxDeepPartial<{
+  email: string;
   password: string;
   confirmPassword: string;
-  email: string;
+  country: string;
+  state: string;
 }>;
 
-@Component({
-  // ...
-})
-export class MyFormComponent {
-  // ✅ Type-safe with autocomplete
-  protected readonly validationConfig = createValidationConfig<MyFormModel>()
-    .bidirectional('password', 'confirmPassword')
-    .whenChanged('email', 'password')
-    .build();
-}
-```
-
-## Why ValidationConfig Matters
-
-### The Problem: Conditional Validations Need Dependency Tracking
-
-When using Vest.js's `omitWhen` or `skipWhen` for conditional validations, Angular doesn't automatically know which fields should re-validate when conditions change. This can lead to **stale validation states**.
-
-**Example Scenario:**
-
-```typescript
-// Vest validation suite with conditional logic
-export const suite = create((model) => {
-  test('country', 'Required', () => {
-    enforce(model.country).isNotBlank();
-  });
-
-  // State field only required when country is 'USA'
-  omitWhen(model.country !== 'USA', () => {
-    test('state', 'State is required for USA', () => {
-      enforce(model.state).isNotBlank();
+const signupSuite: NgxVestSuite<SignupFormModel> = create(
+  (model: SignupFormModel) => {
+    test('confirmPassword', 'Passwords must match', () => {
+      enforce(model.confirmPassword).equals(model.password);
     });
-  });
-});
-```
 
-**Without ValidationConfig:**
+    omitWhen(model.country !== 'US', () => {
+      test('state', 'State is required for US addresses', () => {
+        enforce(model.state).isNotBlank();
+      });
+    });
+  }
+);
 
-1. User selects country = "Canada" → no state validation (correct)
-2. User selects country = "USA" → **state field doesn't re-validate automatically!**
-3. Result: Form appears valid even though state is now required
-
-**With ValidationConfig:**
-
-```typescript
-protected readonly validationConfig = createValidationConfig<FormModel>()
-  .whenChanged('country', 'state')  // When country changes, revalidate state
-  .build();
-```
-
-Now when country changes to "USA", Angular automatically re-validates the state field, showing the required error.
-
-### Why This Happens
-
-Vest.js validation suites are **declarative** - they describe what should be valid **at the moment they run**. But Angular's change detection doesn't know:
-
-- Which fields have conditional logic
-- When conditions change that affect other fields
-- Which fields need re-validation when a value changes
-
-**ValidationConfig bridges this gap** by explicitly telling Angular: "When field A changes, re-validate fields B, C, D because their validation rules might depend on A's value."
-
-### When You MUST Use ValidationConfig
-
-Use ValidationConfig whenever you have:
-
-- ✅ **`omitWhen` or `skipWhen`** - Conditional validation based on other field values
-- ✅ **Field comparisons** - Password confirmation, min/max ranges, date ranges
-- ✅ **Dependent requirements** - "Field B required when Field A = X"
-- ✅ **Cascading validations** - Country → State → City dependencies
-- ✅ **"At least one" rules** - Email OR Phone OR Address required
-
-### When ValidationConfig is Optional
-
-You may not need it for:
-
-- ❌ **Independent validations** - Each field validates only its own value
-- ❌ **Static rules** - Validation logic never changes based on other fields
-- ❌ **Simple forms** - Single-field validations with no dependencies
-
-### Real-World Impact
-
-**Without ValidationConfig + omitWhen:**
-
-```typescript
-// ❌ Broken: State validation doesn't update when country changes
-omitWhen(model.country !== 'USA', () => {
-  test('state', 'Required for USA', () => {
-    enforce(model.state).isNotBlank();
-  });
-});
-
-// User flow:
-// 1. Select Canada → no state error (correct)
-// 2. Change to USA → no state error shown (WRONG! Should show error)
-// 3. User submits invalid form → confusing UX
-```
-
-**With ValidationConfig + omitWhen:**
-
-```typescript
-// ✅ Works correctly: State re-validates when country changes
-protected readonly validationConfig = createValidationConfig<FormModel>()
-  .whenChanged('country', 'state')
-  .build();
-
-omitWhen(model.country !== 'USA', () => {
-  test('state', 'Required for USA', () => {
-    enforce(model.state).isNotBlank();
-  });
-});
-
-// User flow:
-// 1. Select Canada → no state error (correct)
-// 2. Change to USA → state error appears immediately (correct!)
-// 3. User sees validation feedback in real-time → better UX
-```
-
-### The Golden Rule
-
-> **Always use ValidationConfig with conditional Vest.js validations (`omitWhen`/`skipWhen`/`optional`)**. It's not just an optimization - it's essential for correct validation behavior in dynamic forms.
-
-## Core Concepts
-
-### What is a Validation Configuration?
-
-A validation configuration defines **dependent field validations** - when field A changes, which other fields should be revalidated?
-
-**Without Builder (Manual):**
-
-```typescript
-// ❌ Verbose, error-prone, no type safety
-protected readonly validationConfig = {
-  'password': ['confirmPassword'],
-  'confirmPassword': ['password'], // Easy to forget reverse dependency
-  'email': ['password'],
-};
-```
-
-**With Builder:**
-
-```typescript
-// ✅ Clean, type-safe, self-documenting
-protected readonly validationConfig = createValidationConfig<MyFormModel>()
-  .bidirectional('password', 'confirmPassword')
-  .whenChanged('email', 'password')
-  .build();
-```
-
-### Type Safety Benefits
-
-- **IDE Autocomplete**: Get suggestions for all valid field paths
-- **Compile-time Errors**: Catch typos before runtime
-- **Refactoring Support**: Rename properties and all references update
-- **Self-documenting**: Intent is clear from method names
-
-## API Reference
-
-### whenChanged()
-
-Add a one-way dependency: when the trigger field changes, revalidate dependent fields.
-
-**Signature:**
-
-```typescript
-whenChanged(
-  trigger: FieldPath<T>,
-  revalidate: FieldPath<T> | ReadonlyArray<FieldPath<T>>
-): this
-```
-
-**Examples:**
-
-```typescript
-// Single dependent
-createValidationConfig<FormModel>()
-  .whenChanged('password', 'confirmPassword')
-  .build();
-// Result: { password: ['confirmPassword'] }
-
-// Multiple dependents
-createValidationConfig<FormModel>()
-  .whenChanged('country', ['state', 'zipCode', 'city'])
-  .build();
-// Result: { country: ['state', 'zipCode', 'city'] }
-
-// Cumulative calls (same trigger)
-createValidationConfig<FormModel>()
-  .whenChanged('password', 'confirmPassword')
-  .whenChanged('password', 'securityScore')
-  .build();
-// Result: { password: ['confirmPassword', 'securityScore'] }
-
-// Nested field paths
-createValidationConfig<FormModel>()
-  .whenChanged('addresses.billing.country', 'addresses.billing.state')
-  .build();
-```
-
-**Use Cases:**
-
-- Conditional validations (country → state/zipCode)
-- Dependent calculations (quantity/price → total)
-- Security validations (password → strength indicator)
-
----
-
-### bidirectional()
-
-Add a two-way dependency: when either field changes, revalidate the other.
-
-**Signature:**
-
-```typescript
-bidirectional(field1: FieldPath<T>, field2: FieldPath<T>): this
-```
-
-**Examples:**
-
-```typescript
-// Password confirmation
-createValidationConfig<FormModel>()
-  .bidirectional('password', 'confirmPassword')
-  .build();
-// Result: {
-//   password: ['confirmPassword'],
-//   confirmPassword: ['password']
-// }
-
-// Date ranges
-createValidationConfig<FormModel>()
-  .bidirectional('startDate', 'endDate')
-  .build();
-
-// Price ranges
-createValidationConfig<FormModel>()
-  .bidirectional('minPrice', 'maxPrice')
-  .build();
-
-// Multiple bidirectional relationships
-createValidationConfig<FormModel>()
-  .bidirectional('password', 'confirmPassword')
-  .bidirectional('startDate', 'endDate')
-  .bidirectional('minPrice', 'maxPrice')
-  .build();
-```
-
-**Use Cases:**
-
-- Password/confirmation matching
-- Min/max range validations
-- Start/end date validations
-- Any mutual dependency
-
----
-
-### group()
-
-Create a validation group where all fields revalidate each other.
-
-**Signature:**
-
-```typescript
-group(fields: ReadonlyArray<FieldPath<T>>): this
-```
-
-**Examples:**
-
-```typescript
-// Contact information group
-createValidationConfig<FormModel>()
-  .group(['firstName', 'lastName', 'email'])
-  .build();
-// Result: {
-//   firstName: ['lastName', 'email'],
-//   lastName: ['firstName', 'email'],
-//   email: ['firstName', 'lastName']
-// }
-
-// Address validation group
-createValidationConfig<FormModel>()
-  .group(['street', 'city', 'state', 'zipCode'])
-  .build();
-
-// Nested field paths
-createValidationConfig<FormModel>()
-  .group([
-    'addresses.billing.street',
-    'addresses.billing.city',
-    'addresses.billing.zipCode',
-  ])
-  .build();
-```
-
-**Use Cases:**
-
-- Fields that collectively form a validation rule
-- "At least one required" scenarios
-- Interdependent field sets
-
-**Performance Note:** Creates N×(N-1) dependencies. For large groups (>10 fields), consider using `whenChanged()` for more targeted dependencies.
-
----
-
-### merge()
-
-Merge with an existing validation configuration.
-
-**Signature:**
-
-```typescript
-merge(other: ValidationConfigMap<T>): this
-```
-
-**Examples:**
-
-```typescript
-// Conditional configuration
-const internationalConfig = isInternational
-  ? { country: ['customsForm', 'taxId'] }
-  : {};
-
-createValidationConfig<FormModel>()
-  .bidirectional('password', 'confirmPassword')
-  .merge(internationalConfig)
-  .build();
-
-// Composition from multiple sources
-const addressConfig = { street: ['city', 'zipCode'] };
-const contactConfig = { email: ['phone'] };
-
-createValidationConfig<FormModel>()
-  .merge(addressConfig)
-  .merge(contactConfig)
-  .build();
-
-// Merge and deduplicate
-const baseConfig = { password: ['confirmPassword'] };
-
-createValidationConfig<FormModel>()
-  .whenChanged('password', 'email')
-  .merge(baseConfig)
-  .build();
-// Result: { password: ['email', 'confirmPassword'] }
-```
-
-**Use Cases:**
-
-- Conditional configurations based on runtime state
-- Composing configurations from multiple sources
-- Reusing base configurations
-- Dynamic configuration building
-
----
-
-### build()
-
-Build the final validation configuration object.
-
-**Signature:**
-
-```typescript
-build(): ValidationConfigMap<T>
-```
-
-**Returns:** A deep copy of the configuration (immutable from builder's perspective).
-
-**Examples:**
-
-```typescript
-const config = createValidationConfig<FormModel>()
-  .bidirectional('password', 'confirmPassword')
-  .build();
-
-// Use in component
 @Component({
-  // ...
+  selector: 'app-signup-form',
+  imports: [NgxVestForms],
+  template: `
+    <form
+      ngxVestForm
+      [suite]="suite"
+      [validationConfig]="validationConfig"
+      [formValue]="formValue()"
+      (formValueChange)="formValue.set($event)"
+    >
+      <!-- controls -->
+    </form>
+  `,
 })
-export class MyComponent {
-  protected readonly validationConfig = createValidationConfig<MyFormModel>()
+export class SignupFormComponent {
+  protected readonly formValue = signal<SignupFormModel>({});
+  protected readonly suite = signupSuite;
+
+  protected readonly validationConfig = createValidationConfig<SignupFormModel>()
     .bidirectional('password', 'confirmPassword')
     .whenChanged('country', 'state')
     .build();
 }
 ```
 
-**Note:** The builder remains reusable after calling `build()`. You can continue chaining methods and build again.
+Passing `<SignupFormModel>` gives you IDE autocomplete and compile-time checks for dotted field paths (including nested paths such as `'addresses.billing.country'`). Since v3, `[validationConfig]` rejects untyped `Record<string, string[]>` maps so path typos fail at compile time.
 
----
+## API reference
 
-## Common Patterns
+### `whenChanged(trigger, revalidate)`
 
-### Password Confirmation
+Adds a one-way dependency: when `trigger` changes, revalidate one or more dependent fields.
 
-```typescript
+```ts
+whenChanged(
+  trigger: FieldPath<T>,
+  revalidate: FieldPath<T> | ReadonlyArray<FieldPath<T>>
+): this
+```
+
+```ts
 createValidationConfig<FormModel>()
-  .bidirectional('password', 'confirmPassword')
+  .whenChanged('country', ['state', 'zipCode'])
+  .whenChanged('addresses.billing.country', 'addresses.billing.state')
   .build();
 ```
 
-### Date Range Validation
+Multiple `whenChanged` calls for the same trigger accumulate dependents and deduplicate automatically (logging a dev-mode warning if you add the exact same dependency twice).
 
-```typescript
+### `bidirectional(field1, field2)`
+
+Adds a two-way dependency: changing either field revalidates the other.
+
+```ts
+bidirectional(field1: FieldPath<T>, field2: FieldPath<T>): this
+```
+
+```ts
 createValidationConfig<FormModel>()
+  .bidirectional('password', 'confirmPassword')
   .bidirectional('startDate', 'endDate')
   .build();
 ```
 
-### Address with Country Dependencies
+### `group(fields)`
 
-```typescript
-createValidationConfig<FormModel>()
-  .whenChanged('country', ['state', 'zipCode', 'province'])
-  .group(['street', 'city', 'zipCode'])
-  .build();
+Connects every field in the list to every other field in the list.
+
+```ts
+group(fields: ReadonlyArray<FieldPath<T>>): this
 ```
 
-### Contact Information Group
-
-```typescript
+```ts
 createValidationConfig<FormModel>()
   .group(['email', 'phone', 'alternateEmail'])
   .build();
 ```
 
-### Complex Form with Multiple Patterns
+A group of N fields creates N × (N - 1) entries (for example, 10 fields create 90 dependencies). Prefer targeted `whenChanged()` calls for large sets of fields.
 
-```typescript
-type OrderFormModel = NgxDeepPartial<{
-  // Customer info
-  firstName: string;
-  lastName: string;
-  email: string;
+### `merge(other)`
 
-  // Authentication
-  password: string;
-  confirmPassword: string;
+Merges an existing `ValidationConfigMap<T>` into the builder and deduplicates entries. Useful for composing reusable helper configs or conditional rules.
 
-  // Date range
-  startDate: Date;
-  endDate: Date;
+```ts
+merge(other: ValidationConfigMap<T>): this
+```
 
-  // Price range
-  minPrice: number;
-  maxPrice: number;
-
-  // Location
-  country: string;
-  state: string;
-  zipCode: string;
-
-  // Order details
-  orderType: string;
-  deliveryDate: Date;
-  priority: string;
-}>;
+```ts
+function createAddressConfig() {
+  return createValidationConfig<OrderFormModel>()
+    .whenChanged('billing.country', ['billing.state', 'billing.zipCode'])
+    .build();
+}
 
 protected readonly validationConfig = createValidationConfig<OrderFormModel>()
-  // Customer info group
-  .group(['firstName', 'lastName', 'email'])
-
-  // Password confirmation
   .bidirectional('password', 'confirmPassword')
-
-  // Date range
-  .bidirectional('startDate', 'endDate')
-
-  // Price range
-  .bidirectional('minPrice', 'maxPrice')
-
-  // Location dependencies
-  .whenChanged('country', ['state', 'zipCode'])
-
-  // Order type affects delivery
-  .whenChanged('orderType', ['deliveryDate', 'priority'])
-
+  .merge(createAddressConfig())
   .build();
 ```
 
-### Conditional Configuration
+### `build()`
 
-```typescript
-@Component({
-  // ...
-})
-export class CheckoutComponent {
-  private readonly isInternational = signal(false);
+Returns a fresh copy of the `ValidationConfigMap<T>`. The builder remains reusable if you want to keep chaining and build another copy.
 
-  protected readonly validationConfig = computed(() => {
-    const builder = createValidationConfig<CheckoutFormModel>()
-      .bidirectional('password', 'confirmPassword')
-      .whenChanged('country', 'state');
-
-    // Add international-specific validations
-    if (this.isInternational()) {
-      builder
-        .whenChanged('country', 'customsForm')
-        .whenChanged('country', 'taxId');
-    }
-
-    return builder.build();
-  });
-}
+```ts
+build(): ValidationConfigMap<T>
 ```
 
-### Nested Field Paths
+## Dynamic configuration with signals
 
-```typescript
-type FormModel = NgxDeepPartial<{
-  addresses: {
-    billing: {
-      street: string;
-      city: string;
-      state: string;
-      zipCode: string;
-      country: string;
-    };
-    shipping: {
-      street: string;
-      city: string;
-      state: string;
-      zipCode: string;
-    };
+When dependencies depend on runtime state, wrap the builder in a `computed()` signal. `FormDirective` compares consecutive configs deeply, so rebuilding an identical map does not restart the pipeline.
+
+```ts
+protected readonly validationConfig = computed(() => {
+  const builder = createValidationConfig<CheckoutFormModel>()
+    .bidirectional('password', 'confirmPassword')
+    .whenChanged('country', 'state');
+
+  if (this.isInternational()) {
+    builder.whenChanged('country', ['customsForm', 'taxId']);
+  }
+
+  return builder.build();
+});
+```
+
+## Timing, debouncing, and submission
+
+- **Debounce:** Dependent revalidation waits `100` ms by default (`NGX_VALIDATION_DEBOUNCE_PRESETS.default`). Override it globally or per component with `NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN`:
+
+  ```ts
+  // App-level debounce configuration
+  import type { ApplicationConfig } from '@angular/core';
+  import {
+    NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
+    NGX_VALIDATION_DEBOUNCE_PRESETS,
+  } from 'ngx-vest-forms';
+
+  export const appConfig: ApplicationConfig = {
+    providers: [
+      {
+        provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
+        useValue: NGX_VALIDATION_DEBOUNCE_PRESETS.relaxed,
+      },
+    ],
   };
-}>;
+  ```
 
-protected readonly validationConfig = createValidationConfig<FormModel>()
-  // Billing address group
-  .group([
-    'addresses.billing.street',
-    'addresses.billing.city',
-    'addresses.billing.zipCode'
-  ])
-
-  // Country affects state for billing
-  .whenChanged('addresses.billing.country', 'addresses.billing.state')
-
-  // Shipping address group
-  .group([
-    'addresses.shipping.street',
-    'addresses.shipping.city',
-    'addresses.shipping.zipCode'
-  ])
-
-  .build();
-```
-
-## Migration Guide
-
-### From Manual Configuration
-
-**Before:**
-
-```typescript
-protected readonly validationConfig = {
-  'password': ['confirmPassword'],
-  'confirmPassword': ['password'],
-  'startDate': ['endDate'],
-  'endDate': ['startDate'],
-  'country': ['state', 'zipCode'],
-};
-```
-
-**After:**
-
-```typescript
-protected readonly validationConfig = createValidationConfig<MyFormModel>()
-  .bidirectional('password', 'confirmPassword')
-  .bidirectional('startDate', 'endDate')
-  .whenChanged('country', ['state', 'zipCode'])
-  .build();
-```
-
-### From Untyped to Typed
-
-**Before:**
-
-```typescript
-protected readonly validationConfig = {
-  'pasword': ['confirmPassword'], // ❌ Typo not caught
-};
-```
-
-**After:**
-
-```typescript
-protected readonly validationConfig = createValidationConfig<MyFormModel>()
-  .bidirectional('pasword', 'confirmPassword') // ✅ TypeScript error!
-  .build();
-```
-
-## Best Practices
-
-### 1. Always Use Type Parameter
-
-```typescript
-// ✅ Good - full type safety
-createValidationConfig<MyFormModel>();
-
-// ❌ Bad - no autocomplete or type checking
-createValidationConfig();
-```
-
-### 2. Use Descriptive Method Names
-
-The builder API is self-documenting. Choose the method that best describes the relationship:
-
-```typescript
-// ✅ Clear intent
-.bidirectional('password', 'confirmPassword')
-.whenChanged('country', 'state')
-.group(['firstName', 'lastName', 'email'])
-
-// ❌ Less clear
-.whenChanged('password', 'confirmPassword')
-.whenChanged('confirmPassword', 'password')
-```
-
-### 3. Chain Related Configurations
-
-Group related validation rules together:
-
-```typescript
-createValidationConfig<FormModel>()
-  // Authentication section
-  .bidirectional('password', 'confirmPassword')
-  .whenChanged('password', 'securityScore')
-
-  // Date section
-  .bidirectional('startDate', 'endDate')
-
-  // Location section
-  .whenChanged('country', ['state', 'zipCode'])
-
-  .build();
-```
-
-### 4. Extract Complex Configurations
-
-For very large forms, consider extracting configuration builders into separate functions:
-
-```typescript
-// Write the helpers against the concrete model type: field paths are
-// validated against FormModel at compile time. (An unconstrained generic
-// <T> would make FieldPath<T> unresolvable and reject every field name.)
-function createAuthConfig() {
-  return createValidationConfig<FormModel>()
-    .bidirectional('password', 'confirmPassword')
-    .whenChanged('password', 'securityScore');
-}
-
-function createAddressConfig() {
-  return createValidationConfig<FormModel>()
-    .whenChanged('country', ['state', 'zipCode'])
-    .group(['street', 'city', 'zipCode']);
-}
-
-protected readonly validationConfig = createAuthConfig()
-  .merge(createAddressConfig().build())
-  .build();
-```
-
-### 5. Use Signals for Dynamic Configuration
-
-When validation config depends on runtime state, use computed signals:
-
-```typescript
-protected readonly validationConfig = computed(() =>
-  createValidationConfig<FormModel>()
-    .bidirectional('password', 'confirmPassword')
-    .merge(this.isDynamicMode() ? this.extraConfig() : {})
-    .build()
-);
-```
-
-### 6. Avoid Large Groups
-
-For groups larger than 10 fields, consider if all fields truly need to revalidate each other:
-
-```typescript
-// ⚠️ Creates 90 dependencies (10×9)
-.group(['field1', 'field2', 'field3', 'field4', 'field5',
-        'field6', 'field7', 'field8', 'field9', 'field10'])
-
-// ✅ More targeted
-.whenChanged('field1', ['field2', 'field3'])
-.whenChanged('field2', ['field1', 'field4'])
-```
-
-### 7. Test Your Configuration
-
-Validation configurations are critical to form behavior. Test them:
-
-```typescript
-describe('MyComponent validation config', () => {
-  it('should revalidate confirmPassword when password changes', () => {
-    const config = component.validationConfig;
-    expect(config.password).toContain('confirmPassword');
-  });
-
-  it('should have bidirectional password validation', () => {
-    const config = component.validationConfig;
-    expect(config.password).toContain('confirmPassword');
-    expect(config.confirmPassword).toContain('password');
-  });
-});
-```
-
-## Performance Considerations
-
-### Debouncing
-
-The validation config respects the debounce token configuration:
-
-```typescript
-// ngx-level debounce configuration
-import {
-  NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
-  NGX_VALIDATION_DEBOUNCE_PRESETS,
-} from 'ngx-vest-forms';
-
-bootstrapApplication(AppComponent, {
-  providers: [
-    {
-      provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
-      useValue: NGX_VALIDATION_DEBOUNCE_PRESETS.relaxed,
-    },
-  ],
-});
-```
-
-### Group Size Impact
-
-Each `group()` call creates N×(N-1) dependencies:
-
-- 3 fields = 6 dependencies
-- 5 fields = 20 dependencies
-- 10 fields = 90 dependencies
-
-Use groups judiciously for large field sets.
-
-### Builder Reuse
-
-Builders can be reused and are garbage-collected after `build()`:
-
-```typescript
-// ✅ Builder is GC'd after build()
-protected readonly config = createValidationConfig<T>()
-  .bidirectional('a', 'b')
-  .build();
-
-// ✅ Reusable builder
-const builder = createValidationConfig<T>();
-const config1 = builder.whenChanged('a', 'b').build();
-const config2 = builder.whenChanged('c', 'd').build();
-```
+- **Submit safety:** When the user submits the form, `FormDirective` revalidates `validationConfig` dependents before emitting `(submitSettled)` (and its corresponding post-submit `(errorsChange)` update; during ordinary edits, `(errorsChange)` still emits on every non-`PENDING` status change). Submitting immediately after editing a trigger field cannot slip past a pending debounce window.
+- **Quiet dependent errors:** `validationConfig` updates the dependent control's validity immediately, while `<ngx-control-wrapper>` still obeys its own `errorDisplayMode` (so an untouched dependent field does not flash errors prematurely).
 
 ## Troubleshooting
 
-### TypeScript Errors
+- **No autocomplete or `"Type 'string' is not assignable to type FieldPath<T>"`:** Pass your concrete model type to `createValidationConfig<MyFormModel>()`. Avoid writing helper functions with an unconstrained `<T>` generic, because `FieldPath<T>` cannot resolve keys for an unknown `T`.
+- **Dependent field does not revalidate:** Confirm that the field path matches the control's `ngModelGroup` + `name` path, `[validationConfig]` is bound on `<form ngxVestForm>`, and the dependent control is currently mounted in the DOM.
 
-**Problem:** "Type 'string' is not assignable to type FieldPath<T>"
+## Related guides
 
-**Solution:** Ensure your type parameter is correctly defined with `NgxDeepPartial`:
-
-```typescript
-// ✅ Correct
-type MyFormModel = NgxDeepPartial<{
-  password: string;
-}>;
-
-// ❌ Wrong
-type MyFormModel = {
-  password?: string; // Use NgxDeepPartial instead
-};
-```
-
-### Autocomplete Not Working
-
-**Problem:** No field suggestions in IDE
-
-**Solution:** Ensure you're providing the type parameter:
-
-```typescript
-// ✅ Autocomplete works
-createValidationConfig<MyFormModel>();
-
-// ❌ No autocomplete
-createValidationConfig();
-```
-
-### Validation Not Triggering
-
-**Problem:** Dependent field not revalidating
-
-**Solution:** Check that:
-
-1. Field names exactly match model property paths
-2. Configuration is passed to `[validationConfig]` input
-3. Form is using `ngxVestForm` directive
-
-```typescript
-// Template
-<form ngxVestForm [validationConfig]="validationConfig">
-  <input name="password" [ngModel]="formValue().password" />
-  <input name="confirmPassword" [ngModel]="formValue().confirmPassword" />
-</form>
-```
-
-## See Also
-
-- [Field Path Types](./FIELD-PATHS.md) - Understanding type-safe field paths
-- [Complete Example](./COMPLETE-EXAMPLE.md) - Full form implementation
-- [Validation Config vs Root Form](./VALIDATION-CONFIG-VS-ROOT-FORM.md) - When to use each pattern
+- [ValidationConfig vs root-form](./VALIDATION-CONFIG-VS-ROOT-FORM.md)
+- [Field path types](./FIELD-PATHS.md)
+- [API tokens](./API-TOKENS.md#ngx_validation_config_debounce_token)

@@ -38,10 +38,11 @@ import { onValidationReset } from './validation-reset';
 
 /**
  * Error display modes for form controls.
- * - 'on-blur': Show errors after field is touched/blurred
- * - 'on-submit': Show errors after form submission
  * - 'on-blur-or-submit': Show errors after blur or form submission (default)
- * - 'on-dirty': Show errors as soon as the field value changes
+ * - 'on-blur': Deprecated alias for `'on-blur-or-submit'` (opens on blur or form
+ *   submission; scheduled for removal in v4, see ADR 0013)
+ * - 'on-submit': Show errors after form submission
+ * - 'on-dirty': Show errors as soon as the field value changes, or after touch/submit
  * - 'always': Show errors immediately, even on pristine fields
  */
 export type NgxErrorDisplayMode =
@@ -53,9 +54,9 @@ export type NgxErrorDisplayMode =
 
 /**
  * Warning display modes for form controls.
- * - 'on-touch': Show warnings after field is touched/blurred
- * - 'on-validated-or-touch': Show warnings after validation runs or field is touched (default)
- * - 'on-dirty': Show warnings as soon as the field value changes
+ * - 'on-validated-or-touch': Show warnings after validation runs, touch, or form submission (default)
+ * - 'on-touch': Show warnings after field is touched/blurred or the form is submitted
+ * - 'on-dirty': Show warnings as soon as the field value changes, or after touch/submit
  * - 'always': Show warnings immediately, even on pristine fields
  */
 export type NgxWarningDisplayMode =
@@ -87,7 +88,7 @@ export class FormErrorDisplayDirective {
 
   /**
    * Input signal for error display mode.
-   * Works seamlessly with hostDirectives in Angular 19+.
+   * Works with `hostDirectives`.
    */
   readonly errorDisplayMode = input<NgxErrorDisplayMode>(
     inject(NGX_ERROR_DISPLAY_MODE_TOKEN, { optional: true }) ??
@@ -445,7 +446,7 @@ function errorGateOpen(state: {
       return (isDirty || isTouched || formSubmitted) && hasErrorState;
 
     case 'on-blur':
-      // Show after touch (blur) or form submission (traditional behavior, not dirty-based)
+      // Deprecated alias for 'on-blur-or-submit' (scheduled for removal in v4; see ADR 0013)
       return (isTouched || formSubmitted) && hasErrorState;
 
     case 'on-submit':

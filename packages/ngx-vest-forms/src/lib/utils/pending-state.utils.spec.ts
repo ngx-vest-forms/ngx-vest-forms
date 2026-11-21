@@ -32,47 +32,20 @@ describe('pending-state.utils', () => {
       expect(result.showPendingMessage()).toBe(true);
     });
 
-    it('should create debounced pending state with default options', () => {
+    it('shows the Pending message after the default 200 ms delay', () => {
       TestBed.runInInjectionContext(() => {
         const isPending = signal(false);
-        const result = createDebouncedPendingState(isPending);
+        const { showPendingMessage } = createDebouncedPendingState(isPending);
+        expect(showPendingMessage()).toBe(false);
 
-        expect(result.showPendingMessage).toBeDefined();
-        expect(result.cleanup).toBeDefined();
-        expect(typeof result.cleanup).toBe('function');
-        expect(result.showPendingMessage()).toBe(false);
-      });
-    });
-
-    it('should not show pending message immediately when validation starts', () => {
-      TestBed.runInInjectionContext(() => {
-        const isPending = signal(false);
-        const result = createDebouncedPendingState(isPending);
-
-        // Start validation
         isPending.set(true);
+        TestBed.tick();
 
-        // Should not show immediately
-        expect(result.showPendingMessage()).toBe(false);
-      });
-    });
-
-    it('should show pending message after showAfter delay (default 200ms)', () => {
-      TestBed.runInInjectionContext(() => {
-        const isPending = signal(false);
-        const result = createDebouncedPendingState(isPending);
-
-        // Start validation
-        isPending.set(true);
-        expect(result.showPendingMessage()).toBe(false);
-
-        // Advance time by 199ms (just before threshold)
         vi.advanceTimersByTime(199);
-        expect(result.showPendingMessage()).toBe(false);
+        expect(showPendingMessage()).toBe(false);
 
-        // Advance to 200ms (at threshold)
         vi.advanceTimersByTime(1);
-        expect(result.showPendingMessage()).toBe(true);
+        expect(showPendingMessage()).toBe(true);
       });
     });
 
@@ -474,6 +447,89 @@ describe('pending-state.utils', () => {
           // Cross the new 1000ms threshold from the restart point.
           await vi.advanceTimersByTimeAsync(1000);
           expect(result.showPendingMessage()).toBe(true);
+        });
+      });
+
+      it('keeps active showAfter and minimumDisplay timers running when options emits an equal object', async () => {
+        await TestBed.runInInjectionContext(async () => {
+          const isPending = signal(false);
+          const opts = signal({ showAfter: 200, minimumDisplay: 500 });
+          const result = createDebouncedPendingState(isPending, opts);
+
+          isPending.set(true);
+          await vi.advanceTimersByTimeAsync(100);
+          expect(result.showPendingMessage()).toBe(false);
+
+          // New object identity with identical numbers (as produced by inline template bindings).
+          opts.set({ showAfter: 200, minimumDisplay: 500 });
+          await vi.advanceTimersByTimeAsync(100);
+          expect(result.showPendingMessage()).toBe(true);
+
+          isPending.set(false);
+          await vi.advanceTimersByTimeAsync(250);
+          expect(result.showPendingMessage()).toBe(true);
+
+          // Another identical object during minimumDisplay must not reset the hide timer.
+          opts.set({ showAfter: 200, minimumDisplay: 500 });
+          await vi.advanceTimersByTimeAsync(250);
+          expect(result.showPendingMessage()).toBe(false);
+        });
+      });
+
+      it('does not re-run the effect when minimumDisplay clears showPendingMessage', async () => {
+        await TestBed.runInInjectionContext(async () => {
+          const isPending = signal(false);
+          let reads = 0;
+          const baseIsPending = () => {
+            reads++;
+            return isPending();
+          };
+          const trackedIsPending = Object.assign(baseIsPending, isPending);
+          const result = createDebouncedPendingState(trackedIsPending, {
+            showAfter: 100,
+            minimumDisplay: 200,
+          });
+
+          isPending.set(true);
+          await vi.advanceTimersByTimeAsync(100);
+          expect(result.showPendingMessage()).toBe(true);
+
+          isPending.set(false);
+          await vi.advanceTimersByTimeAsync(0);
+          const readsBeforeHide = reads;
+
+          await vi.advanceTimersByTimeAsync(200);
+          expect(result.showPendingMessage()).toBe(false);
+          TestBed.tick();
+          expect(reads).toBe(readsBeforeHide);
+        });
+      });
+
+      it('applies updated minimumDisplay values when the options signal changes', async () => {
+        await TestBed.runInInjectionContext(async () => {
+          const isPending = signal(false);
+          const opts = signal({ showAfter: 100, minimumDisplay: 200 });
+          const result = createDebouncedPendingState(isPending, opts);
+
+          isPending.set(true);
+          await vi.advanceTimersByTimeAsync(100);
+          expect(result.showPendingMessage()).toBe(true);
+
+          isPending.set(false);
+          await vi.advanceTimersByTimeAsync(100);
+          expect(result.showPendingMessage()).toBe(true);
+
+          // Extend minimumDisplay while the message is in its hold window.
+          opts.set({ showAfter: 100, minimumDisplay: 600 });
+          await vi.advanceTimersByTimeAsync(0);
+
+          // Crossing the old 200ms window is no longer enough to hide it.
+          await vi.advanceTimersByTimeAsync(200);
+          expect(result.showPendingMessage()).toBe(true);
+
+          // Crossing the new 600ms duration from the update hides it.
+          await vi.advanceTimersByTimeAsync(400);
+          expect(result.showPendingMessage()).toBe(false);
         });
       });
     });

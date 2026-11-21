@@ -1,4 +1,5 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   Directive,
   forwardRef,
@@ -2108,6 +2109,146 @@ describe('ControlWrapperComponent while re-validating', () => {
       expect(screen.queryByText('Handle is taken')).not.toBeInTheDocument();
       expect(input).not.toHaveAttribute('aria-invalid');
       expect(input).toHaveAttribute('aria-describedby', 'handle-hint');
+    });
+  });
+
+  it('keeps inline [pendingDebounce] timers running across unrelated change detection', async () => {
+    vi.useFakeTimers();
+    onTestFinished(() => {
+      vi.useRealTimers();
+    });
+
+    @Component({
+      imports: [
+        FormsModule,
+        ControlWrapperComponent,
+        ManualAsyncValidatorDirective,
+      ],
+      template: `
+        <form #form="ngForm">
+          <p data-testid="counter">{{ counter() }}</p>
+          <ngx-control-wrapper
+            [pendingDebounce]="{ showAfter: 200, minimumDisplay: 500 }"
+          >
+            <label for="inline-pending">Handle</label>
+            <input
+              id="inline-pending"
+              name="handle"
+              ngxManualAsync
+              [(ngModel)]="model"
+            />
+          </ngx-control-wrapper>
+        </form>
+      `,
+    })
+    class InlinePendingDebounceHostComponent {
+      model = '';
+      readonly counter = signal(0);
+      readonly validator = viewChild.required(ManualAsyncValidatorDirective);
+      readonly ngForm = viewChild.required(NgForm);
+    }
+
+    const { fixture } = await render(InlinePendingDebounceHostComponent);
+    const host = fixture.componentInstance;
+    const control = host.ngForm().form.get('handle');
+    if (!control) throw new Error('handle control missing');
+
+    control.markAsDirty();
+    control.setValue('checking');
+    fixture.detectChanges();
+
+    // Repeated unrelated CD passes every 50ms must not reset the 200ms showAfter timer.
+    for (let i = 0; i < 4; i++) {
+      host.counter.update((n) => n + 1);
+      fixture.detectChanges();
+      await vi.advanceTimersByTimeAsync(50);
+    }
+    fixture.detectChanges();
+    expect(screen.getByText('Validating…')).toBeInTheDocument();
+
+    // Settle validation and keep triggering unrelated CD during the 500ms minimumDisplay window.
+    host.validator().settle(null);
+    fixture.detectChanges();
+
+    for (let i = 0; i < 9; i++) {
+      host.counter.update((n) => n + 1);
+      fixture.detectChanges();
+      await vi.advanceTimersByTimeAsync(50);
+    }
+    fixture.detectChanges();
+    expect(screen.getByText('Validating…')).toBeInTheDocument();
+
+    host.counter.update((n) => n + 1);
+    fixture.detectChanges();
+    await vi.advanceTimersByTimeAsync(50);
+    fixture.detectChanges();
+    expect(screen.queryByText('Validating…')).not.toBeInTheDocument();
+  });
+
+  it('omits errorId from aria-describedby when invalid with no rendered error text while keeping aria-invalid', async () => {
+    const { fixture } = await render(HeldMessagesHostComponent);
+    const host = fixture.componentInstance;
+    const input = screen.getByLabelText('Handle');
+    const control = host.ngForm().form.get('handle');
+    if (!control) throw new Error('handle control missing');
+
+    control.markAsTouched();
+    control.markAsDirty();
+    control.setValue('bad');
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Control becomes INVALID, but with an empty messages array so no error text renders.
+    host.validator().settle({ errors: [] });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    await waitFor(() => {
+      expect(input).toHaveAttribute('aria-invalid', 'true');
+      expect(input).toHaveAttribute('aria-describedby', 'handle-hint');
+    });
+  });
+
+  it('updates rendered errors and clears them under ChangeDetectionStrategy.OnPush', async () => {
+    @Component({
+      imports: [NgxVestForms],
+      changeDetection: ChangeDetectionStrategy.OnPush,
+      template: `
+        <form
+          ngxVestForm
+          [suite]="suite"
+          [formValue]="model()"
+          (formValueChange)="model.set($event)"
+        >
+          <ngx-control-wrapper>
+            <label for="onpush-email">OnPush Email</label>
+            <input id="onpush-email" name="email" [ngModel]="model().email" />
+          </ngx-control-wrapper>
+        </form>
+      `,
+    })
+    class OnPushControlWrapperHostComponent {
+      readonly model = signal({ email: '' });
+      readonly suite = testSuite;
+    }
+
+    await render(OnPushControlWrapperHostComponent);
+    const input = screen.getByLabelText('OnPush Email');
+
+    await userEvent.click(input);
+    await userEvent.tab();
+
+    await waitFor(() => {
+      expect(screen.getByText('Email is required')).toBeInTheDocument();
+      expect(input).toHaveAttribute('aria-invalid', 'true');
+    });
+
+    await userEvent.type(input, 'ada@example.com');
+    await userEvent.tab();
+
+    await waitFor(() => {
+      expect(screen.queryByText('Email is required')).not.toBeInTheDocument();
+      expect(input).not.toHaveAttribute('aria-invalid');
     });
   });
 });

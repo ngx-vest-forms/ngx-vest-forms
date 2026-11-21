@@ -22,11 +22,11 @@
  *   age: number;
  * }
  *
- * /// Type: 'name' | 'email' | 'age' | string
+ * // Type: 'name' | 'email' | 'age' | string
  * type UserField = NgxFieldKey<User>;
  *
- * /// IDE suggests 'name', 'email', 'age'
- * /// but also accepts 'addresses.0.street'
+ * // IDE suggests 'name', 'email', 'age'
+ * // but also accepts 'addresses.0.street'
  * const field: UserField = 'email'; // ✅ autocomplete
  * const nested: UserField = 'profile.settings.theme'; // ✅ also valid
  * ```

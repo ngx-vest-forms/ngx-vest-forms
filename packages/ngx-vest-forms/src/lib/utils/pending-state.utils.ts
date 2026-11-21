@@ -1,9 +1,11 @@
 import {
+  computed,
   effect,
   type Injector,
   isSignal,
   type Signal,
   signal,
+  untracked,
 } from '@angular/core';
 
 /**
@@ -53,6 +55,9 @@ export type DebouncedPendingStateResult = {
   cleanup: () => void;
 };
 
+const DEFAULT_SHOW_AFTER = 200;
+const DEFAULT_MINIMUM_DISPLAY = 500;
+
 /**
  * Creates a debounced pending state signal that prevents flashing validation messages.
  *
@@ -96,15 +101,25 @@ export function createDebouncedPendingState(
   options: DebouncedPendingStateOptionsInput = {},
   config: { injector?: Injector } = {}
 ): DebouncedPendingStateResult {
-  // Reading the options inside the effect makes the timings reactive: when
-  // a consumer passes an `input()` accessor (a Signal), changes propagate at
-  // runtime rather than getting captured once at construction.
-  let optionsSignal: Signal<DebouncedPendingStateOptions> | null = null;
-  let staticOptions: DebouncedPendingStateOptions = {};
+  // Memoize primitive timing numbers via computed() so inline object literals
+  // such as `[pendingDebounce]="{ showAfter: 200, minimumDisplay: 500 }"` do
+  // not re-run the effect and reset active timers on unrelated CD passes.
+  let readShowAfter: () => number;
+  let readMinimumDisplay: () => number;
   if (isSignal(options)) {
-    optionsSignal = options;
+    const showAfterSignal = computed(
+      () => options().showAfter ?? DEFAULT_SHOW_AFTER
+    );
+    const minimumDisplaySignal = computed(
+      () => options().minimumDisplay ?? DEFAULT_MINIMUM_DISPLAY
+    );
+    readShowAfter = showAfterSignal;
+    readMinimumDisplay = minimumDisplaySignal;
   } else {
-    staticOptions = options;
+    const showAfter = options.showAfter ?? DEFAULT_SHOW_AFTER;
+    const minimumDisplay = options.minimumDisplay ?? DEFAULT_MINIMUM_DISPLAY;
+    readShowAfter = () => showAfter;
+    readMinimumDisplay = () => minimumDisplay;
   }
 
   // Create writable signal for debounced state
@@ -129,11 +144,10 @@ export function createDebouncedPendingState(
   // Effect to manage debounced pending message display
   effect((onCleanup) => {
     const pending = isPending();
-    const current = optionsSignal ? optionsSignal() : staticOptions;
-    const showAfter = current.showAfter ?? 200;
-    const minimumDisplay = current.minimumDisplay ?? 500;
 
     if (pending) {
+      const showAfter = readShowAfter();
+
       // Clear any existing minimum display timeout
       if (minimumDisplayTimeout) {
         clearTimeout(minimumDisplayTimeout);
@@ -155,8 +169,11 @@ export function createDebouncedPendingState(
     } else {
       // Validation completed. A still-running show-delay timer was already
       // cleared by the previous run's cleanup, so the message only needs
-      // hiding when it is visible.
-      if (showPendingMessageSignal()) {
+      // hiding when it is visible. Read visibility untracked so clearing it
+      // when minimumDisplay elapses does not trigger a redundant effect run.
+      if (untracked(showPendingMessageSignal)) {
+        const minimumDisplay = readMinimumDisplay();
+
         // Message was shown - keep it visible for minimum duration
         minimumDisplayTimeout = setTimeout(() => {
           showPendingMessageSignal.set(false);

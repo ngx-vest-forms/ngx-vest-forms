@@ -17,9 +17,11 @@ parent component can drive an on-submit reveal programmatically.
   `ngx-control-wrapper` with an explicit `errorDisplayMode` or
   `warningDisplayMode`.
 - Error modes shown: `always` (visible even while pristine), `on-dirty`
-  (after the value changes), and `on-submit` (stays quiet until the form is
-  submitted programmatically).
-- Warning modes shown: `always`, `on-dirty`, and `on-touch` (after blur).
+  (after the value changes), `on-submit` (stays quiet until the form is
+  submitted programmatically), plus a field inheriting the component-provided
+  `NGX_ERROR_DISPLAY_MODE_TOKEN` (`'on-submit'`).
+- Warning modes shown: `always`, `on-dirty`, `on-touch` (after blur), plus a
+  field inheriting `NGX_WARNING_DISPLAY_MODE_TOKEN` (`'on-touch'`).
 - The form runs `triggerFormValidation()` on first render, so the contrast
   between modes is visible immediately without any interaction.
 - An external "Programmatically submit demo form" button simulates a
@@ -32,7 +34,8 @@ parent component can drive an on-submit reveal programmatically.
 ## ngx-vest-forms APIs showcased
 
 - `ngx-control-wrapper` with `[errorDisplayMode]` and `[warningDisplayMode]`
-  inputs.
+  inputs, plus `NGX_ERROR_DISPLAY_MODE_TOKEN` and
+  `NGX_WARNING_DISPLAY_MODE_TOKEN` defaults provided on the page.
 - `NgxVestForms` directive bundle and the `ngxVestForm` template directive.
 - `FormDirective.triggerFormValidation()`, plus the native
   `HTMLFormElement.requestSubmit()` for the programmatic submit.
