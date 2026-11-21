@@ -40,7 +40,7 @@ jobs:
         # verifies the pnpm binary against npm's signature. install: false —
         # the install step below runs under the Socket firewall. Pull requests
         # restore the store but never save it (ADR-0011).
-        uses: pnpm/setup@fa36a5ef7dcdefc3a7cb25655c122e00cf6e636e # v3.1.2
+        uses: pnpm/setup@731dfb6463bbd11c11fd0ee11fe00ed0e36d48a1 # v3.2.0
         with:
           node-version-file: .node-version
           install: false
