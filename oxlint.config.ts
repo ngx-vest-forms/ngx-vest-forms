@@ -1,9 +1,11 @@
 import { defineConfig } from 'oxlint';
 
-// NOTE: `options.typeAware` enables the tsgolint-powered rules (see
+// NOTE: `options.typeAware` enables the type-aware rules, which the
+// `tsrs` package runs (see
 // https://oxc.rs/docs/guide/usage/linter/type-aware). Type checking
 // itself stays tsc's responsibility; `typeCheck` is intentionally NOT
-// enabled so oxlint does not become a second, noisy type checker.
+// enabled so oxlint does not become a second, noisy type checker. With
+// it on, spec files report missing Vitest globals (`expect`, `vi`).
 //
 // The type-aware `no-unsafe-*` family and the assertion rules are set
 // to `warn` here: this workspace allows `any` in utility and test code
