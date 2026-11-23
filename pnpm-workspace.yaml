@@ -7,6 +7,11 @@ minimumReleaseAge: 1440 # minutes (24h)
 minimumReleaseAgeStrict: true
 minimumReleaseAgeIgnoreMissingTime: false
 trustPolicy: no-downgrade
+# tsrs@0.0.0-bootstrap.0 was a staged publish (highest trust rank), so every
+# later tsrs release, all OIDC trusted publishes with provenance, reads as a
+# downgrade. Exclude one exact version at a time.
+trustPolicyExclude:
+  - tsrs@7.1.0-beta.tsrs4
 blockExoticSubdeps: true
 audit:
   level: high
