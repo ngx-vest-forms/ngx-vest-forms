@@ -1,0 +1,53 @@
+name: Accessibility barrier
+description: Something in ngx-vest-forms or the examples app stops a person from completing a task.
+title: 'Accessibility: '
+labels: ['accessibility']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for telling us. Only the first field is required. You do not need to tell us about a disability or a diagnosis, and you do not need to choose a severity. See [ACCESSIBILITY.md](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/ACCESSIBILITY.md) for how we respond.
+
+        Report security problems through [SECURITY.md](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/SECURITY.md), not here.
+  - type: textarea
+    id: barrier
+    attributes:
+      label: What did you try to do, and what happened instead?
+      description: Describe it in your own words. For example, "After I submit, my screen reader does not say which field has an error."
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: The steps that cause the problem, if you know them.
+    validations:
+      required: false
+  - type: input
+    id: location
+    attributes:
+      label: Examples page or code
+      description: A link to the examples page, or a short template snippet that shows the problem.
+    validations:
+      required: false
+  - type: input
+    id: version
+    attributes:
+      label: ngx-vest-forms version
+      placeholder: 3.0.0
+    validations:
+      required: false
+  - type: textarea
+    id: environment
+    attributes:
+      label: Operating system, browser and assistive technology
+      description: Include versions if you know them. For example, "macOS 26, Safari 26, VoiceOver" or "Windows 11, Firefox 146, NVDA 2025.3".
+    validations:
+      required: false
+  - type: textarea
+    id: media
+    attributes:
+      label: Screenshots or recordings
+      description: Optional. Add them only if you want to.
+    validations:
+      required: false

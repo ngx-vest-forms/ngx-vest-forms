@@ -2,6 +2,8 @@
 
 ngx-vest-forms targets WCAG 2.2 Level AA for inline validation feedback, ARIA associations, and keyboard error recovery.
 
+This guide explains how the library does that. The [accessibility statement](../ACCESSIBILITY.md) lists what we test, the known limitations, and how to report a barrier.
+
 ## Field-level live regions (polite)
 
 `<ngx-control-wrapper>` and `<ngx-form-group-wrapper>` render inline errors, warnings, and pending indicators inside permanently mounted `role="status"` / `aria-live="polite"` regions so screen readers announce updates without interrupting typing:

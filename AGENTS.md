@@ -9,6 +9,7 @@ This codebase is yours to shape and keep improving: follow the boy scout rule an
 - Code that uses ngx-vest-forms or Vest: load the `ngx-vest-forms` and `vestjs` skills first. They hold the invariants (`[ngModel]` binding, `name` = model path, Vest 6 suite shape).
 - Forms in this repo are template-driven with ngx-vest-forms by design. Angular's own guidance (the `angular-developer` skill, the `get_best_practices` tool) prefers Signal Forms for a new form; that preference does not apply here.
 - Project vocabulary: `GLOSSARY.md`. Past decisions and their reasons: `docs/adr/`.
+- A change to wrappers, ARIA association, submit focus, default styles or an examples page: follow the contributor rules in `ACCESSIBILITY.md`, and add any new barrier you find to its known limitations.
 - Public surface of the library: exactly what `packages/ngx-vest-forms/src/public-api.ts` exports.
 
 ## Branches
