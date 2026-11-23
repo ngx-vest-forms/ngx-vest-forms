@@ -201,6 +201,7 @@ export class AddressFormComponent {
 - [Built-in control wrapper](./packages/ngx-vest-forms/src/lib/components/control-wrapper/README.md) - Inputs, display modes, ARIA modes, and CSS theming tokens
 - [Custom control wrappers](./docs/CUSTOM-CONTROL-WRAPPERS.md) - Build custom wrappers with `ngxErrorDisplay`, `ngxErrorControl`, debounced pending states, and Signal Forms controls
 - [Accessibility](./docs/ACCESSIBILITY.md) - WCAG 2.2 AA live regions, ARIA widget association, and first-invalid focus
+- [Accessibility statement](./ACCESSIBILITY.md) - what we test, known limitations, and how to report a barrier
 - [Child components](./docs/CHILD-COMPONENTS.md) - Split large forms with `vestFormsViewProviders` and `ngModelGroup`
 - [Composite adapter recipe](./docs/COMPOSITE-ADAPTER-RECIPE.md) - Map one composite widget (such as a date-range picker) to multiple field paths
 - [Auto-save on blur](./docs/AUTO-SAVE-ON-BLUR.md) - Build draft persistence with `(fieldBlur)` and quiet dependent validation
